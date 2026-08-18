@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>İzmir — model karşılaştırması · Meridyen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1EC; --paper:#F7F9F5; --ink:#1F2A24; --ink-soft:#5B665D; --ink-faint:#8B948B; --line:#C9D0C6;
+    --amber:#D98E2B; --teal:#1E7A6B; --navy:#2C4A6E; --coral:#B4553B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;line-height:1.5;}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px 60px;}
+
+  header{display:flex;justify-content:space-between;align-items:center;padding:28px 0;border-bottom:1px solid var(--line);margin-bottom:28px;}
+  .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;letter-spacing:-0.02em;}
+  .brand span{color:var(--teal);}
+  nav{display:flex;gap:28px;font-size:13px;}
+  nav a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px;transition:.15s;}
+  nav a:hover{color:var(--ink);border-color:var(--ink);}
+
+  .search-row{position:relative;margin-bottom:14px;}
+  .search-input{width:100%;font-size:14px;padding:11px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);}
+  .search-input:focus{outline:none;border-color:var(--ink);}
+  .search-results{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden;z-index:10;box-shadow:0 8px 24px rgba(31,42,36,.08);}
+  .search-results div{padding:10px 16px;font-size:13.5px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .search-results div:last-child{border-bottom:none;}
+  .search-results div:hover{background:var(--bg);}
+
+  .location-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px;}
+  .loc-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--ink);color:var(--paper);
+    padding:6px 8px 6px 12px;border-radius:20px;display:flex;align-items:center;gap:8px;
+  }
+  .fav-btn{
+    width:22px;height:22px;border-radius:50%;border:none;background:rgba(247,249,245,.15);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--paper);transition:.15s;
+  }
+  .fav-btn:hover{background:rgba(247,249,245,.3);}
+  .fav-btn.active{color:var(--amber);}
+  .fav-btn.active svg{fill:var(--amber);}
+  .chip{font-size:13px;font-weight:500;background:var(--paper);border:1px solid var(--line);color:var(--ink-soft);padding:6px 13px;border-radius:20px;cursor:pointer;transition:.15s;}
+  .chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .chip:hover:not(.active){border-color:var(--ink);color:var(--ink);}
+
+  .period-row{display:flex;gap:2px;margin-bottom:24px;border:1px solid var(--line);border-radius:8px;padding:3px;width:fit-content;background:var(--paper);}
+  .period-tab{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:7px 16px;border-radius:6px;cursor:pointer;color:var(--ink-soft);}
+  .period-tab.active{background:var(--ink);color:var(--paper);}
+
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:24px 24px 18px;margin-bottom:20px;min-height:60px;}
+  .panel-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+  .panel-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;}
+  .panel-sub{font-size:12px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  svg.chart{display:block;width:100%;height:auto;margin-top:18px;}
+  .axis-label{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--ink-soft);}
+  .model-line{fill:none;stroke-width:2;}
+  .model-line.dashed{stroke-dasharray:4 3;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);}
+  .legend-item{display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .legend-swatch{width:16px;height:2px;display:inline-block;}
+
+  .agree-row{display:flex;align-items:center;gap:16px;margin-top:20px;}
+  .agree-label{font-size:13px;color:var(--ink-soft);white-space:nowrap;}
+  .agree-track{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden;}
+  .agree-fill{height:100%;background:var(--teal);border-radius:4px;transition:width .4s;}
+  .agree-pct{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:var(--teal);white-space:nowrap;}
+
+  table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  th{text-align:left;font-weight:500;color:var(--ink-soft);padding:8px 10px;border-bottom:1px solid var(--ink);font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+  td{padding:9px 10px;border-bottom:1px solid var(--line);}
+  td.station{font-family:'IBM Plex Sans',sans-serif;font-weight:500;}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;}
+  .loading,.err{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:20px 0;text-align:center;}
+  .err{color:var(--coral);}
+
+  .explain-link{
+    display:flex;align-items:center;justify-content:space-between;background:var(--paper);border:1px solid var(--line);
+    border-radius:12px;padding:16px 20px;margin-bottom:20px;text-decoration:none;color:var(--ink);transition:.15s;
+  }
+  .explain-link:hover{border-color:var(--ink);}
+  .explain-link .el-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;}
+  .explain-link .el-sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .explain-link .el-arrow{font-family:'IBM Plex Mono',monospace;font-size:16px;color:var(--ink-soft);}
+
+  footer{border-top:1px solid var(--line);padding-top:24px;margin-top:12px;}
+  .foot-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .foot-attr{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);}
+  .foot-attr a{color:var(--ink-soft);}
+  .foot-links{display:flex;gap:20px;font-size:12.5px;}
+  .foot-links a{color:var(--ink-soft);text-decoration:none;}
+  .foot-links a:hover{color:var(--ink);}
+
+  @media (max-width:640px){
+    nav{display:none;}
+    .foot-row{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">meri<span>dyen</span></div>
+    <nav>
+      <a href="ana-sayfa.html">Ana sayfa</a>
+      <a href="#">Modeller</a>
+      <a href="#">Favoriler</a>
+    </nav>
+  </header>
+
+  <div class="search-row">
+    <input class="search-input" id="searchInput" placeholder="Şehir veya ilçe ara (örn. Bodrum)…" autocomplete="off">
+    <div class="search-results" id="searchResults" style="display:none"></div>
+  </div>
+
+  <div class="location-row">
+    <div class="loc-tag">
+      📍 <span id="locName">İzmir</span>
+      <button class="fav-btn" id="favBtn" aria-label="Favorilere ekle" title="Favorilere ekle">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </button>
+    </div>
+    <div class="chip active" data-lat="38.42" data-lon="27.14" data-name="İzmir">İzmir</div>
+    <div class="chip" data-lat="41.01" data-lon="28.98" data-name="İstanbul">İstanbul</div>
+    <div class="chip" data-lat="39.93" data-lon="32.86" data-name="Ankara">Ankara</div>
+    <div class="chip" data-lat="36.90" data-lon="30.71" data-name="Antalya">Antalya</div>
+  </div>
+
+  <div class="period-row" id="periodRow">
+    <div class="period-tab" data-days="2">Saatlik</div>
+    <div class="period-tab active" data-days="3">3 gün</div>
+    <div class="period-tab" data-days="7">7 gün</div>
+    <div class="period-tab" data-days="16">16 gün</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Sıcaklık karşılaştırması</div>
+      <div class="panel-sub" id="chartSub">°C · 4 model</div>
+    </div>
+    <div id="chartArea"><div class="loading">Veri yükleniyor…</div></div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:#D98E2B"></span>ECMWF</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:#1E7A6B"></span>GFS</div>
+      <div class="legend-item"><span class="legend-swatch" style="border-top:2px dashed #2C4A6E;height:0"></span>ICON</div>
+      <div class="legend-item"><span class="legend-swatch" style="border-top:2px dashed #B4553B;height:0"></span>GEM</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Yağış — model uyumu (ilk 24 saat)</div>
+      <div class="panel-sub" id="agreeSub">—</div>
+    </div>
+    <div class="agree-row">
+      <div class="agree-label">Uyum skoru</div>
+      <div class="agree-track"><div class="agree-fill" id="agreeFill" style="width:0%"></div></div>
+      <div class="agree-pct" id="agreePct">—</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title" id="tableTitle">Model detayları</div></div>
+    <table>
+      <thead><tr><th>Model</th><th>Sıcaklık</th><th>Yağış olasılığı</th></tr></thead>
+      <tbody id="tableBody"><tr><td colspan="3" class="loading">Veri yükleniyor…</td></tr></tbody>
+    </table>
+  </div>
+
+  <a href="#" class="explain-link">
+    <div>
+      <div class="el-title">Bu modeller ne anlama geliyor?</div>
+      <div class="el-sub">ECMWF, GFS, ICON ve GEM arasındaki farkları öğren</div>
+    </div>
+    <div class="el-arrow">→</div>
+  </a>
+
+  <footer>
+    <div class="foot-row">
+      <div class="foot-attr">VERİ KAYNAĞI: <a href="https://open-meteo.com" target="_blank" rel="noopener">OPEN-METEO</a> (CC BY 4.0)</div>
+      <div class="foot-links">
+        <a href="#">Hakkında</a>
+        <a href="#">SSS</a>
+        <a href="#">Yasal</a>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+const MODELS = [
+  { id: 'ecmwf_ifs025', label: 'ECMWF', color: '#D98E2B', dashed: false },
+  { id: 'gfs_seamless', label: 'GFS', color: '#1E7A6B', dashed: false },
+  { id: 'icon_seamless', label: 'ICON', color: '#2C4A6E', dashed: true },
+  { id: 'gem_seamless', label: 'GEM', color: '#B4553B', dashed: true },
+];
+const FAV_KEY = 'meridyen_favorites';
+let state = { lat: 38.42, lon: 27.14, name: 'İzmir', days: 3 };
+
+function slugify(name) {
+  const map = {'ı':'i','İ':'i','ş':'s','Ş':'s','ğ':'g','Ğ':'g','ü':'u','Ü':'u','ö':'o','Ö':'o','ç':'c','Ç':'c'};
+  return name.toLowerCase().split('').map(ch => map[ch] || ch).join('').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
+}
+function isFavorite(name) {
+  return getFavorites().some(f => f.name === name);
+}
+function toggleFavorite() {
+  let favs = getFavorites();
+  if (isFavorite(state.name)) {
+    favs = favs.filter(f => f.name !== state.name);
+  } else {
+    favs.push({ name: state.name, lat: state.lat, lon: state.lon, slug: slugify(state.name) });
+  }
+  localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+  updateFavBtn();
+}
+function updateFavBtn() {
+  document.getElementById('favBtn').classList.toggle('active', isFavorite(state.name));
+}
+document.getElementById('favBtn').addEventListener('click', toggleFavorite);
+
+let searchTimer;
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = searchInput.value.trim();
+  if (q.length < 2) { searchResults.style.display = 'none'; return; }
+  searchTimer = setTimeout(() => runSearch(q), 350);
+});
+async function runSearch(q) {
+  try {
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=tr&format=json`);
+    const data = await res.json();
+    if (!data.results || !data.results.length) { searchResults.innerHTML = '<div>Sonuç yok</div>'; searchResults.style.display = 'block'; return; }
+    searchResults.innerHTML = data.results.map(r =>
+      `<div data-lat="${r.latitude}" data-lon="${r.longitude}" data-name="${r.name}">${r.name}${r.admin1 ? ', ' + r.admin1 : ''} — ${r.country}</div>`
+    ).join('');
+    searchResults.style.display = 'block';
+    searchResults.querySelectorAll('div[data-lat]').forEach(el => {
+      el.addEventListener('click', () => {
+        setLocation(parseFloat(el.dataset.lat), parseFloat(el.dataset.lon), el.dataset.name);
+        searchResults.style.display = 'none';
+        searchInput.value = '';
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      });
+    });
+  } catch (e) { searchResults.innerHTML = '<div>Arama başarısız</div>'; searchResults.style.display = 'block'; }
+}
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    setLocation(parseFloat(chip.dataset.lat), parseFloat(chip.dataset.lon), chip.dataset.name);
+  });
+});
+
+document.querySelectorAll('.period-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.days = parseInt(tab.dataset.days);
+    loadForecast();
+  });
+});
+
+function setLocation(lat, lon, name) {
+  state.lat = lat; state.lon = lon; state.name = name;
+  document.getElementById('locName').textContent = name;
+  document.title = `${name} — model karşılaştırması · Meridyen`;
+  updateFavBtn();
+  loadForecast();
+}
+
+async function loadForecast() {
+  document.getElementById('chartArea').innerHTML = '<div class="loading">Veri yükleniyor…</div>';
+  document.getElementById('tableBody').innerHTML = '<tr><td colspan="3" class="loading">Veri yükleniyor…</td></tr>';
+  const modelParam = MODELS.map(m => m.id).join(',');
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=temperature_2m,precipitation_probability&models=${modelParam}&forecast_days=${state.days}&timezone=auto`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('API hatası');
+    const data = await res.json();
+    renderChart(data);
+    renderTable(data);
+    renderAgreement(data);
+  } catch (e) {
+    document.getElementById('chartArea').innerHTML = '<div class="err">Veri alınamadı — bağlantını kontrol et.</div>';
+    document.getElementById('tableBody').innerHTML = '<tr><td colspan="3" class="err">Veri alınamadı</td></tr>';
+  }
+}
+
+function renderChart(data) {
+  const times = data.hourly.time;
+  const series = MODELS.map(m => ({ ...m, values: data.hourly['temperature_2m_' + m.id] })).filter(s => s.values);
+  if (!series.length) { document.getElementById('chartArea').innerHTML = '<div class="err">Bu modeller için veri yok.</div>'; return; }
+  const allVals = series.flatMap(s => s.values).filter(v => v != null);
+  const min = Math.floor(Math.min(...allVals) / 2) * 2 - 2;
+  const max = Math.ceil(Math.max(...allVals) / 2) * 2 + 2;
+  const w = 800, h = 220, padL = 34, padR = 10, padT = 14, padB = 26;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const n = times.length;
+  const x = i => padL + (i / (n - 1)) * plotW;
+  const y = v => padT + plotH - ((v - min) / (max - min)) * plotH;
+
+  let dots = '';
+  for (let row = 0; row <= 3; row++) {
+    const gy = padT + (row / 3) * plotH;
+    for (let col = 0; col <= 10; col++) dots += `<circle cx="${padL + (col/10)*plotW}" cy="${gy}" r="1" fill="var(--line)"/>`;
+  }
+  let labels = '';
+  [min, (min+max)/2, max].forEach((v, idx) => {
+    labels += `<text class="axis-label" x="4" y="${padT + plotH - (idx/2)*plotH + 3}">${Math.round(v)}°</text>`;
+  });
+  const dayStep = Math.max(1, Math.floor(n / 6));
+  for (let i = 0; i < n; i += dayStep) {
+    const d = new Date(times[i]);
+    labels += `<text class="axis-label" x="${x(i)-14}" y="${h-6}">${d.toLocaleDateString('tr-TR',{weekday:'short'})} ${d.getHours()}s</text>`;
+  }
+  let lines = '';
+  series.forEach(s => {
+    const pts = s.values.map((v, i) => v != null ? `${x(i)},${y(v)}` : null).filter(Boolean).join(' ');
+    lines += `<polyline class="model-line${s.dashed ? ' dashed' : ''}" stroke="${s.color}" points="${pts}"/>`;
+  });
+  document.getElementById('chartArea').innerHTML = `<svg class="chart" viewBox="0 0 ${w} ${h}">${dots}${labels}${lines}</svg>`;
+  document.getElementById('chartSub').textContent = `°C · ${series.length} model · ${state.name}`;
+}
+
+function renderTable(data) {
+  const idx = 24 < data.hourly.time.length ? 24 : Math.floor(data.hourly.time.length / 2);
+  const time = new Date(data.hourly.time[idx]);
+  document.getElementById('tableTitle').textContent = `Model detayları — ${time.toLocaleDateString('tr-TR',{weekday:'long'})} ${time.getHours()}:00`;
+  let rows = '';
+  MODELS.forEach(m => {
+    const temp = data.hourly['temperature_2m_' + m.id]?.[idx];
+    const precip = data.hourly['precipitation_probability_' + m.id]?.[idx];
+    if (temp == null) return;
+    rows += `<tr><td class="station"><span class="dot" style="background:${m.color}"></span>${m.label}</td><td>${Math.round(temp)}°C</td><td>%${precip ?? '—'}</td></tr>`;
+  });
+  document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="3" class="err">Veri yok</td></tr>';
+}
+
+function renderAgreement(data) {
+  const n = Math.min(24, data.hourly.time.length);
+  let agree = 0, total = 0;
+  MODELS.forEach(m => {
+    const arr = data.hourly['precipitation_probability_' + m.id];
+    if (!arr) return;
+    total++;
+    const avg = arr.slice(0, n).reduce((a,b) => a+b, 0) / n;
+    if (avg > 30) agree++;
+  });
+  const pct = total ? Math.round((agree / total) * 100) : 0;
+  document.getElementById('agreeFill').style.width = pct + '%';
+  document.getElementById('agreePct').textContent = '%' + pct;
+  document.getElementById('agreeSub').textContent = `${agree}/${total} model yağış öngörüyor`;
+}
+
+updateFavBtn();
+loadForecast();
+</script>
+</body>
+</html>

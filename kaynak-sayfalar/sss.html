@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sık sorulan sorular · Meridyen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1EC; --paper:#F7F9F5; --ink:#1F2A24; --ink-soft:#5B665D; --ink-faint:#8B948B; --line:#C9D0C6;
+    --amber:#D98E2B; --teal:#1E7A6B; --navy:#2C4A6E; --coral:#B4553B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;line-height:1.5;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 24px 60px;}
+
+  header{display:flex;justify-content:space-between;align-items:center;padding:28px 0;border-bottom:1px solid var(--line);margin-bottom:32px;}
+  .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;letter-spacing:-0.02em;}
+  .brand span{color:var(--teal);}
+  nav{display:flex;gap:28px;font-size:13px;}
+  nav a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px;transition:.15s;}
+  nav a:hover{color:var(--ink);border-color:var(--ink);}
+
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--ink-soft);text-transform:uppercase;}
+  h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:30px;margin:8px 0 32px;line-height:1.15;}
+
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;
+    color:var(--ink-soft);text-decoration:none;margin-bottom:20px;
+  }
+  .back-link:hover{color:var(--ink);}
+
+  .faq-list{display:flex;flex-direction:column;gap:10px;}
+  .faq-item{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .faq-item[open]{border-color:var(--ink);}
+  .faq-q{
+    display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px;
+    cursor:pointer;list-style:none;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;
+  }
+  .faq-q::-webkit-details-marker{display:none;}
+  .faq-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);flex-shrink:0;min-width:24px;}
+  .faq-q-text{flex:1;}
+  .faq-icon{
+    width:22px;height:22px;border-radius:50%;border:1px solid var(--line);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;color:var(--ink-soft);transition:transform .2s;
+  }
+  .faq-item[open] .faq-icon{transform:rotate(45deg);border-color:var(--ink);color:var(--ink);}
+  .faq-a{padding:0 22px 20px 62px;font-size:14px;color:var(--ink-soft);line-height:1.7;}
+
+  footer{border-top:1px solid var(--line);padding-top:24px;margin-top:40px;}
+  .foot-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .foot-attr{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);}
+  .foot-attr a{color:var(--ink-soft);}
+  .foot-links{display:flex;gap:20px;font-size:12.5px;}
+  .foot-links a{color:var(--ink-soft);text-decoration:none;}
+  .foot-links a:hover{color:var(--ink);}
+
+  @media (max-width:640px){
+    nav{display:none;}
+    .faq-a{padding-left:22px;}
+    .foot-row{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">meri<span>dyen</span></div>
+    <nav>
+      <a href="ana-sayfa.html">Ana sayfa</a>
+      <a href="modeller.html">Modeller</a>
+      <a href="hakkinda.html">Hakkında</a>
+    </nav>
+  </header>
+
+  <a class="back-link" href="ana-sayfa.html">← Ana sayfaya dön</a>
+
+  <div class="kicker">Destek</div>
+  <h1>Sık sorulan sorular</h1>
+
+  <div class="faq-list">
+    <details class="faq-item" open>
+      <summary class="faq-q">
+        <span class="faq-num">01</span>
+        <span class="faq-q-text">Hangi model en doğru?</span>
+        <span class="faq-icon">+</span>
+      </summary>
+      <div class="faq-a">Kesin bir "en doğru" model yok. ECMWF genelde 3-7 gün arası orta vadede güçlü kabul edilir, GFS sık güncellendiği için kısa vadede hızlı tepki verir, ICON Avrupa'da yüksek çözünürlük sunar. Her modelin güçlü olduğu koşullar farklıdır — bu yüzden karşılaştırma yapıyoruz.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-q">
+        <span class="faq-num">02</span>
+        <span class="faq-q-text">Veriler ne sıklıkla güncelleniyor?</span>
+        <span class="faq-icon">+</span>
+      </summary>
+      <div class="faq-a">Modelden modele değişir: GFS ve ICON günde 4 kez, ECMWF ve GEM günde 2 kez güncellenir. Meridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-q">
+        <span class="faq-num">03</span>
+        <span class="faq-q-text">Bu MGM'nin resmi sitesi mi?</span>
+        <span class="faq-icon">+</span>
+      </summary>
+      <div class="faq-a">Hayır. Meridyen bağımsız, kişisel bir karşılaştırma aracıdır — Meteoroloji Genel Müdürlüğü ile bir bağlantısı yoktur. Afet veya acil durum kararları için lütfen MGM'nin resmi uyarılarını takip et.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-q">
+        <span class="faq-num">04</span>
+        <span class="faq-q-text">Favorilerim nerede saklanıyor?</span>
+        <span class="faq-icon">+</span>
+      </summary>
+      <div class="faq-a">Yalnızca kendi cihazında, tarayıcının yerel deposunda (localStorage) saklanır. Hesap oluşturmana gerek yok, hiçbir veri sunucuya gönderilmez. Tarayıcı verilerini temizlersen favorilerin de silinir.</div>
+    </details>
+  </div>
+
+  <footer>
+    <div class="foot-row">
+      <div class="foot-attr">VERİ KAYNAĞI: <a href="https://open-meteo.com" target="_blank" rel="noopener">OPEN-METEO</a> (CC BY 4.0)</div>
+      <div class="foot-links">
+        <a href="hakkinda.html">Hakkında</a>
+        <a href="#">Yasal</a>
+      </div>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

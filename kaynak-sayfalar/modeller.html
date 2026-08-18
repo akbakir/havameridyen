@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modeller — ECMWF, GFS, ICON, GEM · Meridyen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1EC; --paper:#F7F9F5; --ink:#1F2A24; --ink-soft:#5B665D; --ink-faint:#8B948B; --line:#C9D0C6;
+    --amber:#D98E2B; --teal:#1E7A6B; --navy:#2C4A6E; --coral:#B4553B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;line-height:1.5;}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px 60px;}
+
+  header{display:flex;justify-content:space-between;align-items:center;padding:28px 0;border-bottom:1px solid var(--line);margin-bottom:32px;}
+  .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;letter-spacing:-0.02em;}
+  .brand span{color:var(--teal);}
+  nav{display:flex;gap:28px;font-size:13px;}
+  nav a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px;transition:.15s;}
+  nav a:hover{color:var(--ink);border-color:var(--ink);}
+
+  .page-head{max-width:600px;margin-bottom:20px;}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--ink-soft);text-transform:uppercase;}
+  .page-head h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:30px;margin:8px 0 14px;line-height:1.15;}
+  .page-head p{font-size:14.5px;color:var(--ink-soft);line-height:1.65;}
+
+  .model-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin:36px 0;}
+  .model-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:22px;position:relative;overflow:hidden;}
+  .model-card::before{content:"";position:absolute;top:0;left:0;width:4px;height:100%;background:var(--m-color);}
+  .model-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+  .model-code{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;}
+  .model-flag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-faint);border:1px solid var(--line);border-radius:4px;padding:3px 8px;white-space:nowrap;}
+  .model-agency{font-size:13px;color:var(--ink-soft);margin-bottom:16px;}
+  .model-facts{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:14px;}
+  .fact-label{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em;}
+  .fact-value{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink);margin-top:2px;}
+  .model-note{font-size:12.5px;color:var(--ink-soft);border-top:1px dashed var(--line);padding-top:12px;line-height:1.5;}
+
+  .why-panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:26px 28px;margin-bottom:20px;}
+  .why-panel h2{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin-bottom:12px;}
+  .why-panel p{font-size:14px;color:var(--ink-soft);line-height:1.7;margin-bottom:12px;}
+  .why-panel p:last-child{margin-bottom:0;}
+
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;
+    color:var(--ink-soft);text-decoration:none;margin-bottom:8px;
+  }
+  .back-link:hover{color:var(--ink);}
+
+  footer{border-top:1px solid var(--line);padding-top:24px;margin-top:40px;}
+  .foot-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .foot-attr{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);}
+  .foot-attr a{color:var(--ink-soft);}
+  .foot-links{display:flex;gap:20px;font-size:12.5px;}
+  .foot-links a{color:var(--ink-soft);text-decoration:none;}
+  .foot-links a:hover{color:var(--ink);}
+
+  @media (max-width:640px){
+    nav{display:none;}
+    .model-grid{grid-template-columns:1fr;}
+    .foot-row{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">meri<span>dyen</span></div>
+    <nav>
+      <a href="ana-sayfa.html">Ana sayfa</a>
+      <a href="favoriler.html">Favoriler</a>
+      <a href="sehir-sayfasi.html">İzmir</a>
+    </nav>
+  </header>
+
+  <a class="back-link" href="sehir-sayfasi.html">← Şehir sayfasına dön</a>
+
+  <div class="page-head">
+    <div class="kicker">Model rehberi</div>
+    <h1>4 model, 4 farklı bakış açısı</h1>
+    <p>Her hava tahmin merkezi kendi verisini, kendi fiziksel varsayımlarını ve kendi çözünürlüğünü kullanır. Bu yüzden aynı gün için farklı sonuçlar görebilirsin — hangisinin "doğru" olduğu değil, hangisinin senin durumun için daha güvenilir olduğu önemlidir.</p>
+  </div>
+
+  <div class="model-grid">
+    <div class="model-card" style="--m-color:#D98E2B">
+      <div class="model-top">
+        <div class="model-code">ECMWF</div>
+        <div class="model-flag">AVRUPA</div>
+      </div>
+      <div class="model-agency">Avrupa Orta Vadeli Hava Tahminleri Merkezi</div>
+      <div class="model-facts">
+        <div><div class="fact-label">Çözünürlük</div><div class="fact-value">~9 km</div></div>
+        <div><div class="fact-label">Güncelleme</div><div class="fact-value">Günde 2 kez</div></div>
+      </div>
+      <div class="model-note">Genellikle 3-7 gün arası orta vadeli tahminlerde en isabetli kabul edilir. Küresel modeller arasında referans noktası sayılır.</div>
+    </div>
+
+    <div class="model-card" style="--m-color:#1E7A6B">
+      <div class="model-top">
+        <div class="model-code">GFS</div>
+        <div class="model-flag">ABD</div>
+      </div>
+      <div class="model-agency">NOAA Küresel Tahmin Sistemi</div>
+      <div class="model-facts">
+        <div><div class="fact-label">Çözünürlük</div><div class="fact-value">~28 km</div></div>
+        <div><div class="fact-label">Güncelleme</div><div class="fact-value">Günde 4 kez</div></div>
+      </div>
+      <div class="model-note">Sık güncellendiği için ani hava değişimlerine hızlı tepki verir. Kısa vadeli (1-3 gün) takipte pratik bir referans.</div>
+    </div>
+
+    <div class="model-card" style="--m-color:#2C4A6E">
+      <div class="model-top">
+        <div class="model-code">ICON</div>
+        <div class="model-flag">ALMANYA</div>
+      </div>
+      <div class="model-agency">Deutscher Wetterdienst küresel modeli</div>
+      <div class="model-facts">
+        <div><div class="fact-label">Çözünürlük</div><div class="fact-value">~13 km</div></div>
+        <div><div class="fact-label">Güncelleme</div><div class="fact-value">Günde 4 kez</div></div>
+      </div>
+      <div class="model-note">Avrupa ve çevresinde yüksek çözünürlüklü bölgesel varyantlarıyla bilinir, yerel detayları daha net yakalar.</div>
+    </div>
+
+    <div class="model-card" style="--m-color:#B4553B">
+      <div class="model-top">
+        <div class="model-code">GEM</div>
+        <div class="model-flag">KANADA</div>
+      </div>
+      <div class="model-agency">Environment Canada küresel modeli</div>
+      <div class="model-facts">
+        <div><div class="fact-label">Çözünürlük</div><div class="fact-value">~15 km</div></div>
+        <div><div class="fact-label">Güncelleme</div><div class="fact-value">Günde 2 kez</div></div>
+      </div>
+      <div class="model-note">Bağımsız bir veri asimilasyon sistemi kullanır — diğer üç modelden farklı bir "ikinci görüş" sağlar.</div>
+    </div>
+  </div>
+
+  <div class="why-panel">
+    <h2>Neden birden fazla model?</h2>
+    <p>Her model, dünyanın atmosferini biraz farklı bir matematiksel yaklaşımla simüle eder: farklı başlangıç verisi, farklı çözünürlük, farklı fizik kuralları. Bu farklar özellikle 4 günden uzun vadeli tahminlerde belirginleşir.</p>
+    <p>Modeller aynı şeyi söylüyorsa (yüksek uyum skoru), tahmine güvenmek daha kolaydır. Ayrışıyorlarsa, bu senin için de bir sinyaldir — hava durumu o gün için daha belirsiz demektir.</p>
+  </div>
+
+  <footer>
+    <div class="foot-row">
+      <div class="foot-attr">VERİ KAYNAĞI: <a href="https://open-meteo.com" target="_blank" rel="noopener">OPEN-METEO</a> (CC BY 4.0)</div>
+      <div class="foot-links">
+        <a href="#">Hakkında</a>
+        <a href="#">SSS</a>
+        <a href="#">Yasal</a>
+      </div>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

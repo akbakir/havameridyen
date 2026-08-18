@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Favorilerin · Meridyen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1EC; --paper:#F7F9F5; --ink:#1F2A24; --ink-soft:#5B665D; --ink-faint:#8B948B; --line:#C9D0C6;
+    --amber:#D98E2B; --teal:#1E7A6B; --navy:#2C4A6E; --coral:#B4553B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;line-height:1.5;}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px 60px;}
+
+  header{display:flex;justify-content:space-between;align-items:center;padding:28px 0;border-bottom:1px solid var(--line);margin-bottom:32px;}
+  .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;letter-spacing:-0.02em;}
+  .brand span{color:var(--teal);}
+  nav{display:flex;gap:28px;font-size:13px;}
+  nav a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px;transition:.15s;}
+  nav a:hover{color:var(--ink);border-color:var(--ink);}
+
+  .page-head{margin-bottom:28px;}
+  .page-head h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:26px;margin-bottom:6px;}
+  .page-head p{font-size:14px;color:var(--ink-soft);}
+
+  .fav-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+  .fav-card{
+    background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px;cursor:pointer;
+    text-decoration:none;color:var(--ink);display:block;transition:.15s;position:relative;
+  }
+  .fav-card:hover{border-color:var(--ink);}
+  .fav-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+  .fav-card-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;}
+  .fav-card-coords{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);margin-top:2px;}
+  .remove-btn{
+    width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:var(--bg);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);flex-shrink:0;
+  }
+  .remove-btn:hover{border-color:var(--coral);color:var(--coral);}
+  .fav-card-temp{display:flex;align-items:baseline;gap:10px;}
+  .fav-temp-value{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:500;}
+  .fav-temp-range{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .fav-card-loading{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-faint);}
+  .fav-card-err{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--coral);}
+
+  .empty-state{
+    text-align:center;padding:72px 24px;background:var(--paper);border:1px dashed var(--line);border-radius:14px;
+  }
+  .empty-icon{
+    width:52px;height:52px;border-radius:50%;background:var(--bg);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:var(--ink-faint);
+  }
+  .empty-state h2{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;margin-bottom:8px;}
+  .empty-state p{font-size:13.5px;color:var(--ink-soft);max-width:340px;margin:0 auto 22px;}
+  .empty-cta{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--ink);color:var(--paper);
+    padding:10px 20px;border-radius:8px;text-decoration:none;
+  }
+  .empty-cta:hover{background:var(--teal);}
+
+  footer{border-top:1px solid var(--line);padding-top:24px;margin-top:40px;}
+  .foot-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .foot-attr{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);}
+  .foot-attr a{color:var(--ink-soft);}
+  .foot-links{display:flex;gap:20px;font-size:12.5px;}
+  .foot-links a{color:var(--ink-soft);text-decoration:none;}
+  .foot-links a:hover{color:var(--ink);}
+
+  @media (max-width:640px){
+    nav{display:none;}
+    .foot-row{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">meri<span>dyen</span></div>
+    <nav>
+      <a href="ana-sayfa.html">Ana sayfa</a>
+      <a href="#">Modeller</a>
+      <a href="sehir-sayfasi.html">İzmir</a>
+    </nav>
+  </header>
+
+  <div class="page-head">
+    <h1>Kayıtlı konumların</h1>
+    <p id="pageSub">—</p>
+  </div>
+
+  <div id="content"></div>
+
+  <footer>
+    <div class="foot-row">
+      <div class="foot-attr">VERİ KAYNAĞI: <a href="https://open-meteo.com" target="_blank" rel="noopener">OPEN-METEO</a> (CC BY 4.0)</div>
+      <div class="foot-links">
+        <a href="#">Hakkında</a>
+        <a href="#">SSS</a>
+        <a href="#">Yasal</a>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+const FAV_KEY = 'meridyen_favorites';
+
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
+}
+function saveFavorites(favs) {
+  localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+}
+function removeFavorite(name) {
+  saveFavorites(getFavorites().filter(f => f.name !== name));
+  render();
+}
+function cityUrl(f) {
+  return `sehir-sayfasi.html?lat=${f.lat}&lon=${f.lon}&name=${encodeURIComponent(f.name)}`;
+}
+
+function render() {
+  const favs = getFavorites();
+  const content = document.getElementById('content');
+  const sub = document.getElementById('pageSub');
+
+  if (!favs.length) {
+    sub.textContent = 'Henüz kayıtlı konumun yok.';
+    content.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <h2>Henüz favori eklemedin</h2>
+        <p>Bir şehir sayfasında konum etiketinin yanındaki yıldıza tıkla, buradan tek ekranda takip et.</p>
+        <a class="empty-cta" href="ana-sayfa.html">Ana sayfaya git →</a>
+      </div>`;
+    return;
+  }
+
+  sub.textContent = `${favs.length} konum kayıtlı · anlık sıcaklıklar güncelleniyor`;
+  content.innerHTML = `<div class="fav-grid">${favs.map(f => `
+    <a class="fav-card" href="${cityUrl(f)}" data-name="${f.name}">
+      <div class="fav-card-top">
+        <div>
+          <div class="fav-card-name">${f.name}</div>
+          <div class="fav-card-coords">${f.lat.toFixed(2)}°K ${f.lon.toFixed(2)}°D</div>
+        </div>
+        <button class="remove-btn" data-remove="${f.name}" aria-label="Favorilerden çıkar" title="Favorilerden çıkar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="fav-card-temp" id="temp-${cssSafe(f.name)}">
+        <span class="fav-card-loading">Yükleniyor…</span>
+      </div>
+    </a>
+  `).join('')}</div>`;
+
+  content.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      removeFavorite(btn.dataset.remove);
+    });
+  });
+
+  favs.forEach(loadTemp);
+}
+
+function cssSafe(name) {
+  return name.replace(/[^a-zA-Z0-9]/g, '');
+}
+
+async function loadTemp(f) {
+  const el = document.getElementById('temp-' + cssSafe(f.name));
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${f.lat}&longitude=${f.lon}&hourly=temperature_2m&forecast_days=1&timezone=auto`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const vals = data.hourly.temperature_2m.filter(v => v != null);
+    const now = vals[new Date().getHours()] ?? vals[0];
+    const min = Math.round(Math.min(...vals));
+    const max = Math.round(Math.max(...vals));
+    if (el) el.innerHTML = `<span class="fav-temp-value">${Math.round(now)}°</span><span class="fav-temp-range">${min}° / ${max}°</span>`;
+  } catch (e) {
+    if (el) el.innerHTML = `<span class="fav-card-err">Veri alınamadı</span>`;
+  }
+}
+
+render();
+</script>
+</body>
+</html>
