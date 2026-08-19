@@ -1,9 +1,19 @@
-import { getForecast } from "../../lib/forecast";
+import { getForecast, MODELS, defaultActiveModelIds } from "../../lib/forecast";
 
 const VALID_PERIODS = new Set(["hourly", "3d", "7d", "16d"]);
+const VALID_IDS = new Set(MODELS.map((m) => m.id));
+
+function parseModelIds(modelsQuery) {
+  if (!modelsQuery || typeof modelsQuery !== "string") return defaultActiveModelIds();
+  const parsed = modelsQuery
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => VALID_IDS.has(id));
+  return parsed.length ? parsed : defaultActiveModelIds();
+}
 
 export default async function handler(req, res) {
-  const { lat, lon, period = "3d", name } = req.query;
+  const { lat, lon, period = "3d", name, models } = req.query;
 
   const latNum = parseFloat(lat);
   const lonNum = parseFloat(lon);
@@ -15,7 +25,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const forecast = await getForecast(latNum, lonNum, period);
+    const forecast = await getForecast(latNum, lonNum, period, parseModelIds(models));
     res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate");
     res.status(200).json({
       location: { name: name || null, lat: latNum, lon: lonNum },
