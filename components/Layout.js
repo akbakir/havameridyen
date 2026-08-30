@@ -50,7 +50,7 @@ export default function Layout({ title, variant = "default", nav = DEFAULT_NAV, 
       <div className={wrapClass}>
         <header>
           <Link href="/" className="brand">
-            meri<span>dyen</span>
+            <span className="brand-hava">hava</span>meri<span>dyen</span>
           </Link>
           <nav>
             {nav.map((item) => (
