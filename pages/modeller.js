@@ -39,33 +39,33 @@ const MODELS = [
     optional: false,
   },
   {
-    code: "GEM",
-    flag: "KANADA",
-    color: "#B4553B",
-    agency: "Environment Canada küresel modeli",
-    resolution: "~15 km",
-    update: "Günde 2 kez",
-    note: "Bağımsız bir veri asimilasyon sistemi kullanır — diğer üç modelden farklı bir \"ikinci görüş\" sağlar.",
-    optional: false,
-  },
-  {
-    code: "Météo-France",
-    flag: "FRANSA",
-    color: "#7A6C4F",
-    agency: "Météo-France ARPEGE / AROME modeli",
-    resolution: "~25 km (Avrupa'da ~11 km)",
-    update: "Günde 4 kez",
-    note: "Avrupa ve Kuzey Afrika'da yüksek çözünürlüklü AROME verisiyle desteklenir; konuma göre en uygun çözünürlük otomatik seçilir.",
-    optional: true,
-  },
-  {
-    code: "UK Met Office",
+    code: "UKMO",
     flag: "İNGİLTERE",
     color: "#4F6B7A",
     agency: "UK Met Office küresel modeli",
     resolution: "~10 km",
     update: "Günde 4 kez",
     note: "Birleşik Krallık merkezli geliştirilse de küresel kapsama sahiptir; orta vadeli tahminlerde ECMWF'e yakın performans gösterir.",
+    optional: false,
+  },
+  {
+    code: "ARPEGE",
+    flag: "FRANSA",
+    color: "#7A6C4F",
+    agency: "Météo-France ARPEGE / AROME modeli",
+    resolution: "~25 km (Avrupa'da ~11 km)",
+    update: "Günde 4 kez",
+    note: "Avrupa ve Kuzey Afrika'da yüksek çözünürlüklü AROME verisiyle desteklenir; konuma göre en uygun çözünürlük otomatik seçilir.",
+    optional: false,
+  },
+  {
+    code: "GEM",
+    flag: "KANADA",
+    color: "#B4553B",
+    agency: "Environment Canada küresel modeli",
+    resolution: "~15 km",
+    update: "Günde 2 kez",
+    note: "Bağımsız bir veri asimilasyon sistemi kullanır — diğer modellerden farklı bir \"ikinci görüş\" sağlar.",
     optional: true,
   },
   {
@@ -92,7 +92,7 @@ const MODELS = [
 
 export default function Modeller() {
   return (
-    <Layout title="Modeller — ECMWF, GFS, ICON, GEM ve 4 model daha · Meridyen" nav={NAV}>
+    <Layout title="Modeller — ECMWF, GFS, ICON, UKMO, ARPEGE ve 3 model daha · Meridyen" nav={NAV}>
       <div className="models-page">
         <Link className="back-link" href="/izmir">
           ← Şehir sayfasına dön
@@ -107,8 +107,8 @@ export default function Modeller() {
             senin durumun için daha güvenilir olduğu önemlidir.
           </p>
           <p>
-            Şehir sayfasında varsayılan olarak 4 model (ECMWF, GFS, ICON, GEM) açık gelir. Aşağıdaki 4 model ise
-            opsiyoneldir — grafiklerin üstündeki model isimlerine tıklayarak istediğin an ekleyip çıkarabilirsin.
+            Şehir sayfasında varsayılan olarak 5 model (ECMWF, GFS, ICON, UKMO, ARPEGE) açık gelir. Aşağıdaki 3 model
+            ise opsiyoneldir — grafiklerin üstündeki model isimlerine tıklayarak istediğin an ekleyip çıkarabilirsin.
           </p>
         </div>
 

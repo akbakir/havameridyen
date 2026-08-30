@@ -63,19 +63,19 @@ export default function Home() {
   }
 
   return (
-    <Layout title="Meridyen — Türkiye için 4 model, tek ekran" variant="home" nav={HOME_NAV} footerLinks={HOME_FOOTER}>
+    <Layout title="Meridyen — Türkiye için çoklu model, tek ekran" variant="home" nav={HOME_NAV} footerLinks={HOME_FOOTER}>
       <section className="hero">
         <div className="eyebrow">
           <span className="eyebrow-dot" />
-          ECMWF · GFS · ICON · GEM canlı karşılaştırma
+          ECMWF · GFS · ICON · UKMO · ARPEGE canlı karşılaştırma
         </div>
         <h1>
-          Türkiye için 4 model,
+          Türkiye için çoklu model,
           <br />
           <em>tek ekran.</em>
         </h1>
         <p className="hero-sub">
-          ECMWF, GFS, ICON ve GEM&apos;i yan yana karşılaştır, modellerin ne kadar uyuştuğunu gör, kendi kararını ver.
+          ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA ve KNMI&apos;yi yan yana karşılaştır, modellerin ne kadar uyuştuğunu gör, kendi kararını ver.
         </p>
 
         <div className="search-block" ref={blockRef}>

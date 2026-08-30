@@ -24,8 +24,9 @@ export default function Hakkinda() {
 
       <div className="body-text">
         <p>
-          Meridyen, Türkiye&apos;deki kullanıcılar için <strong>ECMWF, GFS, ICON ve GEM</strong> gibi dünyanın önde
-          gelen sayısal hava tahmin modellerini tek ekranda yan yana gösteren, bağımsız bir web uygulamasıdır.
+          Meridyen, Türkiye&apos;deki kullanıcılar için <strong>ECMWF, GFS, ICON, UKMO, ARPEGE</strong> gibi
+          dünyanın önde gelen sayısal hava tahmin modellerini tek ekranda yan yana gösteren, bağımsız bir
+          web uygulamasıdır.
         </p>
         <p>
           Fikir basit: hiçbir model her zaman &quot;en doğru&quot; değildir. Modeller bazen aynı şeyi söyler, bazen

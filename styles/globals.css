@@ -67,8 +67,8 @@ header {
   text-decoration: none;
   color: var(--ink);
 }
-.brand span { color: var(--teal); }
-.brand .brand-hava { color: var(--ink); }
+.brand-hava { color: var(--ink); }
+.brand-meridyen { color: var(--teal); }
 
 nav { display: flex; gap: 28px; font-size: 13px; }
 nav a {
