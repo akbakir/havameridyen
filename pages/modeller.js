@@ -16,6 +16,7 @@ const MODELS = [
     resolution: "~9 km",
     update: "Günde 2 kez",
     note: "Genellikle 3-7 gün arası orta vadeli tahminlerde en isabetli kabul edilir. Küresel modeller arasında referans noktası sayılır.",
+    optional: false,
   },
   {
     code: "GFS",
@@ -25,6 +26,7 @@ const MODELS = [
     resolution: "~28 km",
     update: "Günde 4 kez",
     note: "Sık güncellendiği için ani hava değişimlerine hızlı tepki verir. Kısa vadeli (1-3 gün) takipte pratik bir referans.",
+    optional: false,
   },
   {
     code: "ICON",
@@ -34,6 +36,27 @@ const MODELS = [
     resolution: "~13 km",
     update: "Günde 4 kez",
     note: "Avrupa ve çevresinde yüksek çözünürlüklü bölgesel varyantlarıyla bilinir, yerel detayları daha net yakalar.",
+    optional: false,
+  },
+  {
+    code: "UKMO",
+    flag: "İNGİLTERE",
+    color: "#4F6B7A",
+    agency: "UK Met Office küresel modeli",
+    resolution: "~10 km",
+    update: "Günde 4 kez",
+    note: "Birleşik Krallık merkezli geliştirilse de küresel kapsama sahiptir; orta vadeli tahminlerde ECMWF'e yakın performans gösterir.",
+    optional: false,
+  },
+  {
+    code: "ARPEGE",
+    flag: "FRANSA",
+    color: "#7A6C4F",
+    agency: "Météo-France ARPEGE / AROME modeli",
+    resolution: "~25 km (Avrupa'da ~11 km)",
+    update: "Günde 4 kez",
+    note: "Avrupa ve Kuzey Afrika'da yüksek çözünürlüklü AROME verisiyle desteklenir; konuma göre en uygun çözünürlük otomatik seçilir.",
+    optional: false,
   },
   {
     code: "GEM",
@@ -42,13 +65,34 @@ const MODELS = [
     agency: "Environment Canada küresel modeli",
     resolution: "~15 km",
     update: "Günde 2 kez",
-    note: "Bağımsız bir veri asimilasyon sistemi kullanır — diğer üç modelden farklı bir \"ikinci görüş\" sağlar.",
+    note: "Bağımsız bir veri asimilasyon sistemi kullanır — diğer modellerden farklı bir \"ikinci görüş\" sağlar.",
+    optional: true,
+  },
+  {
+    code: "JMA",
+    flag: "JAPONYA",
+    color: "#8A6FA3",
+    agency: "Japon Meteoroloji Ajansı Küresel Spektral Modeli (GSM)",
+    resolution: "~55 km",
+    update: "Günde 4 kez",
+    note: "Diğer modellere göre daha düşük çözünürlüklü, ancak Asya-Pasifik bölgesinde uzun yıllardır kullanılan, kanıtlanmış bir model.",
+    optional: true,
+  },
+  {
+    code: "KNMI",
+    flag: "HOLLANDA",
+    color: "#5C8A5C",
+    agency: "KNMI HARMONIE bölgesel modeli",
+    resolution: "~2.5 km",
+    update: "Saatlik",
+    note: "Sadece Avrupa'yı kapsar ama çok yüksek çözünürlüklüdür; kısa vadede ani hava olaylarını yakalamada güçlüdür.",
+    optional: true,
   },
 ];
 
 export default function Modeller() {
   return (
-    <Layout title="Modeller — ECMWF, GFS, ICON, GEM · Meridyen" nav={NAV}>
+    <Layout title="Modeller — ECMWF, GFS, ICON, UKMO, ARPEGE ve 3 model daha · Meridyen" nav={NAV}>
       <div className="models-page">
         <Link className="back-link" href="/izmir">
           ← Şehir sayfasına dön
@@ -56,11 +100,15 @@ export default function Modeller() {
 
         <div className="page-head lead">
           <div className="kicker">Model rehberi</div>
-          <h1>4 model, 4 farklı bakış açısı</h1>
+          <h1>8 model, 8 farklı bakış açısı</h1>
           <p>
             Her hava tahmin merkezi kendi verisini, kendi fiziksel varsayımlarını ve kendi çözünürlüğünü kullanır. Bu
             yüzden aynı gün için farklı sonuçlar görebilirsin — hangisinin &quot;doğru&quot; olduğu değil, hangisinin
             senin durumun için daha güvenilir olduğu önemlidir.
+          </p>
+          <p>
+            Şehir sayfasında varsayılan olarak 5 model (ECMWF, GFS, ICON, UKMO, ARPEGE) açık gelir. Aşağıdaki 3 model
+            ise opsiyoneldir — grafiklerin üstündeki model isimlerine tıklayarak istediğin an ekleyip çıkarabilirsin.
           </p>
         </div>
 
@@ -69,7 +117,10 @@ export default function Modeller() {
             <div key={m.code} className="model-card" style={{ "--m-color": m.color }}>
               <div className="model-top">
                 <div className="model-code">{m.code}</div>
-                <div className="model-flag">{m.flag}</div>
+                <div className="model-top-tags">
+                  {m.optional && <div className="model-optional-tag">Opsiyonel</div>}
+                  <div className="model-flag">{m.flag}</div>
+                </div>
               </div>
               <div className="model-agency">{m.agency}</div>
               <div className="model-facts">

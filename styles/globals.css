@@ -67,7 +67,8 @@ header {
   text-decoration: none;
   color: var(--ink);
 }
-.brand span { color: var(--teal); }
+.brand-hava { color: var(--ink); }
+.brand-meridyen { color: var(--teal); }
 
 nav { display: flex; gap: 28px; font-size: 13px; }
 nav a {
@@ -568,6 +569,19 @@ td.station { font-family: "IBM Plex Sans", sans-serif; font-weight: 500; }
 }
 .model-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
 .model-code { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 20px; }
+.model-top-tags { display: flex; align-items: center; gap: 6px; }
+.model-optional-tag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--m-color);
+  border: 1px solid var(--m-color);
+  border-radius: 4px;
+  padding: 3px 7px;
+  white-space: nowrap;
+  opacity: 0.85;
+}
 .model-flag {
   font-family: "IBM Plex Mono", monospace;
   font-size: 10.5px;

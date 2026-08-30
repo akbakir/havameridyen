@@ -436,7 +436,7 @@ export default function SehirPage() {
       <Link href="/modeller" className="explain-link">
         <div>
           <div className="el-title">Bu modeller ne anlama geliyor?</div>
-          <div className="el-sub">ECMWF, GFS, ICON ve GEM arasındaki farkları öğren</div>
+          <div className="el-sub">ECMWF, GFS, ICON, UKMO, ARPEGE ve diğer modeller arasındaki farkları öğren</div>
         </div>
         <div className="el-arrow">→</div>
       </Link>
@@ -508,16 +508,14 @@ function Chart({ models }) {
   if (!allVals.length || n < 2) {
     return <div className="err">Bu modeller için veri yok.</div>;
   }
-  const min = Math.floor(Math.min(...allVals) / 2) * 2 - 2;
-  const max = Math.ceil(Math.max(...allVals) / 2) * 2 + 2;
+  const min = Math.floor(Math.min(...allVals) / 2) * 2;
+  const max = Math.ceil(Math.max(...allVals) / 2) * 2;
+  const span = max - min || 2;
   const x = (i) => padL + (i / (n - 1)) * plotW;
-  const yTemp = (v) => padT + tempH - ((v - min) / (max - min)) * tempH;
+  const yTemp = (v) => padT + tempH - ((v - min) / span) * tempH;
 
-  const dots = [];
-  for (let row = 0; row <= 3; row++) {
-    const gy = padT + (row / 3) * tempH;
-    for (let col = 0; col <= 10; col++) dots.push([padL + (col / 10) * plotW, gy]);
-  }
+  const tempTicks = [];
+  for (let v = min; v <= max; v += 2) tempTicks.push(v);
 
   const dayStep = Math.max(1, Math.floor(n / 6));
   const xLabels = [];
@@ -531,8 +529,17 @@ function Chart({ models }) {
 
   return (
     <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
-      {dots.map(([cx, cy], i) => (
-        <circle key={i} cx={cx} cy={cy} r="1" fill="var(--line)" />
+      {tempTicks.map((v) => (
+        <line
+          key={`tgrid-${v}`}
+          x1={padL}
+          y1={yTemp(v)}
+          x2={padL + plotW}
+          y2={yTemp(v)}
+          stroke="var(--line)"
+          strokeWidth={v === 30 ? 1.25 : 1}
+          opacity={v === 30 ? 0.55 : 0.25}
+        />
       ))}
       {xLabels.map((l, i) => (
         <line
@@ -547,9 +554,9 @@ function Chart({ models }) {
           opacity="0.6"
         />
       ))}
-      {[min, (min + max) / 2, max].map((v, idx) => (
-        <text key={idx} className="axis-label" x="4" y={padT + tempH - (idx / 2) * tempH + 3}>
-          {Math.round(v)}°
+      {tempTicks.map((v) => (
+        <text key={`tlab-${v}`} className="axis-label" x="4" y={yTemp(v) + 3}>
+          {v}°
         </text>
       ))}
       <line
