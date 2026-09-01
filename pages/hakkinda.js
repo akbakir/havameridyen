@@ -9,7 +9,7 @@ const NAV = [
 
 const FOOTER = [
   { href: "/sss", label: "SSS" },
-  { href: "#", label: "Yasal" },
+  { href: "/yasal", label: "Yasal" },
 ];
 
 export default function Hakkinda() {
@@ -24,9 +24,9 @@ export default function Hakkinda() {
 
       <div className="body-text">
         <p>
-          Meridyen, Türkiye&apos;deki kullanıcılar için <strong>ECMWF, GFS, ICON, UKMO, ARPEGE</strong> gibi
-          dünyanın önde gelen sayısal hava tahmin modellerini tek ekranda yan yana gösteren, bağımsız bir
-          web uygulamasıdır.
+          Meridyen, Türkiye&apos;deki kullanıcılar için <strong>ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA ve KNMI</strong>{" "}
+          olmak üzere dünyanın önde gelen sekiz sayısal hava tahmin modelini tek ekranda yan yana gösteren, bağımsız
+          bir web uygulamasıdır.
         </p>
         <p>
           Fikir basit: hiçbir model her zaman &quot;en doğru&quot; değildir. Modeller bazen aynı şeyi söyler, bazen
@@ -37,7 +37,7 @@ export default function Hakkinda() {
 
       <div className="stat-row">
         <div className="stat">
-          <div className="stat-value">4</div>
+          <div className="stat-value">8</div>
           <div className="stat-label">karşılaştırılan model</div>
         </div>
         <div className="stat">
