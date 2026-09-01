@@ -9,7 +9,7 @@ const NAV = [
 
 const FOOTER = [
   { href: "/sss", label: "SSS" },
-  { href: "#", label: "Yasal" },
+  { href: "/yasal", label: "Yasal" },
 ];
 
 export default function Hakkinda() {

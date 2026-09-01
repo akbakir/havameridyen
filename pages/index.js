@@ -13,7 +13,7 @@ const HOME_FOOTER = [
   { href: "/modeller", label: "Modeller" },
   { href: "/hakkinda", label: "Hakkında" },
   { href: "/sss", label: "SSS" },
-  { href: "#", label: "Yasal" },
+  { href: "/yasal", label: "Yasal" },
 ];
 
 export default function Home() {
