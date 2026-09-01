@@ -9,7 +9,7 @@ const NAV = [
 
 const FOOTER = [
   { href: "/hakkinda", label: "Hakkında" },
-  { href: "#", label: "Yasal" },
+  { href: "/yasal", label: "Yasal" },
 ];
 
 const FAQS = [
