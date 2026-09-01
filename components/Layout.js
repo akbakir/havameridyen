@@ -10,7 +10,7 @@ const DEFAULT_NAV = [
 const DEFAULT_FOOTER = [
   { href: "/hakkinda", label: "Hakkında" },
   { href: "/sss", label: "SSS" },
-  { href: "#", label: "Yasal" },
+  { href: "/yasal", label: "Yasal" },
 ];
 
 function Isobars() {
