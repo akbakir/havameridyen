@@ -529,7 +529,7 @@ function formatTableTime(forecast, index) {
   if (!t) return "";
   const d = new Date(t);
   const tarih = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
-  const gun = d.toLocaleDateString("tr-TR", { weekday: "long" });
+  const gun = formatWeekdayAbbr3(d);
   const saat = String(d.getHours()).padStart(2, "0") + "Z";
   return `${tarih} ${gun} ${saat}`;
 }
@@ -555,7 +555,7 @@ function Chart({ models }) {
     padL = 34,
     padR = 10,
     padT = 14,
-    padB = 34;
+    padB = 44;
   const plotW = w - padL - padR,
     plotH = h - padT - padB;
   const tempH = plotH * 0.6;
@@ -591,7 +591,7 @@ function Chart({ models }) {
           opacity={v === 30 ? 0.55 : 0.25}
         />
       ))}
-      {renderTimeAxis(timeAxis, padT, h - padB, h - 20, h - 6)}
+      {renderTimeAxis(timeAxis, padT, h - padB, h - 30, h - 17, h - 5)}
       {tempTicks.map((v) => (
         <text key={`tlab-${v}`} className="axis-label" x="4" y={yTemp(v) + 3}>
           {v}°
@@ -657,10 +657,19 @@ function formatAxisDate(d) {
   return d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
 }
 
+// Sabit 3 harfli Türkçe gün kısaltmaları (Intl'in "short" biçimi bazı günlerde 3'ten uzun
+// dönebiliyor, örn. "Çarş"). getDay(): 0=Pazar, 1=Pazartesi, ... 6=Cumartesi.
+const WEEKDAY_ABBR_3 = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+
+function formatWeekdayAbbr3(d) {
+  return WEEKDAY_ABBR_3[d.getDay()];
+}
+
 // buildTimeAxis()'in ürettiği marks'i SVG'ye çizen ortak yardımcı: gün sınırında noktalı dikey
-// çizgi + "00Z" + altına tarih, öğlende daha soluk kesikli çizgi + "12Z". row1Y saat etiketinin,
-// row2Y tarihin y konumu.
-function renderTimeAxis({ marks, rotateDate }, padT, plotBottom, row1Y, row2Y) {
+// çizgi + "00Z" + altına tarih + altına 3 harfli gün kısaltması, öğlende daha soluk kesikli
+// çizgi + "12Z". Sıkışıklıkta (rotateDate) tarih+gün tek satırda birleşip dikey yazılır.
+// row1Y saat etiketinin, row2Y tarihin, row3Y gün kısaltmasının y konumu.
+function renderTimeAxis({ marks, rotateDate }, padT, plotBottom, row1Y, row2Y, row3Y) {
   return (
     <>
       {marks.map((m) => (
@@ -694,12 +703,17 @@ function renderTimeAxis({ marks, rotateDate }, padT, plotBottom, row1Y, row2Y) {
               textAnchor="start"
               transform={`rotate(-90 ${m.x} ${row2Y})`}
             >
-              {formatAxisDate(m.date)}
+              {`${formatAxisDate(m.date)} ${formatWeekdayAbbr3(m.date)}`}
             </text>
           ) : (
-            <text key={`axis-date-${m.i}`} className="axis-label" x={m.x} y={row2Y} textAnchor="middle">
-              {formatAxisDate(m.date)}
-            </text>
+            <g key={`axis-date-${m.i}`}>
+              <text className="axis-label" x={m.x} y={row2Y} textAnchor="middle">
+                {formatAxisDate(m.date)}
+              </text>
+              <text className="axis-label" x={m.x} y={row3Y} textAnchor="middle">
+                {formatWeekdayAbbr3(m.date)}
+              </text>
+            </g>
           )
         )}
     </>
@@ -736,7 +750,7 @@ function PrecipBarChart({ models }) {
     padL = 34,
     padR = 10,
     padT = 14,
-    padB = 34;
+    padB = 44;
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
 
@@ -804,7 +818,7 @@ function PrecipBarChart({ models }) {
           />
         );
       })}
-      {renderTimeAxis(timeAxis, padT, h - padB, h - 20, h - 6)}
+      {renderTimeAxis(timeAxis, padT, h - padB, h - 30, h - 17, h - 5)}
       {[0, max / 2, max].map((v, idx) => (
         <text key={idx} className="axis-label" x="4" y={padT + plotH - (idx / 2) * plotH + 3}>
           {formatMmTick(v)}
@@ -867,7 +881,7 @@ function WindChart({ models }) {
     padL = 34,
     padR = 10,
     padT = 14,
-    padB = 34;
+    padB = 44;
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
   const cy = padT + plotH / 2;
@@ -922,7 +936,7 @@ function WindChart({ models }) {
       {dots.map(([dx, dy], i) => (
         <circle key={i} cx={dx} cy={dy} r="1" fill="var(--line)" />
       ))}
-      {renderTimeAxis(timeAxis, padT, h - padB, h - 20, h - 6)}
+      {renderTimeAxis(timeAxis, padT, h - padB, h - 30, h - 17, h - 5)}
       {glyphs.map((g) => (
         <g key={g.i}>
           <path d={g.path} fill="var(--navy)" fillOpacity={g.opacity} />
