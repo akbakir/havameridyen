@@ -11,7 +11,7 @@ const MODELS = [
   {
     code: "ECMWF",
     flag: "AVRUPA",
-    color: "#D98E2B",
+    color: "#1F7A52",
     agency: "Avrupa Orta Vadeli Hava Tahminleri Merkezi",
     resolution: "~9 km",
     update: "Günde 2 kez",
@@ -21,7 +21,7 @@ const MODELS = [
   {
     code: "GFS",
     flag: "ABD",
-    color: "#1E7A6B",
+    color: "#B35900",
     agency: "NOAA Küresel Tahmin Sistemi",
     resolution: "~28 km",
     update: "Günde 4 kez",
