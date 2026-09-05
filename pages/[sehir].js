@@ -29,7 +29,9 @@ export default function SehirPage() {
   const [results, setResults] = useState(null);
   const [fav, setFav] = useState(false);
   const [windUnit, setWindUnit] = useState("kmh");
-  const [tableTimeIndex, setTableTimeIndex] = useState(24);
+  const [tableTimeIndex, setTableTimeIndex] = useState(0);
+  const [tableInterval, setTableInterval] = useState(1);
+  const [precipInterval, setPrecipInterval] = useState(1);
   const [activeModels, setActiveModels] = useState(
     () => new Set(MODELS.filter((m) => m.defaultActive).map((m) => m.id))
   );
@@ -86,7 +88,7 @@ export default function SehirPage() {
   }, [location, period, activeModelsKey]);
 
   useEffect(() => {
-    setTableTimeIndex(24);
+    setTableTimeIndex(0);
   }, [period]);
 
   useEffect(() => {
@@ -128,16 +130,21 @@ export default function SehirPage() {
 
   const tableSeriesLen = forecast?.models[0]?.series.length || 0;
   const maxTableIndex = Math.max(0, tableSeriesLen - 1);
-  const tableStep = period === "hourly" ? 3 : 6;
   const safeTableIndex = Math.min(Math.max(0, tableTimeIndex), maxTableIndex);
   const formattedTableTime = formatTableTime(forecast, safeTableIndex);
 
   function goToPrevTime() {
-    setTableTimeIndex((i) => Math.max(0, i - tableStep));
+    setTableTimeIndex((i) => Math.max(0, i - tableInterval));
   }
 
   function goToNextTime() {
-    setTableTimeIndex((i) => Math.min(maxTableIndex, i + tableStep));
+    setTableTimeIndex((i) => Math.min(maxTableIndex, i + tableInterval));
+  }
+
+  function changeTableInterval(hrs) {
+    setTableInterval(hrs);
+    // Pencereler hizalı kalsın diye mevcut indeksi yeni aralığın katına yuvarla.
+    setTableTimeIndex((i) => Math.floor(i / hrs) * hrs);
   }
 
   function toggleModel(id) {
@@ -293,14 +300,32 @@ export default function SehirPage() {
 
           <div className="panel">
             <div className="panel-head">
-              <div className="panel-title">Toplam Yağış Miktarı</div>
-              <div className="panel-sub">
-                {status === "ok" ? `mm · ${forecast.models.length} model` : "mm"}
+              <div className="panel-head-left">
+                <div className="panel-title">Toplam Yağış Miktarı</div>
+                <div className="panel-sub">
+                  {status === "ok" ? `mm · ${forecast.models.length} model` : "mm"}
+                </div>
+              </div>
+              <div className="unit-toggle">
+                {[1, 3, 6].map((hrs) => (
+                  <button
+                    key={hrs}
+                    type="button"
+                    className={precipInterval === hrs ? "active" : ""}
+                    onClick={() => setPrecipInterval(hrs)}
+                  >
+                    {hrs}s
+                  </button>
+                ))}
               </div>
             </div>
             {status === "loading" && <div className="loading">Veri yükleniyor…</div>}
             {status === "error" && <div className="err">Veri alınamadı — bağlantını kontrol et.</div>}
-            {status === "ok" && <PrecipBarChart models={forecast.models} />}
+            {status === "ok" && (
+              <PrecipBarChart
+                models={forecast.models.map((m) => ({ ...m, series: bucketPrecipSeries(m.series, precipInterval) }))}
+              />
+            )}
           </div>
 
           <div className="panel">
@@ -367,23 +392,37 @@ export default function SehirPage() {
             <div className="panel-title">Model detayları</div>
             <div className="panel-sub">{status === "ok" ? formattedTableTime : ""}</div>
           </div>
-          <div className="time-nav">
-            <button
-              type="button"
-              onClick={goToPrevTime}
-              disabled={status !== "ok" || safeTableIndex <= 0}
-              aria-label="Önceki"
-            >
-              ←
-            </button>
-            <button
-              type="button"
-              onClick={goToNextTime}
-              disabled={status !== "ok" || safeTableIndex >= maxTableIndex}
-              aria-label="Sonraki"
-            >
-              →
-            </button>
+          <div className="table-controls">
+            <div className="unit-toggle">
+              {[1, 3, 6].map((hrs) => (
+                <button
+                  key={hrs}
+                  type="button"
+                  className={tableInterval === hrs ? "active" : ""}
+                  onClick={() => changeTableInterval(hrs)}
+                >
+                  {hrs}s
+                </button>
+              ))}
+            </div>
+            <div className="time-nav">
+              <button
+                type="button"
+                onClick={goToPrevTime}
+                disabled={status !== "ok" || safeTableIndex <= 0}
+                aria-label="Önceki"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={goToNextTime}
+                disabled={status !== "ok" || safeTableIndex >= maxTableIndex}
+                aria-label="Sonraki"
+              >
+                →
+              </button>
+            </div>
           </div>
         </div>
         <table>
@@ -392,7 +431,7 @@ export default function SehirPage() {
               <th>Model</th>
               <th>Sıcaklık</th>
               <th>Yağış olasılığı</th>
-              <th>Yağış (mm)</th>
+              <th>Yağış ({tableInterval}s toplam, mm)</th>
               <th>Rüzgar</th>
             </tr>
           </thead>
@@ -414,6 +453,7 @@ export default function SehirPage() {
             {status === "ok" &&
               forecast.models.map((m) => {
                 const point = m.series[safeTableIndex];
+                const precipSum = sumPrecipWindow(m.series, safeTableIndex, tableInterval);
                 return (
                   <tr key={m.id}>
                     <td className="station">
@@ -422,7 +462,7 @@ export default function SehirPage() {
                     </td>
                     <td>{point ? Math.round(point.temp) + "°C" : "—"}</td>
                     <td>{point && point.precip_prob != null ? "%" + point.precip_prob : "—"}</td>
-                    <td>{formatPrecipMm(point?.precip_amount)}</td>
+                    <td>{formatPrecipMm(precipSum)}</td>
                     <td>
                       <WindCell speed={point?.wind_speed} direction={point?.wind_direction} />
                     </td>
@@ -488,7 +528,25 @@ function formatTableTime(forecast, index) {
   const t = forecast?.models[0]?.series[index]?.time;
   if (!t) return "";
   const d = new Date(t);
-  return d.toLocaleDateString("tr-TR", { weekday: "long" }) + " " + d.getHours() + ":00";
+  const tarih = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+  const gun = d.toLocaleDateString("tr-TR", { weekday: "long" });
+  const saat = String(d.getHours()).padStart(2, "0") + "Z";
+  return `${tarih} ${gun} ${saat}`;
+}
+
+// Seçilen tablo aralığı (1/3/6 saat) için, endIndex dahil olmak üzere geriye doğru toplam yağış.
+function sumPrecipWindow(series, endIndex, interval) {
+  const start = Math.max(0, endIndex - interval + 1);
+  let sum = 0;
+  let any = false;
+  for (let i = start; i <= endIndex; i++) {
+    const v = series[i]?.precip_amount;
+    if (v != null && !Number.isNaN(Number(v))) {
+      sum += Number(v);
+      any = true;
+    }
+  }
+  return any ? sum : null;
 }
 
 function Chart({ models }) {
@@ -497,7 +555,7 @@ function Chart({ models }) {
     padL = 34,
     padR = 10,
     padT = 14,
-    padB = 26;
+    padB = 34;
   const plotW = w - padL - padR,
     plotH = h - padT - padB;
   const tempH = plotH * 0.6;
@@ -517,15 +575,7 @@ function Chart({ models }) {
   const tempTicks = [];
   for (let v = min; v <= max; v += 2) tempTicks.push(v);
 
-  const dayStep = Math.max(1, Math.floor(n / 6));
-  const xLabels = [];
-  for (let i = 0; i < n; i += dayStep) {
-    const d = new Date(models[0].series[i].time);
-    xLabels.push({
-      x: x(i) - 14,
-      text: `${d.toLocaleDateString("tr-TR", { weekday: "short" })} ${d.getHours()}s`,
-    });
-  }
+  const timeAxis = buildTimeAxis(models[0].series, x);
 
   return (
     <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
@@ -541,19 +591,7 @@ function Chart({ models }) {
           opacity={v === 30 ? 0.55 : 0.25}
         />
       ))}
-      {xLabels.map((l, i) => (
-        <line
-          key={`guide-${i}`}
-          x1={l.x + 14}
-          y1={padT}
-          x2={l.x + 14}
-          y2={h - padB}
-          stroke="var(--line)"
-          strokeWidth="1"
-          strokeDasharray="2 3"
-          opacity="0.6"
-        />
-      ))}
+      {renderTimeAxis(timeAxis, padT, h - padB, h - 20, h - 6)}
       {tempTicks.map((v) => (
         <text key={`tlab-${v}`} className="axis-label" x="4" y={yTemp(v) + 3}>
           {v}°
@@ -582,11 +620,6 @@ function Chart({ models }) {
           />
         );
       })}
-      {xLabels.map((l, i) => (
-        <text key={i} className="axis-label" x={l.x} y={h - 6}>
-          {l.text}
-        </text>
-      ))}
     </svg>
   );
 }
@@ -596,13 +629,114 @@ function formatMmTick(v) {
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
 }
 
+// Üç grafikte de (sıcaklık, yağış, rüzgar) ortak kullanılan zaman ekseni: gün değişimini (00Z)
+// ve öğleni (12Z) işaretler. Seri sıkışıksa (uzun periyotlarda) 12Z etiketleri elenir, sadece
+// gün sınırları kalır; gün etiketleri de sıkışıksa tarih dikey yazılır.
+function buildTimeAxis(series, xFn) {
+  const n = series.length;
+  if (n < 2) return { marks: [], rotateDate: false };
+  const raw = [];
+  series.forEach((s, i) => {
+    const d = new Date(s.time);
+    const hour = d.getHours();
+    if (hour === 0 || hour === 12) raw.push({ i, x: xFn(i), hour, date: d });
+  });
+  const dayMarks = raw.filter((m) => m.hour === 0);
+  const noonMarks = raw.filter((m) => m.hour === 12);
+  const totalSpan = xFn(n - 1) - xFn(0);
+  const avgSpacingCombined = raw.length > 1 ? totalSpan / (raw.length - 1) : Infinity;
+  const showNoon = noonMarks.length === 0 || avgSpacingCombined >= 30;
+  const marks = (showNoon ? raw : dayMarks).slice().sort((a, b) => a.i - b.i);
+  let minDayGap = Infinity;
+  for (let k = 1; k < dayMarks.length; k++) minDayGap = Math.min(minDayGap, dayMarks[k].x - dayMarks[k - 1].x);
+  const rotateDate = Number.isFinite(minDayGap) && minDayGap < 46;
+  return { marks, rotateDate };
+}
+
+function formatAxisDate(d) {
+  return d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+}
+
+// buildTimeAxis()'in ürettiği marks'i SVG'ye çizen ortak yardımcı: gün sınırında noktalı dikey
+// çizgi + "00Z" + altına tarih, öğlende daha soluk kesikli çizgi + "12Z". row1Y saat etiketinin,
+// row2Y tarihin y konumu.
+function renderTimeAxis({ marks, rotateDate }, padT, plotBottom, row1Y, row2Y) {
+  return (
+    <>
+      {marks.map((m) => (
+        <line
+          key={`axis-line-${m.i}`}
+          x1={m.x}
+          y1={padT}
+          x2={m.x}
+          y2={plotBottom}
+          stroke="var(--line)"
+          strokeWidth="1"
+          strokeDasharray={m.hour === 0 ? "1 4" : "2 3"}
+          strokeLinecap={m.hour === 0 ? "round" : "butt"}
+          opacity={m.hour === 0 ? 0.5 : 0.25}
+        />
+      ))}
+      {marks.map((m) => (
+        <text key={`axis-hour-${m.i}`} className="axis-label" x={m.x} y={row1Y} textAnchor="middle">
+          {m.hour === 0 ? "00Z" : "12Z"}
+        </text>
+      ))}
+      {marks
+        .filter((m) => m.hour === 0)
+        .map((m) =>
+          rotateDate ? (
+            <text
+              key={`axis-date-${m.i}`}
+              className="axis-label"
+              x={m.x}
+              y={row2Y}
+              textAnchor="start"
+              transform={`rotate(-90 ${m.x} ${row2Y})`}
+            >
+              {formatAxisDate(m.date)}
+            </text>
+          ) : (
+            <text key={`axis-date-${m.i}`} className="axis-label" x={m.x} y={row2Y} textAnchor="middle">
+              {formatAxisDate(m.date)}
+            </text>
+          )
+        )}
+    </>
+  );
+}
+
+// Saatlik yağış serisini seçilen aralığa (1/3/6 saat) göre toplar. Kova sınırları gün içi
+// saat % interval === 0 noktalarına hizalanır (örn. 6 saatlik: 00, 06, 12, 18), böylece kova
+// başlangıçları her zaman 00Z/12Z eksen işaretleriyle çakışır.
+function bucketPrecipSeries(series, interval) {
+  if (interval <= 1) return series.map((s) => ({ time: s.time, precip_amount: s.precip_amount }));
+  const buckets = [];
+  let current = null;
+  series.forEach((s) => {
+    const hour = new Date(s.time).getHours();
+    const isBoundary = hour % interval === 0;
+    if (!current || isBoundary) {
+      if (current) buckets.push(current);
+      current = { time: s.time, precip_amount: 0, hasValue: false };
+    }
+    const v = s.precip_amount;
+    if (v != null && !Number.isNaN(Number(v))) {
+      current.precip_amount += Number(v);
+      current.hasValue = true;
+    }
+  });
+  if (current) buckets.push(current);
+  return buckets.map((b) => ({ time: b.time, precip_amount: b.hasValue ? b.precip_amount : null }));
+}
+
 function PrecipBarChart({ models }) {
   const w = 800,
     h = 196,
     padL = 34,
     padR = 10,
     padT = 14,
-    padB = 26;
+    padB = 34;
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
 
@@ -625,21 +759,13 @@ function PrecipBarChart({ models }) {
   const groupW = slot * 0.75;
   const barW = groupW / mCount;
 
-  const dots = [];
-  for (let row = 0; row <= 3; row++) {
-    const gy = padT + (row / 3) * plotH;
-    for (let col = 0; col <= 10; col++) dots.push([padL + (col / 10) * plotW, gy]);
-  }
+  // 0.2mm'de bir ince çizgi; 0.5mm ve 1mm belirgin referans çizgileri.
+  const fineTicks = new Set();
+  for (let v = 0.2; v <= max + 1e-9; v += 0.2) fineTicks.add(Math.round(v * 10) / 10);
+  if (max >= 0.5) fineTicks.add(0.5);
+  const fineTickList = Array.from(fineTicks).sort((a, b) => a - b);
 
-  const dayStep = Math.max(1, Math.floor(n / 6));
-  const xLabels = [];
-  for (let i = 0; i < n; i += dayStep) {
-    const d = new Date(models[0].series[i].time);
-    xLabels.push({
-      x: x(i) - 14,
-      text: `${d.toLocaleDateString("tr-TR", { weekday: "short" })} ${d.getHours()}s`,
-    });
-  }
+  const timeAxis = buildTimeAxis(models[0].series, x);
 
   const bars = [];
   models.forEach((m, mi) => {
@@ -663,33 +789,28 @@ function PrecipBarChart({ models }) {
 
   return (
     <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
-      {dots.map(([cx, cy], i) => (
-        <circle key={i} cx={cx} cy={cy} r="1" fill="var(--line)" />
-      ))}
-      {xLabels.map((l, i) => (
-        <line
-          key={`guide-${i}`}
-          x1={l.x + 14}
-          y1={padT}
-          x2={l.x + 14}
-          y2={h - padB}
-          stroke="var(--line)"
-          strokeWidth="1"
-          strokeDasharray="2 3"
-          opacity="0.6"
-        />
-      ))}
+      {fineTickList.map((v) => {
+        const strong = Math.abs(v - 0.5) < 0.01 || Math.abs(v - 1) < 0.01;
+        return (
+          <line
+            key={`pgrid-${v}`}
+            x1={padL}
+            y1={yPrecip(v)}
+            x2={padL + plotW}
+            y2={yPrecip(v)}
+            stroke="var(--line)"
+            strokeWidth={strong ? 1.25 : 1}
+            opacity={strong ? 0.55 : 0.18}
+          />
+        );
+      })}
+      {renderTimeAxis(timeAxis, padT, h - padB, h - 20, h - 6)}
       {[0, max / 2, max].map((v, idx) => (
         <text key={idx} className="axis-label" x="4" y={padT + plotH - (idx / 2) * plotH + 3}>
           {formatMmTick(v)}
         </text>
       ))}
       {bars}
-      {xLabels.map((l, i) => (
-        <text key={`t-${i}`} className="axis-label" x={l.x} y={h - 6}>
-          {l.text}
-        </text>
-      ))}
     </svg>
   );
 }
@@ -720,15 +841,6 @@ function polarPoint(cx, cy, r, compassDeg) {
   return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
 }
 
-function arrowHead(tipX, tipY, compassDeg, size = 8) {
-  const leftRad = ((compassDeg + 155) * Math.PI) / 180;
-  const rightRad = ((compassDeg - 155) * Math.PI) / 180;
-  return {
-    left: { x: tipX + size * Math.sin(leftRad), y: tipY - size * Math.cos(leftRad) },
-    right: { x: tipX + size * Math.sin(rightRad), y: tipY - size * Math.cos(rightRad) },
-  };
-}
-
 function formatSpeedRange(kmhMin, kmhMax, unit) {
   const toKnot = (v) => Math.round(v * 0.539957);
   if (unit === "kn") {
@@ -755,7 +867,7 @@ function WindChart({ models }) {
     padL = 34,
     padR = 10,
     padT = 14,
-    padB = 26;
+    padB = 34;
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
   const cy = padT + plotH / 2;
@@ -768,20 +880,14 @@ function WindChart({ models }) {
 
   const x = (i) => padL + (i / (n - 1)) * plotW;
   const dayStep = Math.max(1, Math.floor(n / 6));
-  const xLabels = [];
-  for (let i = 0; i < n; i += dayStep) {
-    const d = new Date(models[0].series[i].time);
-    xLabels.push({
-      x: x(i) - 14,
-      text: `${d.toLocaleDateString("tr-TR", { weekday: "short" })} ${d.getHours()}s`,
-    });
-  }
 
   const dots = [];
   for (let row = 0; row <= 3; row++) {
     const gy = padT + (row / 3) * plotH;
     for (let col = 0; col <= 10; col++) dots.push([padL + (col / 10) * plotW, gy]);
   }
+
+  const timeAxis = buildTimeAxis(models[0].series, x);
 
   const glyphs = [];
   for (let i = 0; i < n; i += dayStep) {
@@ -800,7 +906,6 @@ function WindChart({ models }) {
     const avgSpeed = weights.length ? weights.reduce((a, b) => a + b, 0) / weights.length : 0;
     const cx = x(i);
     const tip = polarPoint(cx, cy, radius, meanDir);
-    const head = arrowHead(tip.x, tip.y, meanDir);
     glyphs.push({
       i,
       path: sectorPath(cx, cy, radius, meanDir - spread / 2, meanDir + spread / 2),
@@ -809,7 +914,6 @@ function WindChart({ models }) {
       y1: cy,
       x2: tip.x,
       y2: tip.y,
-      head,
     });
   }
 
@@ -818,19 +922,7 @@ function WindChart({ models }) {
       {dots.map(([dx, dy], i) => (
         <circle key={i} cx={dx} cy={dy} r="1" fill="var(--line)" />
       ))}
-      {xLabels.map((l, i) => (
-        <line
-          key={`guide-${i}`}
-          x1={l.x + 14}
-          y1={padT}
-          x2={l.x + 14}
-          y2={h - padB}
-          stroke="var(--line)"
-          strokeWidth="1"
-          strokeDasharray="2 3"
-          opacity="0.6"
-        />
-      ))}
+      {renderTimeAxis(timeAxis, padT, h - padB, h - 20, h - 6)}
       {glyphs.map((g) => (
         <g key={g.i}>
           <path d={g.path} fill="var(--navy)" fillOpacity={g.opacity} />
@@ -843,16 +935,7 @@ function WindChart({ models }) {
             strokeWidth="1.4"
             strokeLinecap="round"
           />
-          <path
-            d={`M ${g.x2} ${g.y2} L ${g.head.left.x} ${g.head.left.y} L ${g.head.right.x} ${g.head.right.y} Z`}
-            fill="var(--navy)"
-          />
         </g>
-      ))}
-      {xLabels.map((l, i) => (
-        <text key={`t-${i}`} className="axis-label" x={l.x} y={h - 6}>
-          {l.text}
-        </text>
       ))}
     </svg>
   );
