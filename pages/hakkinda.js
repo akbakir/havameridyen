@@ -9,12 +9,12 @@ const NAV = [
 
 const FOOTER = [
   { href: "/sss", label: "SSS" },
-  { href: "#", label: "Yasal" },
+  { href: "/yasal", label: "Yasal" },
 ];
 
 export default function Hakkinda() {
   return (
-    <Layout title="Hakkında · Meridyen" variant="narrow" nav={NAV} footerLinks={FOOTER}>
+    <Layout title="Hakkında · havameridyen" variant="narrow" nav={NAV} footerLinks={FOOTER}>
       <Link className="back-link" href="/">
         ← Ana sayfaya dön
       </Link>
@@ -24,20 +24,21 @@ export default function Hakkinda() {
 
       <div className="body-text">
         <p>
-          Meridyen, Türkiye&apos;deki kullanıcılar için <strong>ECMWF, GFS, ICON, UKMO, ARPEGE</strong> gibi
+          havameridyen, Türkiye&apos;deki kullanıcılar için{" "}
+          <strong>ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA, KNMI</strong> gibi
           dünyanın önde gelen sayısal hava tahmin modellerini tek ekranda yan yana gösteren, bağımsız bir
           web uygulamasıdır.
         </p>
         <p>
           Fikir basit: hiçbir model her zaman &quot;en doğru&quot; değildir. Modeller bazen aynı şeyi söyler, bazen
-          ayrışır — ve bu ayrışmanın kendisi de bir bilgidir. Meridyen bu farkı gizlemek yerine görünür kılmayı
+          ayrışır — ve bu ayrışmanın kendisi de bir bilgidir. havameridyen bu farkı gizlemek yerine görünür kılmayı
           amaçlıyor, böylece kararı sana bırakıyor.
         </p>
       </div>
 
       <div className="stat-row">
         <div className="stat">
-          <div className="stat-value">4</div>
+          <div className="stat-value">8</div>
           <div className="stat-label">karşılaştırılan model</div>
         </div>
         <div className="stat">
@@ -59,14 +60,14 @@ export default function Hakkinda() {
           </a>{" "}
           tarafından <strong>CC BY 4.0</strong> lisansı altında sağlanmaktadır. Open-Meteo, ECMWF, NOAA, DWD,
           Environment Canada gibi ulusal meteoroloji servislerinin açık verilerini tek bir API&apos;de birleştirir.
-          Meridyen bu veriyi işleyip görselleştirir; kendi ölçüm istasyonu veya model üretimi yoktur.
+          havameridyen bu veriyi işleyip görselleştirir; kendi ölçüm istasyonu veya model üretimi yoktur.
         </p>
       </div>
 
       <div className="panel panel-note">
         <div className="p-label">Netlik notu</div>
         <p>
-          Meridyen, <strong>Meteoroloji Genel Müdürlüğü&apos;nün (MGM) resmi bir kanalı değildir.</strong> Bağımsız,
+          havameridyen, <strong>Meteoroloji Genel Müdürlüğü&apos;nün (MGM) resmi bir kanalı değildir.</strong> Bağımsız,
           kişisel bir projedir. Afet veya acil durum kararları için lütfen MGM&apos;nin resmi uyarılarını takip et.
         </p>
       </div>

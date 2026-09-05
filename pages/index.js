@@ -13,7 +13,7 @@ const HOME_FOOTER = [
   { href: "/modeller", label: "Modeller" },
   { href: "/hakkinda", label: "Hakkında" },
   { href: "/sss", label: "SSS" },
-  { href: "#", label: "Yasal" },
+  { href: "/yasal", label: "Yasal" },
 ];
 
 export default function Home() {
@@ -63,7 +63,7 @@ export default function Home() {
   }
 
   return (
-    <Layout title="Meridyen — Türkiye için çoklu model, tek ekran" variant="home" nav={HOME_NAV} footerLinks={HOME_FOOTER}>
+    <Layout title="havameridyen — Türkiye için çoklu model, tek ekran" variant="home" nav={HOME_NAV} footerLinks={HOME_FOOTER}>
       <section className="hero">
         <div className="eyebrow">
           <span className="eyebrow-dot" />

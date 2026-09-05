@@ -154,8 +154,8 @@ export default function SehirPage() {
   }
 
   const title = location
-    ? `${location.name} — model karşılaştırması · Meridyen`
-    : "Model karşılaştırması · Meridyen";
+    ? `${location.name} — model karşılaştırması · havameridyen`
+    : "Model karşılaştırması · havameridyen";
 
   return (
     <Layout title={title} variant="city" nav={CITY_NAV}>

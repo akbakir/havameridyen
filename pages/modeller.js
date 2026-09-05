@@ -92,7 +92,7 @@ const MODELS = [
 
 export default function Modeller() {
   return (
-    <Layout title="Modeller — ECMWF, GFS, ICON, UKMO, ARPEGE ve 3 model daha · Meridyen" nav={NAV}>
+    <Layout title="Modeller — ECMWF, GFS, ICON, UKMO, ARPEGE ve 3 model daha · havameridyen" nav={NAV}>
       <div className="models-page">
         <Link className="back-link" href="/izmir">
           ← Şehir sayfasına dön

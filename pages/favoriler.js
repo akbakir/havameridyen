@@ -66,7 +66,7 @@ export default function Favoriler() {
   const loaded = favs !== null;
 
   return (
-    <Layout title="Favorilerin · Meridyen" nav={NAV}>
+    <Layout title="Favorilerin · havameridyen" nav={NAV}>
       <div className="page-head">
         <h1>Kayıtlı konumların</h1>
         <p>

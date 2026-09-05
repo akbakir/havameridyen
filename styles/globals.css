@@ -619,6 +619,25 @@ td.station { font-family: "IBM Plex Sans", sans-serif; font-weight: 500; }
 .why-panel p { font-size: 14px; color: var(--ink-soft); line-height: 1.7; margin-bottom: 12px; }
 .why-panel p:last-child { margin-bottom: 0; }
 
+/* yasal — gizlilik politikası / kullanım şartları sayfası */
+.legal-meta { font-size: 13px; color: var(--ink-faint); margin-bottom: 28px; }
+.legal-section { margin-bottom: 36px; }
+.legal-section h2 {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  margin-bottom: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.legal-section h3 { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 14.5px; margin: 22px 0 8px; }
+.legal-section h3:first-of-type { margin-top: 18px; }
+.legal-section p { font-size: 14px; color: var(--ink-soft); line-height: 1.75; margin-bottom: 12px; }
+.legal-section strong { color: var(--ink); font-weight: 500; }
+.legal-section ul { margin: 0 0 12px; padding-left: 20px; }
+.legal-section li { font-size: 14px; color: var(--ink-soft); line-height: 1.7; margin-bottom: 6px; }
+.legal-section table { margin: 12px 0 18px; }
+
 /* hakkinda — .panel-attr / .panel-note override city .panel */
 .body-text p { font-size: 15px; color: var(--ink-soft); line-height: 1.75; margin-bottom: 18px; }
 .body-text strong { color: var(--ink); font-weight: 500; }

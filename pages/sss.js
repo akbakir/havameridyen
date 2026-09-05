@@ -9,7 +9,7 @@ const NAV = [
 
 const FOOTER = [
   { href: "/hakkinda", label: "Hakkında" },
-  { href: "#", label: "Yasal" },
+  { href: "/yasal", label: "Yasal" },
 ];
 
 const FAQS = [
@@ -22,12 +22,12 @@ const FAQS = [
   {
     num: "02",
     q: "Veriler ne sıklıkla güncelleniyor?",
-    a: "Modelden modele değişir: GFS ve ICON günde 4 kez, ECMWF ve GEM günde 2 kez güncellenir. Meridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır.",
+    a: "Modelden modele değişir: GFS ve ICON günde 4 kez, ECMWF ve GEM günde 2 kez güncellenir. havameridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır.",
   },
   {
     num: "03",
     q: "Bu MGM'nin resmi sitesi mi?",
-    a: "Hayır. Meridyen bağımsız, kişisel bir karşılaştırma aracıdır — Meteoroloji Genel Müdürlüğü ile bir bağlantısı yoktur. Afet veya acil durum kararları için lütfen MGM'nin resmi uyarılarını takip et.",
+    a: "Hayır. havameridyen bağımsız, kişisel bir karşılaştırma aracıdır — Meteoroloji Genel Müdürlüğü ile bir bağlantısı yoktur. Afet veya acil durum kararları için lütfen MGM'nin resmi uyarılarını takip et.",
   },
   {
     num: "04",
@@ -38,7 +38,7 @@ const FAQS = [
 
 export default function SSS() {
   return (
-    <Layout title="Sık sorulan sorular · Meridyen" variant="narrow" nav={NAV} footerLinks={FOOTER}>
+    <Layout title="Sık sorulan sorular · havameridyen" variant="narrow" nav={NAV} footerLinks={FOOTER}>
       <Link className="back-link" href="/">
         ← Ana sayfaya dön
       </Link>
