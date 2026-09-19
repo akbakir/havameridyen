@@ -69,7 +69,7 @@ export default function Favoriler() {
           {!loaded
             ? "—"
             : favs.length
-            ? `${favs.length} konum kayıtlı · anlık sıcaklıklar güncelleniyor`
+            ? `${favs.length} konum kayıtlı · sıcaklıklar ECMWF saatlik tahmininden`
             : "Henüz kayıtlı konumun yok."}
         </p>
       </div>
@@ -130,6 +130,17 @@ export default function Favoriler() {
             );
           })}
         </div>
+      )}
+
+      {loaded && favs.length > 0 && (
+        <p
+          className="panel-sub"
+          style={{ marginTop: 16, fontSize: 12, lineHeight: 1.5, maxWidth: 640 }}
+        >
+          ⓘ Kartlardaki değerler <strong>ECMWF modelinin saatlik tahmin verisidir</strong> (ölçüm değildir). Büyük
+          sayı şu anki saatin (TSİ) tahmini, küçük sayılar bugünün en düşük / en yüksek tahminidir. Diğer modellerle
+          karşılaştırmak için karta dokunup şehir sayfasını aç.
+        </p>
       )}
     </Layout>
   );
