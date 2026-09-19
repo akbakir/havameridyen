@@ -1,12 +1,6 @@
 import Link from "next/link";
 import Layout from "../components/Layout";
 
-const NAV = [
-  { href: "/", label: "Ana sayfa" },
-  { href: "/favoriler", label: "Favoriler" },
-  { href: "/izmir", label: "İzmir" },
-];
-
 const MODELS = [
   {
     code: "ECMWF",
@@ -14,7 +8,7 @@ const MODELS = [
     color: "#1F7A52",
     agency: "Avrupa Orta Vadeli Hava Tahminleri Merkezi",
     resolution: "~9 km",
-    update: "Günde 2 kez",
+    update: "Günde 4 kez",
     note: "Genellikle 3-7 gün arası orta vadeli tahminlerde en isabetli kabul edilir. Küresel modeller arasında referans noktası sayılır.",
     optional: false,
   },
@@ -23,7 +17,7 @@ const MODELS = [
     flag: "ABD",
     color: "#B35900",
     agency: "NOAA Küresel Tahmin Sistemi",
-    resolution: "~28 km",
+    resolution: "~13 km",
     update: "Günde 4 kez",
     note: "Sık güncellendiği için ani hava değişimlerine hızlı tepki verir. Kısa vadeli (1-3 gün) takipte pratik bir referans.",
     optional: false,
@@ -33,7 +27,7 @@ const MODELS = [
     flag: "ALMANYA",
     color: "#2C4A6E",
     agency: "Deutscher Wetterdienst küresel modeli",
-    resolution: "~13 km",
+    resolution: "~7 km (Avrupa), ~11 km (küresel)",
     update: "Günde 4 kez",
     note: "Avrupa ve çevresinde yüksek çözünürlüklü bölgesel varyantlarıyla bilinir, yerel detayları daha net yakalar.",
     optional: false,
@@ -78,37 +72,27 @@ const MODELS = [
     note: "Diğer modellere göre daha düşük çözünürlüklü, ancak Asya-Pasifik bölgesinde uzun yıllardır kullanılan, kanıtlanmış bir model.",
     optional: true,
   },
-  {
-    code: "KNMI",
-    flag: "HOLLANDA",
-    color: "#5C8A5C",
-    agency: "KNMI HARMONIE bölgesel modeli",
-    resolution: "~2.5 km",
-    update: "Saatlik",
-    note: "Sadece Avrupa'yı kapsar ama çok yüksek çözünürlüklüdür; kısa vadede ani hava olaylarını yakalamada güçlüdür.",
-    optional: true,
-  },
 ];
 
 export default function Modeller() {
   return (
-    <Layout title="Modeller — ECMWF, GFS, ICON, UKMO, ARPEGE ve 3 model daha · havameridyen" nav={NAV}>
+    <Layout title="Modeller — ECMWF, GFS, ICON, UKMO, ARPEGE ve 2 model daha · havameridyen">
       <div className="models-page">
-        <Link className="back-link" href="/izmir">
-          ← Şehir sayfasına dön
+        <Link className="back-link" href="/">
+          ← Ana sayfaya dön
         </Link>
 
         <div className="page-head lead">
           <div className="kicker">Model rehberi</div>
-          <h1>8 model, 8 farklı bakış açısı</h1>
+          <h1>7 model, 7 farklı bakış açısı</h1>
           <p>
             Her hava tahmin merkezi kendi verisini, kendi fiziksel varsayımlarını ve kendi çözünürlüğünü kullanır. Bu
             yüzden aynı gün için farklı sonuçlar görebilirsin — hangisinin &quot;doğru&quot; olduğu değil, hangisinin
             senin durumun için daha güvenilir olduğu önemlidir.
           </p>
           <p>
-            Şehir sayfasında varsayılan olarak 5 model (ECMWF, GFS, ICON, UKMO, ARPEGE) açık gelir. Aşağıdaki 3 model
-            ise opsiyoneldir — grafiklerin üstündeki model isimlerine tıklayarak istediğin an ekleyip çıkarabilirsin.
+            Şehir sayfasında varsayılan olarak 5 model (ECMWF, GFS, ICON, UKMO, ARPEGE) açık gelir. Aşağıdaki 2 model
+            ise opsiyoneldir — grafiklerin üstündeki &quot;Modeller&quot; satırında işaret kutularıyla istediğin an ekleyip çıkarabilirsin.
           </p>
         </div>
 

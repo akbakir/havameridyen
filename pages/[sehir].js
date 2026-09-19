@@ -13,12 +13,6 @@ const PERIODS = [
   { id: "16d", label: "16 gün" },
 ];
 
-const CITY_NAV = [
-  { href: "/", label: "Ana sayfa" },
-  { href: "/modeller", label: "Modeller" },
-  { href: "/favoriler", label: "Favoriler" },
-];
-
 export default function SehirPage() {
   const router = useRouter();
   const [location, setLocation] = useState(null);
@@ -187,7 +181,7 @@ export default function SehirPage() {
     : "Model karşılaştırması · havameridyen";
 
   return (
-    <Layout title={title} variant="city" nav={CITY_NAV}>
+    <Layout title={title} variant="city">
       <div className="search-row">
         <input
           className="search-input"
@@ -233,11 +227,12 @@ export default function SehirPage() {
             </svg>
           </button>
         </div>
-        {CITY_CHIPS.map((c) => (
+        {/* Bulunulan şehir 📍 etiketinde zaten yazdığı için hızlı seçim çiplerinde tekrar gösterilmez. */}
+        {CITY_CHIPS.filter((c) => !(location && c.name === location.name)).map((c) => (
           <button
             key={c.name}
             type="button"
-            className={"chip" + (location && c.name === location.name ? " active" : "")}
+            className="chip"
             onClick={() => goToLocation(c)}
           >
             {c.name}

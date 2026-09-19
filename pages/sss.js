@@ -1,12 +1,6 @@
 import Link from "next/link";
 import Layout from "../components/Layout";
 
-const NAV = [
-  { href: "/", label: "Ana sayfa" },
-  { href: "/modeller", label: "Modeller" },
-  { href: "/hakkinda", label: "Hakkında" },
-];
-
 const FOOTER = [
   { href: "/hakkinda", label: "Hakkında" },
   { href: "/yasal", label: "Yasal" },
@@ -22,7 +16,7 @@ const FAQS = [
   {
     num: "02",
     q: "Veriler ne sıklıkla güncelleniyor?",
-    a: "Modelden modele değişir: GFS ve ICON günde 4 kez, ECMWF ve GEM günde 2 kez güncellenir. havameridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır.",
+    a: "Modelden modele değişir: ECMWF, GFS, ICON, UKMO, ARPEGE ve JMA günde 4 kez, GEM günde 2 kez güncellenir. havameridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır.",
   },
   {
     num: "03",
@@ -38,7 +32,7 @@ const FAQS = [
 
 export default function SSS() {
   return (
-    <Layout title="Sık sorulan sorular · havameridyen" variant="narrow" nav={NAV} footerLinks={FOOTER}>
+    <Layout title="Sık sorulan sorular · havameridyen" variant="narrow" footerLinks={FOOTER}>
       <Link className="back-link" href="/">
         ← Ana sayfaya dön
       </Link>

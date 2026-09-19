@@ -4,12 +4,6 @@ import Layout from "../components/Layout";
 import { getFavorites, removeFavorite } from "../lib/favorites";
 import { cityHref } from "../lib/slugify";
 
-const NAV = [
-  { href: "/", label: "Ana sayfa" },
-  { href: "/modeller", label: "Modeller" },
-  { href: "/izmir", label: "İzmir" },
-];
-
 export default function Favoriler() {
   const [favs, setFavs] = useState(null);
   const [temps, setTemps] = useState({});
@@ -68,7 +62,7 @@ export default function Favoriler() {
   const loaded = favs !== null;
 
   return (
-    <Layout title="Favorilerin · havameridyen" nav={NAV}>
+    <Layout title="Favorilerin · havameridyen">
       <div className="page-head">
         <h1>Kayıtlı konumların</h1>
         <p>

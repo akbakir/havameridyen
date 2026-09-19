@@ -1,10 +1,13 @@
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
-const DEFAULT_NAV = [
+// Tüm sayfalarda aynı üst menü. Bulunulan sayfanın bağlantısı koyu ve altı çizili gösterilir.
+const SITE_NAV = [
   { href: "/", label: "Ana sayfa" },
   { href: "/modeller", label: "Modeller" },
   { href: "/favoriler", label: "Favoriler" },
+  { href: "/hakkinda", label: "Hakkında" },
 ];
 
 const DEFAULT_FOOTER = [
@@ -31,7 +34,8 @@ function Isobars() {
   );
 }
 
-export default function Layout({ title, variant = "default", nav = DEFAULT_NAV, footerLinks = DEFAULT_FOOTER, children }) {
+export default function Layout({ title, variant = "default", footerLinks = DEFAULT_FOOTER, children }) {
+  const router = useRouter();
   const wrapClass = [
     "wrap",
     variant === "home" && "wrap-home",
@@ -53,11 +57,19 @@ export default function Layout({ title, variant = "default", nav = DEFAULT_NAV, 
             <span className="brand-hava">hava</span><span className="brand-meridyen">meridyen</span>
           </Link>
           <nav>
-            {nav.map((item) => (
-              <Link key={item.href + item.label} href={item.href}>
-                {item.label}
-              </Link>
-            ))}
+            {SITE_NAV.map((item) => {
+              const current = router.pathname === item.href;
+              return (
+                <Link
+                  key={item.href + item.label}
+                  href={item.href}
+                  aria-current={current ? "page" : undefined}
+                  style={current ? { color: "var(--ink)", borderColor: "var(--ink)" } : undefined}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
         </header>
         {children}

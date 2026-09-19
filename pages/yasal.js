@@ -1,12 +1,6 @@
 import Link from "next/link";
 import Layout from "../components/Layout";
 
-const NAV = [
-  { href: "/", label: "Ana sayfa" },
-  { href: "/modeller", label: "Modeller" },
-  { href: "/favoriler", label: "Favoriler" },
-];
-
 const FOOTER = [
   { href: "/hakkinda", label: "Hakkında" },
   { href: "/sss", label: "SSS" },
@@ -20,12 +14,11 @@ const MODEL_KAYNAKLARI = [
   { model: "ARPEGE", kurum: "Météo-France (Fransa)" },
   { model: "GEM", kurum: "Environment and Climate Change Canada" },
   { model: "JMA", kurum: "Japon Meteoroloji Ajansı" },
-  { model: "KNMI", kurum: "Kraliyet Hollanda Meteoroloji Enstitüsü" },
 ];
 
 export default function Yasal() {
   return (
-    <Layout title="Yasal · havameridyen" variant="narrow" nav={NAV} footerLinks={FOOTER}>
+    <Layout title="Yasal · havameridyen" variant="narrow" footerLinks={FOOTER}>
       <Link className="back-link" href="/">
         ← Ana sayfaya dön
       </Link>
@@ -157,7 +150,7 @@ export default function Yasal() {
         <h3>2.2 Hizmetin Tanımı</h3>
         <p>
           havameridyen, Türkiye&apos;deki kullanıcılar için birden fazla küresel sayısal hava tahmin modelini
-          (ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA, KNMI) tek ekranda karşılaştırmalı olarak sunan bağımsız, ücretsiz
+          (ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA) tek ekranda karşılaştırmalı olarak sunan bağımsız, ücretsiz
           bir web uygulamasıdır.
         </p>
 

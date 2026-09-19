@@ -3,12 +3,6 @@ import { useRouter } from "next/router";
 import Layout from "../components/Layout";
 import { cityHref, HOME_CITIES, slugify } from "../lib/slugify";
 
-const HOME_NAV = [
-  { href: "/modeller", label: "Modeller" },
-  { href: "/favoriler", label: "Favoriler" },
-  { href: "/hakkinda", label: "Hakkında" },
-];
-
 const HOME_FOOTER = [
   { href: "/modeller", label: "Modeller" },
   { href: "/hakkinda", label: "Hakkında" },
@@ -63,11 +57,11 @@ export default function Home() {
   }
 
   return (
-    <Layout title="havameridyen — Türkiye için çoklu model, tek ekran" variant="home" nav={HOME_NAV} footerLinks={HOME_FOOTER}>
+    <Layout title="havameridyen — Türkiye için çoklu model, tek ekran" variant="home" footerLinks={HOME_FOOTER}>
       <section className="hero">
         <div className="eyebrow">
           <span className="eyebrow-dot" />
-          ECMWF · GFS · ICON · UKMO · ARPEGE · KNMI · GEM · JMA canlı karşılaştırma
+          ECMWF · GFS · ICON · UKMO · ARPEGE · GEM · JMA canlı karşılaştırma
         </div>
         <h1>
           Türkiye için çoklu model,
@@ -75,7 +69,7 @@ export default function Home() {
           <em>tek ekran.</em>
         </h1>
         <p className="hero-sub">
-          ECMWF, GFS, ICON, UKMO, ARPEGE, KNMI, GEM ve JMA&apos;yı yan yana karşılaştır, modellerin ne kadar uyuştuğunu gör, kendi kararını ver.
+          ECMWF, GFS, ICON, UKMO, ARPEGE, GEM ve JMA&apos;yı yan yana karşılaştır, modellerin ne kadar uyuştuğunu gör, kendi kararını ver.
         </p>
 
         <div className="search-block" ref={blockRef}>
