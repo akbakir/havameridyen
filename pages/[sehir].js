@@ -165,6 +165,10 @@ export default function SehirPage() {
     setTableTimeIndex((i) => Math.floor(i / hrs) * hrs);
   }
 
+  function resetModels() {
+    setActiveModels(new Set(MODELS.filter((m) => m.defaultActive).map((m) => m.id)));
+  }
+
   function toggleModel(id) {
     setActiveModels((prev) => {
       const next = new Set(prev);
@@ -255,52 +259,11 @@ export default function SehirPage() {
       </div>
 
       <div className="charts-block">
-        <div className="shared-legend-top">
-          {MODELS.filter((m) => m.defaultActive).map((m) => (
-            <div
-              key={m.id}
-              className={"legend-item-h" + (activeModels.has(m.id) ? "" : " inactive")}
-              onClick={() => toggleModel(m.id)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  toggleModel(m.id);
-                }
-              }}
-            >
-              <span className="legend-dot" style={{ background: m.color }} />
-              {m.label}
-            </div>
-          ))}
-          <span className="legend-divider" aria-hidden="true" />
-          {MODELS.filter((m) => !m.defaultActive).map((m) => (
-            <div
-              key={m.id}
-              className={"legend-item-h" + (activeModels.has(m.id) ? "" : " inactive")}
-              onClick={() => toggleModel(m.id)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  toggleModel(m.id);
-                }
-              }}
-            >
-              <span
-                className="legend-dot"
-                style={
-                  activeModels.has(m.id)
-                    ? { background: m.color }
-                    : { background: "transparent", boxShadow: `inset 0 0 0 1.5px ${m.color}` }
-                }
-              />
-              {m.label}
-            </div>
-          ))}
-        </div>
+        <ModelPicker
+          activeModels={activeModels}
+          onToggle={toggleModel}
+          onReset={resetModels}
+        />
         <div className="charts-stack">
           <div className="panel">
             <div className="panel-head">
@@ -944,6 +907,115 @@ function PrecipBarChart({ models, interval = 1, rawModels, rainThreshold = RAIN_
       )}
       {strip}
     </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Model seçimi: işaret kutulu düğmeler. Renkler modelin kendi rengi; açık = dolu kutu + ✓,
+// kapalı = boş kutu (çerçeve model renginde). En az bir model açık kalır.
+// ---------------------------------------------------------------------------
+
+function ModelCheck({ color, checked }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        width: 14,
+        height: 14,
+        borderRadius: 3,
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxSizing: "border-box",
+        border: `1.5px solid ${color}`,
+        background: checked ? color : "transparent",
+      }}
+    >
+      {checked && (
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+          <path d="M2.5 6.2 L5 8.6 L9.5 3.6" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
+function ModelChip({ m, checked, onToggle, optional }) {
+  const lastActive = checked === "last";
+  const isOn = !!checked;
+  const title = lastActive
+    ? "En az bir model açık kalmalı"
+    : `${m.label} modelini ${isOn ? "gizle" : "göster"}`;
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={isOn}
+      title={title}
+      onClick={() => onToggle(m.id)}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 7,
+        padding: "5px 10px 5px 8px",
+        borderRadius: 999,
+        border: `1px solid ${isOn ? "var(--ink-faint)" : "var(--line)"}`,
+        background: isOn ? "var(--paper)" : "transparent",
+        color: isOn ? "var(--ink)" : "var(--ink-faint)",
+        fontFamily: '"IBM Plex Mono", monospace',
+        fontSize: 12,
+        cursor: lastActive ? "default" : "pointer",
+        lineHeight: 1.2,
+      }}
+    >
+      <ModelCheck color={m.color} checked={isOn} />
+      {optional && !isOn ? `+ ${m.label}` : m.label}
+    </button>
+  );
+}
+
+function ModelPicker({ activeModels, onToggle, onReset }) {
+  const defaults = MODELS.filter((m) => m.defaultActive);
+  const optionals = MODELS.filter((m) => !m.defaultActive);
+  const isDefault =
+    activeModels.size === defaults.length && defaults.every((m) => activeModels.has(m.id));
+  const state = (id) => (activeModels.has(id) ? (activeModels.size === 1 ? "last" : true) : false);
+  return (
+    <div className="shared-legend-top" style={{ gap: 8, alignItems: "center" }}>
+      <div style={{ width: "100%", display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 2 }}>
+        <span style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>Modeller</span>
+        <span className="panel-sub" style={{ fontSize: 11 }}>
+          göstermek / gizlemek için dokun
+        </span>
+        {!isDefault && (
+          <button
+            type="button"
+            onClick={onReset}
+            style={{
+              marginLeft: "auto",
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              color: "var(--teal)",
+              fontFamily: '"IBM Plex Mono", monospace',
+              fontSize: 11,
+              textDecoration: "underline",
+            }}
+          >
+            Varsayılana dön
+          </button>
+        )}
+      </div>
+      {defaults.map((m) => (
+        <ModelChip key={m.id} m={m} checked={state(m.id)} onToggle={onToggle} />
+      ))}
+      <span className="legend-divider" aria-hidden="true" />
+      {optionals.map((m) => (
+        <ModelChip key={m.id} m={m} checked={state(m.id)} onToggle={onToggle} optional />
+      ))}
+    </div>
   );
 }
 
