@@ -460,7 +460,7 @@ export default function SehirPage() {
                       <span className="dot" style={{ background: m.color }} />
                       {m.label}
                     </td>
-                    <td>{point ? Math.round(point.temp) + "°C" : "—"}</td>
+                    <td>{point && point.temp != null ? formatOneDecimal(point.temp) + "°C" : "—"}</td>
                     <td>{point && point.precip_prob != null ? "%" + point.precip_prob : "—"}</td>
                     <td>{formatPrecipMm(precipSum)}</td>
                     <td>
@@ -492,6 +492,12 @@ function degreesToCompass(deg) {
   return COMPASS_8[Math.round(normalized / 45) % 8];
 }
 
+// Tablolarda sıcaklık ve rüzgar tek ondalıkla gösterilir (örn. 23.4°C, 12.6 km/s).
+function formatOneDecimal(v) {
+  if (v == null || Number.isNaN(Number(v))) return "—";
+  return Number(v).toFixed(1);
+}
+
 function formatPrecipMm(amount) {
   if (amount == null || Number.isNaN(Number(amount))) return "—";
   return Number(amount).toFixed(1);
@@ -500,7 +506,7 @@ function formatPrecipMm(amount) {
 function WindCell({ speed, direction }) {
   if (speed == null && direction == null) return "—";
   const compass = degreesToCompass(direction);
-  const speedText = speed == null ? "—" : `${Math.round(speed)} km/s`;
+  const speedText = speed == null ? "—" : `${formatOneDecimal(speed)} km/s`;
   return (
     <span className="wind-cell">
       {direction != null && (
@@ -524,14 +530,26 @@ function WindCell({ speed, direction }) {
   );
 }
 
+// API'den gelen zamanlar TSİ duvar saatidir ("YYYY-MM-DDTHH:mm", ek/offset yok; bkz. lib/forecast.js).
+// Tarayıcının kendi saat diliminden etkilenmemek için metin doğrudan ayrıştırılır; tarih/gün
+// hesapları için UTC tabanlı bir Date üretilir ve yalnızca getUTC* / timeZone:"UTC" ile okunur.
+function parseTsiTime(t) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(t || "");
+  if (!m) return null;
+  const hour = +m[4];
+  return { hour, date: new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], hour, +m[5])) };
+}
+
+function formatHourLabel(hour) {
+  return String(hour).padStart(2, "0") + ":00";
+}
+
 function formatTableTime(forecast, index) {
-  const t = forecast?.models[0]?.series[index]?.time;
-  if (!t) return "";
-  const d = new Date(t);
-  const tarih = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
-  const gun = formatWeekdayAbbr3(d);
-  const saat = String(d.getHours()).padStart(2, "0") + "Z";
-  return `${tarih} ${gun} ${saat}`;
+  const p = parseTsiTime(forecast?.models[0]?.series[index]?.time);
+  if (!p) return "";
+  const tarih = p.date.toLocaleDateString("tr-TR", { day: "numeric", month: "long", timeZone: "UTC" });
+  const gun = formatWeekdayAbbr3(p.date);
+  return `${tarih} ${gun} ${formatHourLabel(p.hour)} TSİ`;
 }
 
 // Seçilen tablo aralığı (1/3/6 saat) için, endIndex dahil olmak üzere geriye doğru toplam yağış.
@@ -629,17 +647,17 @@ function formatMmTick(v) {
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
 }
 
-// Üç grafikte de (sıcaklık, yağış, rüzgar) ortak kullanılan zaman ekseni: gün değişimini (00Z)
-// ve öğleni (12Z) işaretler. Seri sıkışıksa (uzun periyotlarda) 12Z etiketleri elenir, sadece
+// Üç grafikte de (sıcaklık, yağış, rüzgar) ortak kullanılan zaman ekseni: gün değişimini (00:00 TSİ)
+// ve öğleni (12:00 TSİ) işaretler. Seri sıkışıksa (uzun periyotlarda) 12:00 etiketleri elenir, sadece
 // gün sınırları kalır; gün etiketleri de sıkışıksa tarih dikey yazılır.
 function buildTimeAxis(series, xFn) {
   const n = series.length;
   if (n < 2) return { marks: [], rotateDate: false };
   const raw = [];
   series.forEach((s, i) => {
-    const d = new Date(s.time);
-    const hour = d.getHours();
-    if (hour === 0 || hour === 12) raw.push({ i, x: xFn(i), hour, date: d });
+    const p = parseTsiTime(s.time);
+    if (!p) return;
+    if (p.hour === 0 || p.hour === 12) raw.push({ i, x: xFn(i), hour: p.hour, date: p.date });
   });
   const dayMarks = raw.filter((m) => m.hour === 0);
   const noonMarks = raw.filter((m) => m.hour === 12);
@@ -654,20 +672,22 @@ function buildTimeAxis(series, xFn) {
 }
 
 function formatAxisDate(d) {
-  return d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+  return d.toLocaleDateString("tr-TR", { day: "numeric", month: "short", timeZone: "UTC" });
 }
 
 // Sabit 3 harfli Türkçe gün kısaltmaları (Intl'in "short" biçimi bazı günlerde 3'ten uzun
-// dönebiliyor, örn. "Çarş"). getDay(): 0=Pazar, 1=Pazartesi, ... 6=Cumartesi.
+// dönebiliyor, örn. "Çarş"). getUTCDay(): 0=Pazar, 1=Pazartesi, ... 6=Cumartesi.
+// (Date, parseTsiTime ile UTC tabanlı üretildiği için getUTCDay kullanılır.)
 const WEEKDAY_ABBR_3 = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
 
 function formatWeekdayAbbr3(d) {
-  return WEEKDAY_ABBR_3[d.getDay()];
+  return WEEKDAY_ABBR_3[d.getUTCDay()];
 }
 
 // buildTimeAxis()'in ürettiği marks'i SVG'ye çizen ortak yardımcı: gün sınırında noktalı dikey
-// çizgi + "00Z" + altına tarih + altına 3 harfli gün kısaltması, öğlende daha soluk kesikli
-// çizgi + "12Z". Sıkışıklıkta (rotateDate) tarih+gün tek satırda birleşip dikey yazılır.
+// çizgi + "00:00" + altına tarih + altına 3 harfli gün kısaltması, öğlende daha soluk kesikli
+// çizgi + "12:00". Saatler TSİ'dir (sonlarına "Z" eklenmez).
+// Sıkışıklıkta (rotateDate) tarih+gün tek satırda birleşip dikey yazılır.
 // row1Y saat etiketinin, row2Y tarihin, row3Y gün kısaltmasının y konumu.
 function renderTimeAxis({ marks, rotateDate }, padT, plotBottom, row1Y, row2Y, row3Y) {
   return (
@@ -688,7 +708,7 @@ function renderTimeAxis({ marks, rotateDate }, padT, plotBottom, row1Y, row2Y, r
       ))}
       {marks.map((m) => (
         <text key={`axis-hour-${m.i}`} className="axis-label" x={m.x} y={row1Y} textAnchor="middle">
-          {m.hour === 0 ? "00Z" : "12Z"}
+          {formatHourLabel(m.hour)}
         </text>
       ))}
       {marks
@@ -722,13 +742,14 @@ function renderTimeAxis({ marks, rotateDate }, padT, plotBottom, row1Y, row2Y, r
 
 // Saatlik yağış serisini seçilen aralığa (1/3/6 saat) göre toplar. Kova sınırları gün içi
 // saat % interval === 0 noktalarına hizalanır (örn. 6 saatlik: 00, 06, 12, 18), böylece kova
-// başlangıçları her zaman 00Z/12Z eksen işaretleriyle çakışır.
+// başlangıçları her zaman 00:00/12:00 (TSİ) eksen işaretleriyle çakışır.
 function bucketPrecipSeries(series, interval) {
   if (interval <= 1) return series.map((s) => ({ time: s.time, precip_amount: s.precip_amount }));
   const buckets = [];
   let current = null;
   series.forEach((s) => {
-    const hour = new Date(s.time).getHours();
+    const p = parseTsiTime(s.time);
+    const hour = p ? p.hour : 0;
     const isBoundary = hour % interval === 0;
     if (!current || isBoundary) {
       if (current) buckets.push(current);

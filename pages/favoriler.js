@@ -32,8 +32,10 @@ export default function Favoriler() {
         const day = series.slice(0, 24);
         const vals = day.map((s) => s.temp).filter((v) => v != null);
         if (!vals.length) throw new Error();
-        const hour = new Date().getHours();
-        const now = day[hour]?.temp ?? vals[0];
+        // Seri TSİ duvar saatiyle gelir; "şimdi"yi de TSİ'ye göre bul (tarayıcı saat diliminden bağımsız).
+        const nowTsiKey = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+        const nowIdx = series.findIndex((s) => typeof s.time === "string" && s.time.startsWith(nowTsiKey));
+        const now = (nowIdx >= 0 ? series[nowIdx]?.temp : null) ?? vals[0];
         if (cancelled) return;
         setTemps((prev) => ({
           ...prev,
