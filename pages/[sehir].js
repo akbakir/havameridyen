@@ -32,6 +32,7 @@ export default function SehirPage() {
   const [tableTimeIndex, setTableTimeIndex] = useState(0);
   const [tableInterval, setTableInterval] = useState(1);
   const [precipInterval, setPrecipInterval] = useState(1);
+  const [rainThreshold, setRainThreshold] = useState(RAIN_THRESHOLD_DEFAULT);
   const [activeModels, setActiveModels] = useState(
     () => new Set(MODELS.filter((m) => m.defaultActive).map((m) => m.id))
   );
@@ -87,13 +88,22 @@ export default function SehirPage() {
     };
   }, [location, period, activeModelsKey]);
 
+  // Şehir veya periyot değişince tablo "şimdi"ye konumlanır. Model aç/kapa gibi yeniden
+  // yüklemelerde kullanıcının seçtiği saat korunur. Veri yine 00:00 TSİ'den başlar; ← ile geriye gidilebilir.
+  const jumpToNowRef = useRef(true);
   useEffect(() => {
-    setTableTimeIndex(0);
-  }, [period]);
+    jumpToNowRef.current = true;
+  }, [period, location]);
 
   useEffect(() => {
     if (!forecast) return;
-    const max = Math.max(0, (forecast.models[0]?.series.length || 1) - 1);
+    const series = forecast.models[0]?.series || [];
+    const max = Math.max(0, series.length - 1);
+    if (jumpToNowRef.current) {
+      jumpToNowRef.current = false;
+      setTableTimeIndex(nowTargetIndex(series, tableInterval));
+      return;
+    }
     setTableTimeIndex((i) => Math.min(Math.max(0, i), max));
   }, [forecast]);
 
@@ -132,6 +142,14 @@ export default function SehirPage() {
   const maxTableIndex = Math.max(0, tableSeriesLen - 1);
   const safeTableIndex = Math.min(Math.max(0, tableTimeIndex), maxTableIndex);
   const formattedTableTime = formatTableTime(forecast, safeTableIndex);
+  const nowTarget = forecast ? nowTargetIndex(forecast.models[0]?.series || [], tableInterval) : -1;
+  const nowAvailable = forecast ? findNowIndex(forecast.models[0]?.series || []) >= 0 : false;
+  const noProbLabels = forecast ? forecast.models.filter((m) => !modelHasPrecipProb(m)).map((m) => m.label) : [];
+
+  function goToNow() {
+    if (!forecast) return;
+    setTableTimeIndex(nowTargetIndex(forecast.models[0]?.series || [], tableInterval));
+  }
 
   function goToPrevTime() {
     setTableTimeIndex((i) => Math.max(0, i - tableInterval));
@@ -295,7 +313,12 @@ export default function SehirPage() {
             </div>
             {status === "loading" && <div className="loading">Veri yükleniyor…</div>}
             {status === "error" && <div className="err">Veri alınamadı — bağlantını kontrol et.</div>}
-            {status === "ok" && <Chart models={forecast.models} />}
+            {status === "ok" && (
+              <>
+                <Chart models={forecast.models} />
+                <CoverageNote models={forecast.models} />
+              </>
+            )}
           </div>
 
           <div className="panel">
@@ -322,9 +345,15 @@ export default function SehirPage() {
             {status === "loading" && <div className="loading">Veri yükleniyor…</div>}
             {status === "error" && <div className="err">Veri alınamadı — bağlantını kontrol et.</div>}
             {status === "ok" && (
-              <PrecipBarChart
-                models={forecast.models.map((m) => ({ ...m, series: bucketPrecipSeries(m.series, precipInterval) }))}
-              />
+              <>
+                <PrecipBarChart
+                  models={forecast.models.map((m) => ({ ...m, series: bucketPrecipSeries(m.series, precipInterval) }))}
+                  interval={precipInterval}
+                  rawModels={forecast.models}
+                  rainThreshold={rainThreshold}
+                />
+                <AgreementLegend threshold={rainThreshold} onChange={setRainThreshold} />
+              </>
             )}
           </div>
 
@@ -332,7 +361,7 @@ export default function SehirPage() {
             <div className="panel-head">
               <div className="panel-head-left">
                 <div className="panel-title">Rüzgar</div>
-                <div className="panel-sub">Ortalama yön ve hız (koyuluk)</div>
+                <div className="panel-sub">Günlük hakim yön, yön aralığı, ortalama hız ve hamle</div>
               </div>
               <div className="unit-toggle">
                 <button
@@ -355,13 +384,8 @@ export default function SehirPage() {
             {status === "error" && <div className="err">Veri alınamadı — bağlantını kontrol et.</div>}
             {status === "ok" && (
               <>
-                <WindChart models={forecast.models} />
-                <div className="speed-legend-row">
-                  <div className="speed-legend-item"><span className="speed-dot" style={{ opacity: 0.25 }} /> {formatSpeedRange(0, 10, windUnit)}</div>
-                  <div className="speed-legend-item"><span className="speed-dot" style={{ opacity: 0.5 }} /> {formatSpeedRange(10, 20, windUnit)}</div>
-                  <div className="speed-legend-item"><span className="speed-dot" style={{ opacity: 0.75 }} /> {formatSpeedRange(20, 30, windUnit)}</div>
-                  <div className="speed-legend-item"><span className="speed-dot" style={{ opacity: 1 }} /> {formatSpeedRange(30, null, windUnit)}</div>
-                </div>
+                <WindChart models={forecast.models} unit={windUnit} />
+                <WindLegend unit={windUnit} />
               </>
             )}
           </div>
@@ -370,27 +394,14 @@ export default function SehirPage() {
 
       <div className="panel">
         <div className="panel-head">
-          <div className="panel-title">Yağış — model uyumu (ilk 24 saat)</div>
-          <div className="panel-sub">
-            {status === "ok"
-              ? `${forecast.agreement.agree_count}/${forecast.agreement.total_count} model yağış öngörüyor`
-              : "—"}
-          </div>
-        </div>
-        <div className="agree-row">
-          <div className="agree-label">Uyum skoru</div>
-          <div className="agree-track">
-            <div className="agree-fill" style={{ width: (status === "ok" ? forecast.agreement.agree_pct : 0) + "%" }} />
-          </div>
-          <div className="agree-pct">%{status === "ok" ? forecast.agreement.agree_pct : "—"}</div>
-        </div>
-      </div>
-
-      <div className="panel">
-        <div className="panel-head">
           <div className="panel-title-group">
             <div className="panel-title">Model detayları</div>
-            <div className="panel-sub">{status === "ok" ? formattedTableTime : ""}</div>
+            <div className="panel-sub">
+              {status === "ok" ? formattedTableTime : ""}
+              {status === "ok" && nowAvailable && safeTableIndex === nowTarget && (
+                <span style={NOW_BADGE_STYLE}>şimdi</span>
+              )}
+            </div>
           </div>
           <div className="table-controls">
             <div className="unit-toggle">
@@ -413,6 +424,15 @@ export default function SehirPage() {
                 aria-label="Önceki"
               >
                 ←
+              </button>
+              <button
+                type="button"
+                onClick={goToNow}
+                disabled={status !== "ok" || !nowAvailable}
+                aria-label="Şimdiki saate git"
+                style={{ width: "auto", padding: "0 10px", fontSize: 12 }}
+              >
+                Şimdi
               </button>
               <button
                 type="button"
@@ -461,7 +481,15 @@ export default function SehirPage() {
                       {m.label}
                     </td>
                     <td>{point && point.temp != null ? formatOneDecimal(point.temp) + "°C" : "—"}</td>
-                    <td>{point && point.precip_prob != null ? "%" + point.precip_prob : "—"}</td>
+                    <td>
+                      {point && point.precip_prob != null ? (
+                        "%" + point.precip_prob
+                      ) : modelHasPrecipProb(m) ? (
+                        "—"
+                      ) : (
+                        <span title={`${m.label} yağış olasılığı sunmuyor`}>—*</span>
+                      )}
+                    </td>
                     <td>{formatPrecipMm(precipSum)}</td>
                     <td>
                       <WindCell speed={point?.wind_speed} direction={point?.wind_direction} />
@@ -471,6 +499,11 @@ export default function SehirPage() {
               })}
           </tbody>
         </table>
+        {status === "ok" && noProbLabels.length > 0 && (
+          <div className="panel-sub" style={{ marginTop: 8, fontSize: 11 }}>
+            * {joinTr(noProbLabels)} yağış olasılığı sunmuyor.
+          </div>
+        )}
       </div>
 
       <Link href="/modeller" className="explain-link">
@@ -569,15 +602,15 @@ function sumPrecipWindow(series, endIndex, interval) {
 
 function Chart({ models }) {
   const w = 800,
-    h = 300,
+    h = 260,
     padL = 34,
     padR = 10,
     padT = 14,
     padB = 44;
   const plotW = w - padL - padR,
     plotH = h - padT - padB;
-  const tempH = plotH * 0.6;
-  const tempBottom = padT + tempH;
+  // Eski birleşik grafikten kalan alt boşluk kaldırıldı: sıcaklık tüm çizim alanını kullanır.
+  const tempH = plotH;
 
   const n = models[0]?.series.length || 0;
   const allVals = models.flatMap((m) => m.series.map((s) => s.temp)).filter((v) => v != null);
@@ -594,9 +627,20 @@ function Chart({ models }) {
   for (let v = min; v <= max; v += 2) tempTicks.push(v);
 
   const timeAxis = buildTimeAxis(models[0].series, x);
+  const cov = computeCoverage(models, "temp");
 
   return (
     <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
+      {cov && (
+        <rect
+          x={x(cov.firstEnd)}
+          y={padT}
+          width={Math.max(0, x(n - 1) - x(cov.firstEnd))}
+          height={plotH}
+          fill="var(--line)"
+          opacity={0.22}
+        />
+      )}
       {tempTicks.map((v) => (
         <line
           key={`tgrid-${v}`}
@@ -615,15 +659,6 @@ function Chart({ models }) {
           {v}°
         </text>
       ))}
-      <line
-        x1={padL}
-        y1={tempBottom}
-        x2={padL + plotW}
-        y2={tempBottom}
-        stroke="var(--line)"
-        strokeWidth="1"
-        strokeDasharray="4 3"
-      />
       {models.map((m) => {
         const pts = m.series
           .map((s, i) => (s.temp != null ? `${x(i)},${yTemp(s.temp)}` : null))
@@ -765,7 +800,11 @@ function bucketPrecipSeries(series, interval) {
   return buckets.map((b) => ({ time: b.time, precip_amount: b.hasValue ? b.precip_amount : null }));
 }
 
-function PrecipBarChart({ models }) {
+// Yağış grafiği + altında ince "günlük model uyumu" şeridi. Çizim alanı eskisiyle aynı (h=196);
+// şerit bunun altına STRIP_EXTRA kadar ek yükseklikte çizilir.
+const STRIP_EXTRA = 30;
+
+function PrecipBarChart({ models, interval = 1, rawModels, rainThreshold = RAIN_THRESHOLD_DEFAULT }) {
   const w = 800,
     h = 196,
     padL = 34,
@@ -801,6 +840,48 @@ function PrecipBarChart({ models }) {
   const fineTickList = Array.from(fineTicks).sort((a, b) => a - b);
 
   const timeAxis = buildTimeAxis(models[0].series, x);
+  const cov = computeCoverage(models, "precip_amount");
+
+  // Günlük uyum şeridi (saatlik ham seriden hesaplanır, kovalı eksene hizalanır)
+  const daily = rawModels ? computeDailyAgreement(rawModels, rainThreshold) : [];
+  const xHour = (hIdx) => padL + (hIdx / interval / (n - 1)) * plotW;
+  const stripY = h + 4;
+  const stripH = 18;
+  const strip = daily.map((d, di) => {
+    if (!d.n) return null;
+    const x0 = Math.max(padL, xHour(d.h0));
+    const x1 = di === daily.length - 1 ? padL + plotW : Math.min(padL + plotW, xHour(d.h1));
+    const cw = x1 - x0 - 3;
+    if (cw <= 2) return null;
+    const agree = Math.max(d.wet, d.n - d.wet) / d.n;
+    const pct = Math.round(agree * 100);
+    const split = agree < AGREE_SPLIT_BELOW;
+    const isWet = !split && d.wet > d.n / 2;
+    const fill = split ? "var(--amber)" : isWet ? RAIN_BLUE : DRY_GRAY;
+    const ink = isWet ? "#FFFFFF" : "var(--ink)";
+    let label = "";
+    if (cw >= 96) label = split ? `${d.wet}/${d.n} belirsiz %${pct}` : isWet ? `${d.wet}/${d.n} yağış %${pct}` : `yağış yok %${pct}`;
+    else if (cw >= 30) label = split || isWet ? `${d.wet}/${d.n}` : "yok";
+    const p = parseTsiTime(rawModels[0].series[d.h0]?.time);
+    const dayText = p ? `${formatAxisDate(p.date)} ${formatWeekdayAbbr3(p.date)}` : d.key;
+    return (
+      <g key={`agree-${d.key}`}>
+        <title>{`${dayText}: ${d.wet}/${d.n} model yağış bekliyor (günlük ≥ ${rainThreshold} mm) · uyum %${pct}`}</title>
+        <rect x={x0 + 1.5} y={stripY} width={cw} height={stripH} rx={3} fill={fill} />
+        {label && (
+          <text
+            x={x0 + 1.5 + cw / 2}
+            y={stripY + 12.5}
+            textAnchor="middle"
+            className="axis-label"
+            style={{ fill: ink, fontSize: 9.5 }}
+          >
+            {label}
+          </text>
+        )}
+      </g>
+    );
+  });
 
   const bars = [];
   models.forEach((m, mi) => {
@@ -823,7 +904,17 @@ function PrecipBarChart({ models }) {
   });
 
   return (
-    <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
+    <svg className="chart" viewBox={`0 0 ${w} ${h + (rawModels ? STRIP_EXTRA : 0)}`}>
+      {cov && (
+        <rect
+          x={x(cov.firstEnd)}
+          y={padT}
+          width={Math.max(0, x(n - 1) - x(cov.firstEnd))}
+          height={plotH}
+          fill="var(--line)"
+          opacity={0.22}
+        />
+      )}
       {fineTickList.map((v) => {
         const strong = Math.abs(v - 0.5) < 0.01 || Math.abs(v - 1) < 0.01;
         return (
@@ -846,8 +937,221 @@ function PrecipBarChart({ models }) {
         </text>
       ))}
       {bars}
+      {rawModels && (
+        <text className="axis-label" x="4" y={stripY + 12.5}>
+          uyum
+        </text>
+      )}
+      {strip}
     </svg>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Ortak yardımcılar: TSİ "şimdi", model kapsaması, günlere bölme, Türkçe liste
+// ---------------------------------------------------------------------------
+
+const NOW_BADGE_STYLE = {
+  marginLeft: 8,
+  padding: "1px 6px",
+  borderRadius: 4,
+  background: "var(--teal)",
+  color: "#FFFFFF",
+  fontSize: 10,
+};
+
+// TSİ sabit UTC+3 (Türkiye 2016'dan beri yaz/kış saati uygulamıyor).
+function tsiNowKey() {
+  return new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+}
+
+function findNowIndex(series) {
+  const key = tsiNowKey();
+  return (series || []).findIndex((s) => typeof s.time === "string" && s.time.startsWith(key));
+}
+
+// Tablonun "şimdi" konumu: şimdiki saat, seçili aralığın (1/3/6 saat) katına yuvarlanır.
+function nowTargetIndex(series, interval) {
+  const idx = findNowIndex(series);
+  if (idx < 0) return 0;
+  const step = interval || 1;
+  return Math.floor(idx / step) * step;
+}
+
+function modelHasPrecipProb(m) {
+  return (m.series || []).some((s) => s.precip_prob != null);
+}
+
+function joinTr(items) {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} ve ${items[items.length - 1]}`;
+}
+
+// Modellerin tahmin süreleri farklıysa: en erken biten modelin son verisi (firstEnd), erken
+// biten modeller ve sonuna kadar süren modeller. Süreler kodda sabit değil, veriden hesaplanır.
+function computeCoverage(models, key) {
+  const ends = models
+    .map((m) => {
+      let last = -1;
+      m.series.forEach((s, i) => {
+        if (s[key] != null && !Number.isNaN(Number(s[key]))) last = i;
+      });
+      return { m, last };
+    })
+    .filter((o) => o.last >= 0);
+  if (ends.length < 2) return null;
+  const maxLast = Math.max(...ends.map((o) => o.last));
+  const early = ends.filter((o) => o.last < maxLast).sort((a, b) => a.last - b.last);
+  if (!early.length) return null;
+  return {
+    firstEnd: early[0].last,
+    early,
+    full: ends.filter((o) => o.last === maxLast).map((o) => o.m.label),
+  };
+}
+
+function CoverageNote({ models }) {
+  const cov = computeCoverage(models, "temp");
+  if (!cov) return null;
+  const groups = [];
+  cov.early.forEach((o) => {
+    const p = parseTsiTime(o.m.series[o.last]?.time);
+    const day = p ? formatAxisDate(p.date) : "?";
+    const g = groups.find((x) => x.day === day);
+    if (g) g.ids.push(o.m.label);
+    else groups.push({ day, ids: [o.m.label] });
+  });
+  const parts = groups.map((g) => `${joinTr(g.ids)} ${g.day}`).join("; ");
+  return (
+    <div className="panel-sub" style={{ marginTop: 6, fontSize: 11 }}>
+      ⓘ Model tahmin süreleri farklı — son veri: {parts}. Taralı bölgede yalnızca {joinTr(cov.full)} var.
+    </div>
+  );
+}
+
+// Saatlik seriyi TSİ takvim günlerine böler: [{ key:"YYYY-MM-DD", h0, h1 }] (h1 hariç).
+function groupDays(series) {
+  const days = [];
+  (series || []).forEach((s, i) => {
+    const k = String(s.time || "").slice(0, 10);
+    const last = days[days.length - 1];
+    if (!last || last.key !== k) days.push({ key: k, h0: i, h1: i + 1 });
+    else last.h1 = i + 1;
+  });
+  return days;
+}
+
+// ---------------------------------------------------------------------------
+// Günlük yağış uyumu (yağış grafiğinin altındaki ince şerit)
+// Her model için günlük toplam yağış >= eşik ise "yağış bekliyor" sayılır. Eşik varsayılan 0.2 mm,
+// kullanıcı RAIN_THRESHOLD_OPTIONS arasından artırabilir.
+// Uyum = çoğunluktaki model sayısı / o gün verisi olan model sayısı.
+// (Yağış olasılığı kullanılmaz: UKMO ve ARPEGE bu değeri sunmuyor.)
+// ---------------------------------------------------------------------------
+
+const RAIN_THRESHOLD_DEFAULT = 0.2;
+const RAIN_THRESHOLD_OPTIONS = [0.2, 0.5, 1, 2, 5];
+const AGREE_SPLIT_BELOW = 0.75; // uyum bunun altındaysa "belirsiz" (amber)
+const RAIN_BLUE = "#3B6FB6";
+const DRY_GRAY = "#DDE0DB";
+
+function computeDailyAgreement(models, threshold = RAIN_THRESHOLD_DEFAULT) {
+  const days = groupDays(models[0]?.series);
+  return days.map((d) => {
+    let n = 0;
+    let wet = 0;
+    models.forEach((m) => {
+      let sum = 0;
+      let any = false;
+      for (let i = d.h0; i < d.h1; i++) {
+        const v = m.series[i]?.precip_amount;
+        if (v != null && !Number.isNaN(Number(v))) {
+          sum += Number(v);
+          any = true;
+        }
+      }
+      if (!any) return;
+      n++;
+      if (sum >= threshold - 1e-9) wet++;
+    });
+    return { ...d, n, wet };
+  });
+}
+
+function AgreementLegend({ threshold, onChange }) {
+  const items = [
+    [RAIN_BLUE, "yağışta uzlaşı"],
+    [DRY_GRAY, "yağış yok"],
+    ["var(--amber)", "modeller bölünmüş"],
+  ];
+  return (
+    <div
+      className="panel-sub"
+      style={{ display: "flex", flexWrap: "wrap", gap: 14, alignItems: "center", marginTop: 6, fontSize: 11 }}
+    >
+      {items.map(([c, t]) => (
+        <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 2, background: c, display: "inline-block" }} />
+          {t}
+        </span>
+      ))}
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+        uyum eşiği: günlük toplam ≥
+        <span className="unit-toggle">
+          {RAIN_THRESHOLD_OPTIONS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              className={threshold === t ? "active" : ""}
+              onClick={() => onChange(t)}
+            >
+              {t}
+            </button>
+          ))}
+        </span>
+        mm
+      </span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Rüzgar — günlük grafik
+// Her gün kendi sütununda: taralı dilim = yön aralığı (saatlerin %80'i), koyu çizgi = hakim yön
+// (rüzgarın geldiği yön, hızla ağırlıklı), renk = günlük ortalama hız (Beaufort/MGM),
+// çubuk = ortalama hız (dolu) + gün içi en yüksek hamle (taralı uzantı).
+// ---------------------------------------------------------------------------
+
+const KN_PER_KMH = 0.539957;
+const STORM_MS = 17.2; // MGM: 8 bofor (fırtına) alt sınırı — 17.2 m/s ≈ 62 km/s ≈ 34 knot
+const STORM_RED = "#B8322A";
+
+// MGM Beaufort rüzgâr ıskalası (10 m, açık ve düz alan) — m/s alt sınırları.
+// Renkler griden koyu kahveye: 0–4 bofor yavaş (gri→kum), turuncu tonlar 5 bofordan sonra.
+const BEAUFORT = [
+  { ms: 0, color: "#D2D5D1", label: "0–1 sakin/esinti", kmh: "0–5", kn: "0–3" },
+  { ms: 1.6, color: "#D2C4B3", label: "2 hafif", kmh: "6–11", kn: "4–6" },
+  { ms: 3.4, color: "#D0B296", label: "3 tatlı", kmh: "12–19", kn: "7–10" },
+  { ms: 5.5, color: "#CEA177", label: "4 orta", kmh: "20–28", kn: "11–16" },
+  { ms: 8.0, color: "#CB8F57", label: "5 sert", kmh: "29–38", kn: "17–21" },
+  { ms: 10.8, color: "#BF6B2D", label: "6 kuvvetli", kmh: "39–49", kn: "22–27" },
+  { ms: 13.9, color: "#9C5625", label: "7 fırtınamsı", kmh: "50–61", kn: "28–33" },
+  { ms: 17.2, color: "#7A431F", label: "8 fırtına", kmh: "62–74", kn: "34–40" },
+  { ms: 20.8, color: "#593017", label: "9 kuvvetli fırtına", kmh: "75–88", kn: "41–47" },
+  { ms: 24.5, color: "#3A1E10", label: "10+ tam fırtına", kmh: "89+", kn: "48+" },
+];
+
+function beaufortIndex(kmh) {
+  const ms = kmh / 3.6;
+  let k = 0;
+  BEAUFORT.forEach((b, i) => {
+    if (ms >= b.ms) k = i;
+  });
+  return k;
+}
+
+function toWindUnit(kmh, unit) {
+  return unit === "kn" ? kmh * KN_PER_KMH : kmh;
 }
 
 function circularMeanDirectionWeighted(degrees, weights) {
@@ -863,25 +1167,23 @@ function circularMeanDirectionWeighted(degrees, weights) {
   return mean < 0 ? mean + 360 : mean;
 }
 
-function circularSpread(degrees, meanDeg) {
-  const diffs = degrees.map((d) => {
-    let diff = Math.abs(d - meanDeg) % 360;
-    return diff > 180 ? 360 - diff : diff;
-  });
-  return Math.max(...diffs, 10);
+// Hakim yöne göre saatlerin %80'ini kapsayan yön aralığı (10.–90. yüzdelik). En az 14° genişlik.
+function directionRange80(degrees, meanDeg) {
+  if (!degrees.length) return [meanDeg - 7, meanDeg + 7];
+  const diffs = degrees.map((d) => ((d - meanDeg + 540) % 360) - 180).sort((a, b) => a - b);
+  let lo = diffs[Math.floor(diffs.length * 0.1)];
+  let hi = diffs[Math.max(0, Math.ceil(diffs.length * 0.9) - 1)];
+  if (hi - lo < 14) {
+    const mid = (hi + lo) / 2;
+    lo = mid - 7;
+    hi = mid + 7;
+  }
+  return [meanDeg + lo, meanDeg + hi];
 }
 
 function polarPoint(cx, cy, r, compassDeg) {
   const rad = (compassDeg * Math.PI) / 180;
   return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
-}
-
-function formatSpeedRange(kmhMin, kmhMax, unit) {
-  const toKnot = (v) => Math.round(v * 0.539957);
-  if (unit === "kn") {
-    return kmhMax ? `${toKnot(kmhMin)}-${toKnot(kmhMax)} kt` : `${toKnot(kmhMin)}+ kt`;
-  }
-  return kmhMax ? `${kmhMin}-${kmhMax} km/s` : `${kmhMin}+ km/s`;
 }
 
 function sectorPath(cx, cy, r, startDeg, endDeg) {
@@ -891,87 +1193,276 @@ function sectorPath(cx, cy, r, startDeg, endDeg) {
   return `M ${cx} ${cy} L ${p1.x} ${p1.y} A ${r} ${r} 0 ${largeArc} 1 ${p2.x} ${p2.y} Z`;
 }
 
-function speedToOpacity(speed) {
-  const clamped = Math.min(Math.max(speed, 0), 35);
-  return 0.25 + (clamped / 35) * 0.75;
-}
-
-function WindChart({ models }) {
-  const w = 800,
-    h = 200,
-    padL = 34,
-    padR = 10,
-    padT = 14,
-    padB = 44;
-  const plotW = w - padL - padR;
-  const plotH = h - padT - padB;
-  const cy = padT + plotH / 2;
-  const radius = 34;
-
-  const n = models[0]?.series.length || 0;
-  if (n < 2) {
-    return <div className="err">Bu modeller için veri yok.</div>;
-  }
-
-  const x = (i) => padL + (i / (n - 1)) * plotW;
-  const dayStep = Math.max(1, Math.floor(n / 6));
-
-  const dots = [];
-  for (let row = 0; row <= 3; row++) {
-    const gy = padT + (row / 3) * plotH;
-    for (let col = 0; col <= 10; col++) dots.push([padL + (col / 10) * plotW, gy]);
-  }
-
-  const timeAxis = buildTimeAxis(models[0].series, x);
-
-  const glyphs = [];
-  for (let i = 0; i < n; i += dayStep) {
+function computeDailyWind(models) {
+  const days = groupDays(models[0]?.series);
+  return days.map((d) => {
     const dirs = [];
     const weights = [];
-    for (const m of models) {
-      const d = m.series[i]?.wind_direction;
-      if (d == null || Number.isNaN(Number(d))) continue;
-      dirs.push(Number(d));
-      const s = m.series[i]?.wind_speed;
-      weights.push(s != null && !Number.isNaN(Number(s)) ? Number(s) : 0);
-    }
-    if (!dirs.length) continue;
-    const meanDir = circularMeanDirectionWeighted(dirs, weights);
-    const spread = circularSpread(dirs, meanDir);
-    const avgSpeed = weights.length ? weights.reduce((a, b) => a + b, 0) / weights.length : 0;
-    const cx = x(i);
-    const tip = polarPoint(cx, cy, radius, meanDir);
-    glyphs.push({
-      i,
-      path: sectorPath(cx, cy, radius, meanDir - spread / 2, meanDir + spread / 2),
-      opacity: speedToOpacity(avgSpeed),
-      x1: cx,
-      y1: cy,
-      x2: tip.x,
-      y2: tip.y,
+    const speeds = [];
+    let gustMax = null;
+    models.forEach((m) => {
+      for (let i = d.h0; i < d.h1; i++) {
+        const s = m.series[i];
+        if (!s) continue;
+        const sp = s.wind_speed != null && !Number.isNaN(Number(s.wind_speed)) ? Number(s.wind_speed) : null;
+        const dir = s.wind_direction != null && !Number.isNaN(Number(s.wind_direction)) ? Number(s.wind_direction) : null;
+        if (sp != null) speeds.push(sp);
+        if (dir != null) {
+          dirs.push(dir);
+          weights.push(sp ?? 0);
+        }
+        const g = s.wind_gust != null && !Number.isNaN(Number(s.wind_gust)) ? Number(s.wind_gust) : null;
+        if (g != null) gustMax = gustMax == null ? g : Math.max(gustMax, g);
+      }
     });
+    if (!speeds.length) return { ...d, empty: true };
+    const mean = speeds.reduce((a, b) => a + b, 0) / speeds.length;
+    const hd = dirs.length ? circularMeanDirectionWeighted(dirs, weights) : null;
+    const range = hd != null ? directionRange80(dirs, hd) : null;
+    return { ...d, mean, gustMax: gustMax != null && gustMax > mean ? gustMax : null, hd, range };
+  });
+}
+
+function WindChart({ models, unit = "kmh" }) {
+  const w = 800,
+    h = 330,
+    padL = 34,
+    padR = 10,
+    padT = 8;
+  const plotW = w - padL - padR;
+  const days = computeDailyWind(models).filter((d) => d.h1 - d.h0 > 0);
+  const D = days.length;
+  if (!D || days.every((d) => d.empty)) {
+    return <div className="err">Bu modeller için rüzgar verisi yok.</div>;
   }
+
+  const colW = plotW / D;
+  const narrow = colW < 70;
+  const R = Math.max(12, Math.min(34, colW * 0.4));
+  const glyphY = padT + 36;
+  const compassY = glyphY + 34 + 16;
+  const barTop = compassY + 44;
+  const barBot = h - 34;
+
+  const unitLabel = unit === "kn" ? "kt" : "km/s";
+  const step = unit === "kn" ? 10 : 20;
+  const stormU = unit === "kn" ? 34 : 62;
+  const dataMax = Math.max(
+    0,
+    ...days.filter((d) => !d.empty).map((d) => toWindUnit(d.gustMax ?? d.mean, unit))
+  );
+  let vmax = Math.max(step * 2, Math.ceil(dataMax / step) * step);
+  if (dataMax >= stormU * 0.6) vmax = Math.max(vmax, Math.ceil((stormU + 1) / step) * step);
+  const showStorm = stormU <= vmax;
+  const yv = (v) => barBot - (Math.min(v, vmax) / vmax) * (barBot - barTop);
+  const ticks = [];
+  for (let v = 0; v <= vmax; v += step) ticks.push(v);
+
+  const usedIdx = new Set(days.filter((d) => !d.empty).map((d) => beaufortIndex(d.mean)));
+  const haloStyle = { paintOrder: "stroke", stroke: "var(--paper)", strokeWidth: 3 };
 
   return (
     <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
-      {dots.map(([dx, dy], i) => (
-        <circle key={i} cx={dx} cy={dy} r="1" fill="var(--line)" />
+      <defs>
+        {Array.from(usedIdx).map((k) => (
+          <pattern
+            key={k}
+            id={`wgust-${k}`}
+            width="5"
+            height="5"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
+            <rect width="5" height="5" fill={BEAUFORT[k].color} fillOpacity="0.25" />
+            <line x1="0" y1="0" x2="0" y2="5" stroke={BEAUFORT[k].color} strokeWidth="2" />
+          </pattern>
+        ))}
+      </defs>
+
+      {days.map((d, i) => (
+        <line
+          key={`wday-${d.key}`}
+          x1={padL + i * colW}
+          y1={padT}
+          x2={padL + i * colW}
+          y2={barBot}
+          stroke="var(--line)"
+          strokeDasharray="1 4"
+          strokeLinecap="round"
+          opacity={0.6}
+        />
       ))}
-      {renderTimeAxis(timeAxis, padT, h - padB, h - 30, h - 17, h - 5)}
-      {glyphs.map((g) => (
-        <g key={g.i}>
-          <path d={g.path} fill="var(--navy)" fillOpacity={g.opacity} />
-          <line
-            x1={g.x1}
-            y1={g.y1}
-            x2={g.x2}
-            y2={g.y2}
-            stroke="var(--navy)"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-          />
+
+      {ticks.map((v) => (
+        <g key={`wtick-${v}`}>
+          <line x1={padL} y1={yv(v)} x2={padL + plotW} y2={yv(v)} stroke="var(--line)" opacity={v ? 0.35 : 1} />
+          <text className="axis-label" x="4" y={yv(v) + 3}>
+            {v}
+          </text>
         </g>
       ))}
+      <text className="axis-label" x="4" y={barTop - 10}>
+        {unitLabel}
+      </text>
+
+      {showStorm && (
+        <line
+          x1={padL}
+          y1={yv(stormU)}
+          x2={padL + plotW}
+          y2={yv(stormU)}
+          stroke={STORM_RED}
+          strokeWidth="1.2"
+          strokeDasharray="5 4"
+          opacity={0.8}
+        />
+      )}
+
+      {days.map((d, i) => {
+        const cx = padL + colW * (i + 0.5);
+        const p = parseTsiTime(models[0].series[d.h0]?.time);
+        const dateText = p ? formatAxisDate(p.date) : d.key;
+        const dayText = p ? formatWeekdayAbbr3(p.date) : "";
+        const dayLabels = (
+          <>
+            <text className="axis-label" x={cx} y={h - 20} textAnchor="middle">
+              {dateText}
+            </text>
+            <text className="axis-label" x={cx} y={h - 7} textAnchor="middle">
+              {dayText}
+            </text>
+          </>
+        );
+        if (d.empty) return <g key={`wd-${d.key}`}>{dayLabels}</g>;
+
+        const k = beaufortIndex(d.mean);
+        const col = BEAUFORT[k].color;
+        const meanU = toWindUnit(d.mean, unit);
+        const gustU = d.gustMax != null ? toWindUnit(d.gustMax, unit) : null;
+        const topU = gustU ?? meanU;
+        const bw = Math.min(22, colW * 0.45);
+        const storm = Math.max(d.mean, d.gustMax ?? 0) / 3.6 >= STORM_MS;
+        const tip = polarPoint(cx, glyphY, R + 4, d.hd ?? 0);
+        const meanTxt = Math.round(meanU);
+        const gustTxt = gustU != null ? Math.round(gustU) : "—";
+        const title =
+          `${dateText} ${dayText}\n` +
+          `Kademe: ${BEAUFORT[k].label} bofor\n` +
+          (d.hd != null
+            ? `Hakim yön: ${degreesToCompass(d.hd)} (${Math.round(d.hd)}°)\n` +
+              `Yön aralığı: ${degreesToCompass(d.range[0])} – ${degreesToCompass(d.range[1])}\n`
+            : "") +
+          `Ortalama: ${formatOneDecimal(meanU)} ${unitLabel}\n` +
+          `En yüksek hamle: ${gustU != null ? formatOneDecimal(gustU) + " " + unitLabel : "veri yok"}` +
+          (storm ? "\n⚠ MGM fırtına eşiği (8 bofor) aşılıyor" : "");
+
+        return (
+          <g key={`wd-${d.key}`}>
+            <title>{title}</title>
+            <circle cx={cx} cy={glyphY} r={R} fill="none" stroke="var(--line)" strokeDasharray="2 3" />
+            {d.hd != null && (
+              <>
+                <path
+                  d={sectorPath(cx, glyphY, R, d.range[0], d.range[1])}
+                  fill={col}
+                  fillOpacity={0.9}
+                  stroke="var(--paper)"
+                  strokeWidth={1.5}
+                />
+                <line
+                  x1={cx}
+                  y1={glyphY}
+                  x2={tip.x}
+                  y2={tip.y}
+                  stroke="var(--ink)"
+                  strokeWidth={narrow ? 1.5 : 2}
+                  strokeLinecap="round"
+                />
+              </>
+            )}
+            <circle cx={cx} cy={glyphY} r={narrow ? 1.8 : 2.5} fill="var(--ink)" />
+            <text
+              className="axis-label"
+              x={cx}
+              y={compassY}
+              textAnchor="middle"
+              style={{ fill: "var(--ink)", fontWeight: 500, fontSize: narrow ? 9 : 11 }}
+            >
+              {d.hd != null ? degreesToCompass(d.hd) : "—"}
+            </text>
+
+            {gustU != null && (
+              <rect
+                x={cx - bw / 2}
+                y={yv(gustU)}
+                width={bw}
+                height={Math.max(0, yv(meanU) - yv(gustU))}
+                fill={`url(#wgust-${k})`}
+                rx={3}
+              />
+            )}
+            <rect
+              x={cx - bw / 2}
+              y={yv(meanU) + (gustU != null ? 2 : 0)}
+              width={bw}
+              height={Math.max(1, barBot - yv(meanU) - (gustU != null ? 2 : 0))}
+              fill={col}
+              rx={3}
+            />
+            <text
+              className="axis-label"
+              x={cx}
+              y={yv(topU) - 5}
+              textAnchor="middle"
+              style={{ ...haloStyle, fill: "var(--ink)", fontSize: narrow ? 9 : 11 }}
+            >
+              <tspan style={{ fontWeight: 500 }}>{meanTxt}</tspan>
+              <tspan style={{ fill: "var(--ink-soft)" }}>{narrow ? `/${gustTxt}` : ` / ${gustTxt}`}</tspan>
+            </text>
+            {storm && (
+              <text
+                x={cx}
+                y={yv(topU) - (narrow ? 17 : 20)}
+                textAnchor="middle"
+                className="axis-label"
+                style={{ ...haloStyle, fill: STORM_RED, fontWeight: 600, fontSize: narrow ? 10 : 11 }}
+              >
+                {narrow ? "⚠" : "⚠ fırtına"}
+              </text>
+            )}
+            {dayLabels}
+          </g>
+        );
+      })}
     </svg>
+  );
+}
+
+function WindLegend({ unit = "kmh" }) {
+  const unitLabel = unit === "kn" ? "knot" : "km/s";
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div className="panel-sub" style={{ fontSize: 10, marginBottom: 4 }}>
+        Günlük ortalama hız — bofor · {unitLabel} · çubuk: dolu = ortalama, taralı = en yüksek hamle
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap" }}>
+        {BEAUFORT.map((b) => (
+          <div
+            key={b.label}
+            className="panel-sub"
+            style={{ flex: "1 1 64px", textAlign: "center", fontSize: 9.5, lineHeight: 1.35, padding: "0 1px" }}
+          >
+            <div style={{ height: 10, borderRadius: 2, background: b.color, marginBottom: 3 }} />
+            {b.label}
+            <br />
+            {unit === "kn" ? b.kn : b.kmh}
+          </div>
+        ))}
+      </div>
+      <div className="panel-sub" style={{ fontSize: 10, marginTop: 8 }}>
+        <span style={{ color: STORM_RED }}>- - -</span> MGM fırtına eşiği: 8 bofor · 17.2 m/s ≈ 62 km/s ≈ 34 knot
+        (kaynak: MGM Beaufort rüzgâr ıskalası)
+      </div>
+    </div>
   );
 }
