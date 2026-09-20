@@ -23,6 +23,7 @@ export default function SehirPage() {
   const [results, setResults] = useState(null);
   const [fav, setFav] = useState(false);
   const [windUnit, setWindUnit] = useState("kmh");
+  const [windStep, setWindStep] = useState(3);
   const [tableTimeIndex, setTableTimeIndex] = useState(0);
   const [tableInterval, setTableInterval] = useState(1);
   const [precipInterval, setPrecipInterval] = useState(1);
@@ -88,6 +89,11 @@ export default function SehirPage() {
   useEffect(() => {
     jumpToNowRef.current = true;
   }, [period, location]);
+
+  // Rüzgar tablosu adımı periyoda göre varsayılana döner (Saatlik 1s, 3 gün 3s, 7/16 gün 6s)
+  useEffect(() => {
+    setWindStep(defaultWindStep(period));
+  }, [period]);
 
   useEffect(() => {
     if (!forecast) return;
@@ -319,7 +325,22 @@ export default function SehirPage() {
             <div className="panel-head">
               <div className="panel-head-left">
                 <div className="panel-title">Rüzgar</div>
-                <div className="panel-sub">Günlük hakim yön, yön aralığı, ortalama hız ve hamle</div>
+                <div className="panel-sub">
+                  {status === "ok" ? `${forecast.models.length} model · saatlik ortalama hız, hamle ve yön` : "saatlik ortalama hız, hamle ve yön"}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="unit-toggle">
+                {WIND_STEPS.map((hrs) => (
+                  <button
+                    key={hrs}
+                    type="button"
+                    className={windStep === hrs ? "active" : ""}
+                    onClick={() => setWindStep(hrs)}
+                  >
+                    {hrs}s
+                  </button>
+                ))}
               </div>
               <div className="unit-toggle">
                 <button
@@ -337,12 +358,13 @@ export default function SehirPage() {
                   knot
                 </button>
               </div>
+              </div>
             </div>
             {status === "loading" && <div className="loading">Veri yükleniyor…</div>}
             {status === "error" && <div className="err">Veri alınamadı — bağlantını kontrol et.</div>}
             {status === "ok" && (
               <>
-                <WindChart models={forecast.models} unit={windUnit} />
+                <WindMatrix models={forecast.models} unit={windUnit} step={windStep} />
                 <WindLegend unit={windUnit} />
               </>
             )}
@@ -1183,15 +1205,26 @@ function AgreementLegend({ threshold, onChange }) {
 }
 
 // ---------------------------------------------------------------------------
-// Rüzgar — günlük grafik
-// Her gün kendi sütununda: taralı dilim = yön aralığı (saatlerin %80'i), koyu çizgi = hakim yön
-// (rüzgarın geldiği yön, hızla ağırlıklı), renk = günlük ortalama hız (Beaufort/MGM),
-// çubuk = ortalama hız (dolu) + gün içi en yüksek hamle (taralı uzantı).
+// Rüzgar — model × saat tablosu
+// Her satır bir model, her sütun bir saat (1/3/6 saatlik adım). Hücrede o saat için verilen
+// ORTALAMA rüzgar hızı var (10 m; literatürde 10 dakikalık ortalama), hamle ise o saatteki en
+// yüksek ani rüzgar. Hücre rengi = ortalama hızın bofor kademesi (MGM ıskalası),
+// ok = rüzgarın estiği yön, büyük sayı = ortalama hız, küçük sayı = hamle. En alttaki "uyum" satırı modellerin o saatte
+// yön ve hızda uyuşup uyuşmadığını gösterir.
 // ---------------------------------------------------------------------------
 
 const KN_PER_KMH = 0.539957;
 const STORM_MS = 17.2; // MGM: 8 bofor (fırtına) alt sınırı — 17.2 m/s ≈ 62 km/s ≈ 34 knot
+const STORM_KMH = STORM_MS * 3.6;
 const STORM_RED = "#B8322A";
+
+// Uyum kriterleri (knot cinsinden)
+const WIND_CALM_KT = 3; // bu hızın altındaki modeller yön karşılaştırmasına katılmaz
+const WIND_DIR_PARTIAL = 90; // en büyük yön farkı ≥ 90° → en az "kısmen"
+const WIND_DIR_SPLIT = 135; // ≥ 135° → "ayrışıyor"
+const WIND_SPD_PARTIAL = 10; // en büyük hız farkı ≥ 10 kt → en az "kısmen"
+const WIND_SPD_SPLIT = 20; // ≥ 20 kt → "ayrışıyor"
+const WIND_STEPS = [1, 3, 6];
 
 // MGM Beaufort rüzgâr ıskalası (10 m, açık ve düz alan) — m/s alt sınırları.
 // Renkler griden koyu kahveye: 0–4 bofor yavaş (gri→kum), turuncu tonlar 5 bofordan sonra.
@@ -1221,287 +1254,274 @@ function toWindUnit(kmh, unit) {
   return unit === "kn" ? kmh * KN_PER_KMH : kmh;
 }
 
-function circularMeanDirectionWeighted(degrees, weights) {
-  let sumSin = 0,
-    sumCos = 0;
-  degrees.forEach((d, i) => {
-    const rad = (d * Math.PI) / 180;
-    const w = weights[i] || 0.01;
-    sumSin += Math.sin(rad) * w;
-    sumCos += Math.cos(rad) * w;
-  });
-  let mean = (Math.atan2(sumSin, sumCos) * 180) / Math.PI;
-  return mean < 0 ? mean + 360 : mean;
+function numOrNull(v) {
+  return v != null && !Number.isNaN(Number(v)) ? Number(v) : null;
 }
 
-// Hakim yöne göre saatlerin %80'ini kapsayan yön aralığı (10.–90. yüzdelik). En az 14° genişlik.
-function directionRange80(degrees, meanDeg) {
-  if (!degrees.length) return [meanDeg - 7, meanDeg + 7];
-  const diffs = degrees.map((d) => ((d - meanDeg + 540) % 360) - 180).sort((a, b) => a - b);
-  let lo = diffs[Math.floor(diffs.length * 0.1)];
-  let hi = diffs[Math.max(0, Math.ceil(diffs.length * 0.9) - 1)];
-  if (hi - lo < 14) {
-    const mid = (hi + lo) / 2;
-    lo = mid - 7;
-    hi = mid + 7;
-  }
-  return [meanDeg + lo, meanDeg + hi];
+// İki yön arasındaki en küçük açı farkı (0–180°)
+function angleDiff(a, b) {
+  const d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
 }
 
-function polarPoint(cx, cy, r, compassDeg) {
-  const rad = (compassDeg * Math.PI) / 180;
-  return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
+// Varsayılan adım: Saatlik → 1s, 3 gün → 3s, 7/16 gün → 6s
+function defaultWindStep(period) {
+  if (period === "hourly") return 1;
+  if (period === "3d") return 3;
+  return 6;
 }
 
-function sectorPath(cx, cy, r, startDeg, endDeg) {
-  const p1 = polarPoint(cx, cy, r, startDeg);
-  const p2 = polarPoint(cx, cy, r, endDeg);
-  const largeArc = endDeg - startDeg > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${p1.x} ${p1.y} A ${r} ${r} 0 ${largeArc} 1 ${p2.x} ${p2.y} Z`;
-}
+// Bir saat için modeller arası uyum. Dönüş: { level: "ok"|"partial"|"split"|"na", reasons: [...] }
+function computeWindAgreementAt(models, i) {
+  const pts = models
+    .map((m) => {
+      const s = m.series[i];
+      const spd = numOrNull(s?.wind_speed);
+      if (spd == null) return null;
+      return { label: m.label, kt: spd * KN_PER_KMH, dir: numOrNull(s?.wind_direction) };
+    })
+    .filter(Boolean);
+  if (pts.length < 2) return { level: "na", reasons: ["Karşılaştırma için en az 2 modelin verisi gerekiyor."] };
 
-function computeDailyWind(models) {
-  const days = groupDays(models[0]?.series);
-  return days.map((d) => {
-    const dirs = [];
-    const weights = [];
-    const speeds = [];
-    let gustMax = null;
-    models.forEach((m) => {
-      for (let i = d.h0; i < d.h1; i++) {
-        const s = m.series[i];
-        if (!s) continue;
-        const sp = s.wind_speed != null && !Number.isNaN(Number(s.wind_speed)) ? Number(s.wind_speed) : null;
-        const dir = s.wind_direction != null && !Number.isNaN(Number(s.wind_direction)) ? Number(s.wind_direction) : null;
-        if (sp != null) speeds.push(sp);
-        if (dir != null) {
-          dirs.push(dir);
-          weights.push(sp ?? 0);
-        }
-        const g = s.wind_gust != null && !Number.isNaN(Number(s.wind_gust)) ? Number(s.wind_gust) : null;
-        if (g != null) gustMax = gustMax == null ? g : Math.max(gustMax, g);
+  const reasons = [];
+
+  // Hız farkı
+  const slow = pts.reduce((a, b) => (b.kt < a.kt ? b : a));
+  const fast = pts.reduce((a, b) => (b.kt > a.kt ? b : a));
+  const spdSpread = fast.kt - slow.kt;
+
+  // Yön farkı (sakin modeller hariç)
+  const calm = pts.filter((p) => p.kt < WIND_CALM_KT || p.dir == null);
+  const dirPts = pts.filter((p) => p.kt >= WIND_CALM_KT && p.dir != null);
+  let dirSpread = 0;
+  let pair = null;
+  for (let a = 0; a < dirPts.length; a++) {
+    for (let b = a + 1; b < dirPts.length; b++) {
+      const d = angleDiff(dirPts[a].dir, dirPts[b].dir);
+      if (d > dirSpread) {
+        dirSpread = d;
+        pair = [dirPts[a], dirPts[b]];
       }
-    });
-    if (!speeds.length) return { ...d, empty: true };
-    const mean = speeds.reduce((a, b) => a + b, 0) / speeds.length;
-    const hd = dirs.length ? circularMeanDirectionWeighted(dirs, weights) : null;
-    const range = hd != null ? directionRange80(dirs, hd) : null;
-    return { ...d, mean, gustMax: gustMax != null && gustMax > mean ? gustMax : null, hd, range };
-  });
-}
-
-function WindChart({ models, unit = "kmh" }) {
-  const w = 800,
-    h = 330,
-    padL = 34,
-    padR = 10,
-    padT = 8;
-  const plotW = w - padL - padR;
-  const days = computeDailyWind(models).filter((d) => d.h1 - d.h0 > 0);
-  const D = days.length;
-  if (!D || days.every((d) => d.empty)) {
-    return <div className="err">Bu modeller için rüzgar verisi yok.</div>;
+    }
   }
 
-  const colW = plotW / D;
-  const narrow = colW < 70;
-  const R = Math.max(12, Math.min(34, colW * 0.4));
-  const glyphY = padT + 36;
-  const compassY = glyphY + 34 + 16;
-  const barTop = compassY + 44;
-  const barBot = h - 34;
+  const dirBad = dirSpread >= WIND_DIR_PARTIAL;
+  const spdBad = spdSpread >= WIND_SPD_PARTIAL;
+  const split = (dirBad && spdBad) || dirSpread >= WIND_DIR_SPLIT || spdSpread >= WIND_SPD_SPLIT;
+  const level = split ? "split" : dirBad || spdBad ? "partial" : "ok";
 
-  const unitLabel = unit === "kn" ? "kt" : "km/s";
-  const step = unit === "kn" ? 10 : 20;
-  const stormU = unit === "kn" ? 34 : 62;
-  const dataMax = Math.max(
-    0,
-    ...days.filter((d) => !d.empty).map((d) => toWindUnit(d.gustMax ?? d.mean, unit))
+  if (pair) {
+    reasons.push(
+      `Yön: ${pair[0].label} ${degreesToCompass(pair[0].dir)} ↔ ${pair[1].label} ${degreesToCompass(pair[1].dir)}, fark ${Math.round(dirSpread)}°` +
+        (dirBad ? ` (≥ ${WIND_DIR_PARTIAL}°)` : "")
+    );
+  } else {
+    reasons.push("Yön: karşılaştırılacak yeterli model yok (rüzgar sakin).");
+  }
+  reasons.push(
+    `Ortalama hız: ${slow.label} ${Math.round(slow.kt)} kt ↔ ${fast.label} ${Math.round(fast.kt)} kt, fark ${Math.round(spdSpread)} kt` +
+      (spdBad ? ` (≥ ${WIND_SPD_PARTIAL} kt)` : "")
   );
-  let vmax = Math.max(step * 2, Math.ceil(dataMax / step) * step);
-  if (dataMax >= stormU * 0.6) vmax = Math.max(vmax, Math.ceil((stormU + 1) / step) * step);
-  const showStorm = stormU <= vmax;
-  const yv = (v) => barBot - (Math.min(v, vmax) / vmax) * (barBot - barTop);
-  const ticks = [];
-  for (let v = 0; v <= vmax; v += step) ticks.push(v);
+  if (calm.length) {
+    reasons.push(`${joinTr(calm.map((p) => p.label))} sakin (< ${WIND_CALM_KT} kt); yön karşılaştırmasına katılmadı.`);
+  }
+  return { level, reasons };
+}
 
-  const usedIdx = new Set(days.filter((d) => !d.empty).map((d) => beaufortIndex(d.mean)));
-  const haloStyle = { paintOrder: "stroke", stroke: "var(--paper)", strokeWidth: 3 };
+const WIND_AGREE_STYLE = {
+  ok: { bg: "#DDE0DB", ink: "var(--ink)", mark: "✓", text: "hemfikir" },
+  partial: { bg: "#F0C98A", ink: "var(--ink)", mark: "~", text: "kısmen" },
+  split: { bg: "var(--amber)", ink: "#FFFFFF", mark: "≠", text: "ayrışıyor" },
+  na: { bg: "transparent", ink: "var(--ink-faint)", mark: "·", text: "veri yok" },
+};
+
+function WindArrow({ dir, color }) {
+  // Ok rüzgarın ESTİĞİ yönü gösterir (geldiği yön + 180°)
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" style={{ transform: `rotate(${dir + 180}deg)`, display: "block", margin: "0 auto" }} aria-hidden="true">
+      <path d="M12 3 L18 13 H13.5 V21 H10.5 V13 H6 Z" fill={color} />
+    </svg>
+  );
+}
+
+function WindMatrix({ models, unit = "kmh", step = 1 }) {
+  const scrollRef = useRef(null);
+  const [info, setInfo] = useState(null);
+  const series0 = models[0]?.series || [];
+  const cols = [];
+  series0.forEach((s, i) => {
+    const p = parseTsiTime(s.time);
+    if (p && p.hour % step === 0) cols.push({ i, p });
+  });
+  const nowIdx = findNowIndex(series0);
+  const nowCol = nowIdx >= 0 ? Math.floor(nowIdx / step) * step : -1;
+  const unitLabel = unit === "kn" ? "kt" : "km/s";
+  const agreement = cols.map((c) => computeWindAgreementAt(models, c.i));
+
+  // Açılışta ve adım değişince tablo "şimdi"ye kaydırılır
+  useEffect(() => {
+    const box = scrollRef.current;
+    if (!box) return;
+    const el = box.querySelector('[data-now="1"]');
+    if (el) box.scrollLeft = Math.max(0, el.offsetLeft - 110);
+  }, [step, models.length, series0.length]);
+
+  const cellW = 46;
+  const stickyTd = {
+    position: "sticky",
+    left: 0,
+    zIndex: 1,
+    background: "var(--paper)",
+    boxShadow: "3px 0 0 var(--paper)",
+    textAlign: "left",
+    padding: "0 8px 0 0",
+    whiteSpace: "nowrap",
+    fontFamily: '"IBM Plex Mono", monospace',
+    fontSize: 11,
+  };
+
+  function timeText(p) {
+    return `${formatAxisDate(p.date)} ${formatWeekdayAbbr3(p.date)} ${formatHourLabel(p.hour)}`;
+  }
 
   return (
-    <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
-      <defs>
-        {Array.from(usedIdx).map((k) => (
-          <pattern
-            key={k}
-            id={`wgust-${k}`}
-            width="5"
-            height="5"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(45)"
-          >
-            <rect width="5" height="5" fill={BEAUFORT[k].color} fillOpacity="0.25" />
-            <line x1="0" y1="0" x2="0" y2="5" stroke={BEAUFORT[k].color} strokeWidth="2" />
-          </pattern>
-        ))}
-      </defs>
-
-      {days.map((d, i) => (
-        <line
-          key={`wday-${d.key}`}
-          x1={padL + i * colW}
-          y1={padT}
-          x2={padL + i * colW}
-          y2={barBot}
-          stroke="var(--line)"
-          strokeDasharray="1 4"
-          strokeLinecap="round"
-          opacity={0.6}
-        />
-      ))}
-
-      {ticks.map((v) => (
-        <g key={`wtick-${v}`}>
-          <line x1={padL} y1={yv(v)} x2={padL + plotW} y2={yv(v)} stroke="var(--line)" opacity={v ? 0.35 : 1} />
-          <text className="axis-label" x="4" y={yv(v) + 3}>
-            {v}
-          </text>
-        </g>
-      ))}
-      <text className="axis-label" x="4" y={barTop - 10}>
-        {unitLabel}
-      </text>
-
-      {showStorm && (
-        <line
-          x1={padL}
-          y1={yv(stormU)}
-          x2={padL + plotW}
-          y2={yv(stormU)}
-          stroke={STORM_RED}
-          strokeWidth="1.2"
-          strokeDasharray="5 4"
-          opacity={0.8}
-        />
-      )}
-
-      {days.map((d, i) => {
-        const cx = padL + colW * (i + 0.5);
-        const p = parseTsiTime(models[0].series[d.h0]?.time);
-        const dateText = p ? formatAxisDate(p.date) : d.key;
-        const dayText = p ? formatWeekdayAbbr3(p.date) : "";
-        const dayLabels = (
-          <>
-            <text className="axis-label" x={cx} y={h - 20} textAnchor="middle">
-              {dateText}
-            </text>
-            <text className="axis-label" x={cx} y={h - 7} textAnchor="middle">
-              {dayText}
-            </text>
-          </>
-        );
-        if (d.empty) return <g key={`wd-${d.key}`}>{dayLabels}</g>;
-
-        const k = beaufortIndex(d.mean);
-        const col = BEAUFORT[k].color;
-        const meanU = toWindUnit(d.mean, unit);
-        const gustU = d.gustMax != null ? toWindUnit(d.gustMax, unit) : null;
-        const topU = gustU ?? meanU;
-        const bw = Math.min(22, colW * 0.45);
-        const storm = Math.max(d.mean, d.gustMax ?? 0) / 3.6 >= STORM_MS;
-        const tip = polarPoint(cx, glyphY, R + 4, d.hd ?? 0);
-        const meanTxt = Math.round(meanU);
-        const gustTxt = gustU != null ? Math.round(gustU) : "—";
-        const title =
-          `${dateText} ${dayText}\n` +
-          `Kademe: ${BEAUFORT[k].label} bofor\n` +
-          (d.hd != null
-            ? `Hakim yön: ${degreesToCompass(d.hd)} (${Math.round(d.hd)}°)\n` +
-              `Yön aralığı: ${degreesToCompass(d.range[0])} – ${degreesToCompass(d.range[1])}\n`
-            : "") +
-          `Ortalama: ${formatOneDecimal(meanU)} ${unitLabel}\n` +
-          `En yüksek hamle: ${gustU != null ? formatOneDecimal(gustU) + " " + unitLabel : "veri yok"}` +
-          (storm ? "\n⚠ MGM fırtına eşiği (8 bofor) aşılıyor" : "");
-
-        return (
-          <g key={`wd-${d.key}`}>
-            <title>{title}</title>
-            <circle cx={cx} cy={glyphY} r={R} fill="none" stroke="var(--line)" strokeDasharray="2 3" />
-            {d.hd != null && (
-              <>
-                <path
-                  d={sectorPath(cx, glyphY, R, d.range[0], d.range[1])}
-                  fill={col}
-                  fillOpacity={0.9}
-                  stroke="var(--paper)"
-                  strokeWidth={1.5}
-                />
-                <line
-                  x1={cx}
-                  y1={glyphY}
-                  x2={tip.x}
-                  y2={tip.y}
-                  stroke="var(--ink)"
-                  strokeWidth={narrow ? 1.5 : 2}
-                  strokeLinecap="round"
-                />
-              </>
-            )}
-            <circle cx={cx} cy={glyphY} r={narrow ? 1.8 : 2.5} fill="var(--ink)" />
-            <text
-              className="axis-label"
-              x={cx}
-              y={compassY}
-              textAnchor="middle"
-              style={{ fill: "var(--ink)", fontWeight: 500, fontSize: narrow ? 9 : 11 }}
-            >
-              {d.hd != null ? degreesToCompass(d.hd) : "—"}
-            </text>
-
-            {gustU != null && (
-              <rect
-                x={cx - bw / 2}
-                y={yv(gustU)}
-                width={bw}
-                height={Math.max(0, yv(meanU) - yv(gustU))}
-                fill={`url(#wgust-${k})`}
-                rx={3}
-              />
-            )}
-            <rect
-              x={cx - bw / 2}
-              y={yv(meanU) + (gustU != null ? 2 : 0)}
-              width={bw}
-              height={Math.max(1, barBot - yv(meanU) - (gustU != null ? 2 : 0))}
-              fill={col}
-              rx={3}
-            />
-            <text
-              className="axis-label"
-              x={cx}
-              y={yv(topU) - 5}
-              textAnchor="middle"
-              style={{ ...haloStyle, fill: "var(--ink)", fontSize: narrow ? 9 : 11 }}
-            >
-              <tspan style={{ fontWeight: 500 }}>{meanTxt}</tspan>
-              <tspan style={{ fill: "var(--ink-soft)" }}>{narrow ? `/${gustTxt}` : ` / ${gustTxt}`}</tspan>
-            </text>
-            {storm && (
-              <text
-                x={cx}
-                y={yv(topU) - (narrow ? 17 : 20)}
-                textAnchor="middle"
-                className="axis-label"
-                style={{ ...haloStyle, fill: STORM_RED, fontWeight: 600, fontSize: narrow ? 10 : 11 }}
-              >
-                {narrow ? "⚠" : "⚠ fırtına"}
-              </text>
-            )}
-            {dayLabels}
-          </g>
-        );
-      })}
-    </svg>
+    <div style={{ marginTop: 14 }}>
+      <div ref={scrollRef} style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 4 }}>
+        <table style={{ borderCollapse: "separate", borderSpacing: 2, fontFamily: '"IBM Plex Mono", monospace', width: "auto" }}>
+          <thead>
+            <tr>
+              <th style={{ ...stickyTd, fontSize: 10, color: "var(--ink-soft)", fontWeight: 400 }}>TSİ</th>
+              {cols.map((c, k) => {
+                const newDay = k === 0 || c.p.hour < step || cols[k - 1].p.date.getUTCDate() !== c.p.date.getUTCDate();
+                const isNow = c.i === nowCol;
+                return (
+                  <th
+                    key={c.i}
+                    style={{
+                      minWidth: cellW,
+                      fontSize: 10,
+                      fontWeight: isNow ? 600 : 400,
+                      color: isNow ? "var(--teal)" : "var(--ink-soft)",
+                      textAlign: "center",
+                      borderLeft: newDay && k > 0 ? "1px dashed var(--line)" : "none",
+                      lineHeight: 1.25,
+                      padding: "0 0 2px",
+                      verticalAlign: "bottom",
+                    }}
+                  >
+                    {newDay ? (
+                      <>
+                        {formatAxisDate(c.p.date)} {formatWeekdayAbbr3(c.p.date)}
+                        <br />
+                      </>
+                    ) : (
+                      <br />
+                    )}
+                    {String(c.p.hour).padStart(2, "0")}
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {models.map((m) => (
+              <tr key={m.id}>
+                <td style={stickyTd}>
+                  <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: m.color, marginRight: 6 }} />
+                  {m.label}
+                </td>
+                {cols.map((c) => {
+                  const s = m.series[c.i];
+                  const spd = numOrNull(s?.wind_speed);
+                  const dir = numOrNull(s?.wind_direction);
+                  const gust = numOrNull(s?.wind_gust);
+                  const isNow = c.i === nowCol;
+                  if (spd == null) {
+                    return (
+                      <td
+                        key={c.i}
+                        data-now={isNow ? "1" : undefined}
+                        style={{ width: cellW, height: 44, textAlign: "center", borderRadius: 4, border: "1px dashed var(--line)", color: "var(--ink-faint)", fontSize: 10 }}
+                        title={`${m.label} · ${timeText(c.p)}: veri yok`}
+                      >
+                        —
+                      </td>
+                    );
+                  }
+                  const k = beaufortIndex(spd);
+                  const ink = k >= 5 ? "#FFFFFF" : "var(--ink)";
+                  const storm = Math.max(spd, gust ?? 0) >= STORM_KMH;
+                  const detail =
+                    `${m.label} · ${timeText(c.p)} TSİ\n` +
+                    `Ortalama hız: ${formatOneDecimal(toWindUnit(spd, unit))} ${unitLabel} (${BEAUFORT[k].label} bofor)\n` +
+                    `Hamle (en yüksek ani rüzgar): ${gust != null ? formatOneDecimal(toWindUnit(gust, unit)) + " " + unitLabel : "veri yok"}\n` +
+                    `Yön: ${dir != null ? `${degreesToCompass(dir)} (${Math.round(dir)}°, rüzgarın geldiği yön)` : "veri yok"}` +
+                    (storm ? "\n⚠ MGM fırtına eşiği (8 bofor) aşılıyor" : "");
+                  return (
+                    <td
+                      key={c.i}
+                      data-now={isNow ? "1" : undefined}
+                      title={detail}
+                      onClick={() => setInfo(detail)}
+                      style={{
+                        width: cellW,
+                        height: 44,
+                        textAlign: "center",
+                        verticalAlign: "middle",
+                        borderRadius: 4,
+                        background: BEAUFORT[k].color,
+                        color: ink,
+                        cursor: "pointer",
+                        lineHeight: 1.1,
+                        boxShadow: storm ? `inset 0 0 0 2px ${STORM_RED}` : isNow ? "inset 0 0 0 1.5px var(--teal)" : "none",
+                      }}
+                    >
+                      {dir != null && <WindArrow dir={dir} color={ink} />}
+                      <div style={{ fontSize: 11, fontWeight: 500 }}>{Math.round(toWindUnit(spd, unit))}</div>
+                      <div style={{ fontSize: 9, opacity: 0.8 }}>{gust != null ? Math.round(toWindUnit(gust, unit)) : "—"}</div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+            <tr>
+              <td style={{ ...stickyTd, color: "var(--ink-soft)" }}>uyum</td>
+              {cols.map((c, k) => {
+                const a = agreement[k];
+                const st = WIND_AGREE_STYLE[a.level];
+                const text = `${timeText(c.p)} TSİ — modeller ${st.text}\n` + a.reasons.join("\n");
+                return (
+                  <td
+                    key={c.i}
+                    title={text}
+                    onClick={() => setInfo(text)}
+                    style={{
+                      width: cellW,
+                      height: 22,
+                      textAlign: "center",
+                      borderRadius: 4,
+                      background: st.bg,
+                      color: st.ink,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {st.mark}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div
+        className="panel-sub"
+        style={{ fontSize: 11, marginTop: 6, minHeight: 16, whiteSpace: "pre-line", color: info ? "var(--ink)" : "var(--ink-soft)" }}
+      >
+        {info || "Ayrıntı için bir hücrenin üzerine gel ya da dokun. Tablo yatay kaydırılabilir."}
+      </div>
+    </div>
   );
 }
 
@@ -1510,7 +1530,7 @@ function WindLegend({ unit = "kmh" }) {
   return (
     <div style={{ marginTop: 10 }}>
       <div className="panel-sub" style={{ fontSize: 10, marginBottom: 4 }}>
-        Günlük ortalama hız — bofor · {unitLabel} · çubuk: dolu = ortalama, taralı = en yüksek hamle
+        Hücre rengi — ortalama rüzgar hızı (bofor) · {unitLabel} · ok: rüzgarın estiği yön · üstte ortalama hız, altta hamle (o saatteki en yüksek ani rüzgar)
       </div>
       <div style={{ display: "flex", flexWrap: "wrap" }}>
         {BEAUFORT.map((b) => (
@@ -1526,9 +1546,13 @@ function WindLegend({ unit = "kmh" }) {
           </div>
         ))}
       </div>
-      <div className="panel-sub" style={{ fontSize: 10, marginTop: 8 }}>
-        <span style={{ color: STORM_RED }}>- - -</span> MGM fırtına eşiği: 8 bofor · 17.2 m/s ≈ 62 km/s ≈ 34 knot
-        (kaynak: MGM Beaufort rüzgâr ıskalası)
+      <div className="panel-sub" style={{ fontSize: 10, marginTop: 8, lineHeight: 1.5 }}>
+        <strong style={{ fontWeight: 600 }}>Uyum:</strong> ✓ hemfikir · ~ kısmen (yön farkı ≥ {WIND_DIR_PARTIAL}° veya hız farkı ≥{" "}
+        {WIND_SPD_PARTIAL} kt) · ≠ ayrışıyor (ikisi birden, ya da ≥ {WIND_DIR_SPLIT}° / ≥ {WIND_SPD_SPLIT} kt). {WIND_CALM_KT} kt
+        altındaki sakin rüzgarda yön karşılaştırılmaz.
+        <br />
+        <span style={{ color: STORM_RED }}>▢</span> Kırmızı çerçeve: MGM fırtına eşiği aşılıyor — 8 bofor · 17.2 m/s ≈ 62 km/s ≈
+        34 knot (kaynak: MGM Beaufort rüzgâr ıskalası)
       </div>
     </div>
   );
