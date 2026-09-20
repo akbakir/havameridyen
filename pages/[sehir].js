@@ -24,6 +24,7 @@ export default function SehirPage() {
   const [fav, setFav] = useState(false);
   const [windUnit, setWindUnit] = useState("kmh");
   const [windStep, setWindStep] = useState(3);
+  const [cloudStep, setCloudStep] = useState(3);
   const [tableTimeIndex, setTableTimeIndex] = useState(0);
   const [tableInterval, setTableInterval] = useState(1);
   const [precipInterval, setPrecipInterval] = useState(1);
@@ -90,9 +91,11 @@ export default function SehirPage() {
     jumpToNowRef.current = true;
   }, [period, location]);
 
-  // Rüzgar tablosu adımı periyoda göre varsayılana döner (Saatlik 1s, 3 gün 3s, 7/16 gün 6s)
+  // Rüzgar ve bulutluluk tablolarının adımı periyoda göre varsayılana döner
+  // (Saatlik 1s, 3 gün 3s, 7/16 gün 6s)
   useEffect(() => {
     setWindStep(defaultWindStep(period));
+    setCloudStep(defaultWindStep(period));
   }, [period]);
 
   useEffect(() => {
@@ -280,6 +283,7 @@ export default function SehirPage() {
             {status === "ok" && (
               <>
                 <Chart models={forecast.models} />
+                <AgreeLegend models={forecast.models} param="temp" />
                 <CoverageNote models={forecast.models} />
               </>
             )}
@@ -366,6 +370,79 @@ export default function SehirPage() {
               <>
                 <WindMatrix models={forecast.models} unit={windUnit} step={windStep} />
                 <WindLegend unit={windUnit} />
+              </>
+            )}
+          </div>
+
+          <div className="panel">
+            <div className="panel-head">
+              <div className="panel-head-left">
+                <div className="panel-title">Nem</div>
+                <div className="panel-sub">
+                  {status === "ok" ? `bağıl nem · % · ${forecast.models.length} model` : "bağıl nem · %"}
+                </div>
+              </div>
+            </div>
+            {status === "loading" && <div className="loading">Veri yükleniyor…</div>}
+            {status === "error" && <div className="err">Veri alınamadı — bağlantını kontrol et.</div>}
+            {status === "ok" && (
+              <>
+                <HumidityChart models={forecast.models} />
+                <AgreeLegend models={forecast.models} param="humidity" />
+                <CoverageNote models={forecast.models} field="humidity" />
+              </>
+            )}
+          </div>
+
+          <div className="panel">
+            <div className="panel-head">
+              <div className="panel-head-left">
+                <div className="panel-title">Basınç</div>
+                <div className="panel-sub">
+                  {status === "ok"
+                    ? `deniz seviyesi · hPa · ${forecast.models.length} model`
+                    : "deniz seviyesi · hPa"}
+                </div>
+              </div>
+            </div>
+            {status === "loading" && <div className="loading">Veri yükleniyor…</div>}
+            {status === "error" && <div className="err">Veri alınamadı — bağlantını kontrol et.</div>}
+            {status === "ok" && (
+              <>
+                <PressureChart models={forecast.models} />
+                <PressureLegend models={forecast.models} />
+                <CoverageNote models={forecast.models} field="pressure" />
+              </>
+            )}
+          </div>
+
+          <div className="panel">
+            <div className="panel-head">
+              <div className="panel-head-left">
+                <div className="panel-title">Bulutluluk</div>
+                <div className="panel-sub">
+                  {status === "ok" ? `${forecast.models.length} model · gökyüzünün kaplı oranı` : "gökyüzünün kaplı oranı"}
+                </div>
+              </div>
+              <div className="unit-toggle">
+                {WIND_STEPS.map((hrs) => (
+                  <button
+                    key={hrs}
+                    type="button"
+                    className={cloudStep === hrs ? "active" : ""}
+                    onClick={() => setCloudStep(hrs)}
+                  >
+                    {hrs}s
+                  </button>
+                ))}
+              </div>
+            </div>
+            {status === "loading" && <div className="loading">Veri yükleniyor…</div>}
+            {status === "error" && <div className="err">Veri alınamadı — bağlantını kontrol et.</div>}
+            {status === "ok" && (
+              <>
+                <CloudMatrix models={forecast.models} step={cloudStep} />
+                <CloudLegend models={forecast.models} />
               </>
             )}
           </div>
@@ -609,8 +686,11 @@ function Chart({ models }) {
   const timeAxis = buildTimeAxis(models[0].series, x);
   const cov = computeCoverage(models, "temp");
 
+  const cellW = plotW / (n - 1);
+  const showStrip = models.length > 1; // tek model seçiliyse karşılaştıracak bir şey yok
+
   return (
-    <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
+    <svg className="chart" viewBox={`0 0 ${w} ${h + (showStrip ? AGREE_STRIP_EXTRA : 0)}`}>
       {cov && (
         <rect
           x={x(cov.firstEnd)}
@@ -653,6 +733,7 @@ function Chart({ models }) {
           />
         );
       })}
+      <AgreeStrip models={models} param="temp" x={x} cellW={cellW} padL={padL} plotW={plotW} y={h + 4} />
     </svg>
   );
 }
@@ -1099,8 +1180,8 @@ function computeCoverage(models, key) {
   };
 }
 
-function CoverageNote({ models }) {
-  const cov = computeCoverage(models, "temp");
+function CoverageNote({ models, field = "temp" }) {
+  const cov = computeCoverage(models, field);
   if (!cov) return null;
   const groups = [];
   cov.early.forEach((o) => {
@@ -1329,12 +1410,197 @@ function computeWindAgreementAt(models, i) {
   return { level, reasons };
 }
 
-const WIND_AGREE_STYLE = {
+// Rüzgar tablosu, sıcaklık şeridi ve (ileride) diğer parametreler aynı uyum dilini kullanır.
+const AGREE_STYLE = {
   ok: { bg: "#DDE0DB", ink: "var(--ink)", mark: "✓", text: "hemfikir" },
   partial: { bg: "#F0C98A", ink: "var(--ink)", mark: "~", text: "kısmen" },
   split: { bg: "var(--amber)", ink: "#FFFFFF", mark: "≠", text: "ayrışıyor" },
   na: { bg: "transparent", ink: "var(--ink-faint)", mark: "·", text: "veri yok" },
 };
+
+// ---------------------------------------------------------------------------
+// Model uyumu — ortak altyapı
+// Sıcaklık, nem, basınç ve bulutlulukta aynı soru sorulur: o saatte en düşük ve en yüksek
+// modelin farkı ("aralık") ne kadar? Eşikler parametreye göre değişir, dil aynıdır:
+// ✓ hemfikir · ~ kısmen · ≠ ayrışıyor. Ortalama/ortanca ALINMAZ — amaç tek bir değer
+// üretmek değil, modellerin nerede ayrıştığını göstermektir.
+// (Rüzgarda aralık yerine yön + hız birlikte değerlendirilir: computeWindAgreementAt.)
+// ---------------------------------------------------------------------------
+
+const AGREE_PARAMS = {
+  temp: {
+    key: "temp",
+    partial: 2,
+    split: 4,
+    thPartial: "2 °C",
+    thMid: "2–4 °C",
+    thSplit: "4 °C",
+    pair: "en sıcak ve en soğuk model",
+    fmt: (v) => `${formatOneDecimal(v)}°`,
+    fmtSpread: (v) => `${formatOneDecimal(v)}°`,
+  },
+  humidity: {
+    key: "humidity",
+    partial: 10,
+    split: 20,
+    thPartial: "%10",
+    thMid: "%10–20",
+    thSplit: "%20",
+    pair: "en nemli ve en kuru model",
+    fmt: (v) => `%${Math.round(v)}`,
+    fmtSpread: (v) => `%${Math.round(v)}`,
+  },
+  pressure: {
+    key: "pressure",
+    partial: 2,
+    split: 4,
+    thPartial: "2 hPa",
+    thMid: "2–4 hPa",
+    thSplit: "4 hPa",
+    pair: "en yüksek ve en düşük basınç veren model",
+    fmt: (v) => `${formatOneDecimal(v)} hPa`,
+    fmtSpread: (v) => `${formatOneDecimal(v)} hPa`,
+  },
+  cloud: {
+    key: "cloud_cover",
+    partial: 25,
+    split: 50,
+    thPartial: "%25",
+    thMid: "%25–50",
+    thSplit: "%50",
+    pair: "en kapalı ve en açık model",
+    fmt: (v) => `%${Math.round(v)}`,
+    fmtSpread: (v) => `%${Math.round(v)}`,
+  },
+};
+
+const STRIP_MIN_BLOCK = 24; // bir uyum dilimi en az bu kadar geniş çizilir (viewBox birimi)
+const STRIP_STEPS = [1, 3, 6, 12, 24]; // dilim uzunluğu saat cinsinden; periyoda göre seçilir
+const AGREE_STRIP_H = 18;
+const AGREE_STRIP_EXTRA = 30; // şerit için viewBox'a eklenen yükseklik
+
+// Şerit dilimleri — uyum şeridi ve basınç eğilim şeridi tarafından paylaşılır.
+// Seri sabit uzunlukta dilimlere bölünür (STRIP_STEPS içinden, dilim en az STRIP_MIN_BLOCK
+// genişliğinde olacak şekilde; dilimler 00:00 TSİ'ye hizalıdır çünkü seri 00:00'da başlar).
+// Her dilimi rank()'i en yüksek olan saat temsil eder — yani en dikkat çekici değer
+// ortalama alınarak yumuşatılmaz. Aynı groupKey()'e sahip komşu dilimler tek blokta birleşir.
+function buildStripSegments(items, cellW, rank, groupKey) {
+  const n = items.length;
+  const step = STRIP_STEPS.find((k) => k * cellW >= STRIP_MIN_BLOCK) ?? STRIP_STEPS[STRIP_STEPS.length - 1];
+  const out = [];
+  for (let i = 0; i < n; i += step) {
+    const to = Math.min(n - 1, i + step - 1);
+    let peak = items[i];
+    for (let k = i; k <= to; k++) {
+      if (rank(items[k]) > rank(peak)) peak = items[k];
+    }
+    const last = out[out.length - 1];
+    if (last && groupKey(last.peak) === groupKey(peak)) {
+      last.to = to;
+      if (rank(peak) > rank(last.peak)) last.peak = peak;
+    } else {
+      out.push({ from: i, to, peak });
+    }
+  }
+  return out;
+}
+
+function computeSpreadAgreementAt(models, i, param) {
+  const cfg = AGREE_PARAMS[param];
+  const pts = models
+    .map((m) => {
+      const v = numOrNull(m.series[i]?.[cfg.key]);
+      return v == null ? null : { label: m.label, v };
+    })
+    .filter(Boolean);
+  if (pts.length < 2) return { level: "na", spread: 0, count: pts.length };
+  const lo = pts.reduce((a, b) => (b.v < a.v ? b : a));
+  const hi = pts.reduce((a, b) => (b.v > a.v ? b : a));
+  const spread = hi.v - lo.v;
+  const level = spread < cfg.partial ? "ok" : spread <= cfg.split ? "partial" : "split";
+  return { level, spread, lo, hi, count: pts.length };
+}
+
+// Grafiklerin altındaki ince uyum şeridi (SVG parçası — çağıran <svg>'nin içine konur).
+// Saat saat sınıflandırılsaydı aralık eşiğin iki yanında gidip gelir (1.9 °C ✓, 2.1 °C ~) ve
+// şerit onlarca minik bloğa parçalanırdı; bunun yerine buildStripSegments kullanılır.
+// Pratikte: 3 gün → 3 saatlik dilim, 7 gün → 6–12 saatlik, 16 gün → günlük.
+function AgreeStrip({ models, param, x, cellW, padL, plotW, y, h = AGREE_STRIP_H }) {
+  const cfg = AGREE_PARAMS[param];
+  const n = models[0]?.series.length || 0;
+  if (models.length < 2 || n < 2) return null; // tek model: karşılaştıracak bir şey yok
+
+  const levels = models[0].series.map((_, i) => computeSpreadAgreementAt(models, i, param));
+  const segments = buildStripSegments(
+    levels,
+    cellW,
+    (l) => (l.level === "na" ? -1 : l.spread),
+    (l) => l.level
+  );
+
+  return (
+    <>
+      <text className="axis-label" x="4" y={y + h / 2 + 3.4}>
+        uyum
+      </text>
+      {segments.map((b) => {
+        const x0 = Math.max(padL, x(b.from) - cellW / 2);
+        const x1 = Math.min(padL + plotW, x(b.to) + cellW / 2);
+        const bw = x1 - x0 - 2;
+        if (bw <= 1) return null;
+        const peak = b.peak;
+        const st = AGREE_STYLE[peak.level];
+        // Etiket bloğa sığdığı kadar uzun yazılır; sığmazsa yalnız işaret kalır.
+        const wide = `${st.mark} ${st.text} (en çok ${cfg.fmtSpread(peak.spread)})`;
+        const mid = `${st.mark} ${st.text}`;
+        const fits = (t) => bw >= t.length * 5.2 + 10;
+        const label = peak.lo && fits(wide) ? wide : fits(mid) ? mid : bw >= 13 ? st.mark : "";
+        const from = parseTsiTime(models[0].series[b.from]?.time);
+        const to = parseTsiTime(models[0].series[b.to]?.time);
+        const range =
+          from && to
+            ? b.from === b.to
+              ? `${formatAxisDate(from.date)} ${formatHourLabel(from.hour)}`
+              : `${formatAxisDate(from.date)} ${formatHourLabel(from.hour)} – ${formatAxisDate(to.date)} ${formatHourLabel(to.hour)}`
+            : "";
+        const tip = peak.lo
+          ? `${range} TSİ · modeller ${st.text}. En büyük aralık ${cfg.fmtSpread(peak.spread)}: ` +
+            `${peak.lo.label} ${cfg.fmt(peak.lo.v)} ↔ ${peak.hi.label} ${cfg.fmt(peak.hi.v)}` +
+            (peak.count < models.length ? ` (${peak.count} modelin verisi var)` : "")
+          : `${range} TSİ · karşılaştırma için en az 2 modelin verisi gerekiyor.`;
+        return (
+          <g key={`agree-${param}-${b.from}`}>
+            <title>{tip}</title>
+            <rect x={x0 + 1} y={y} width={bw} height={h} rx={3} fill={st.bg} />
+            {label && (
+              <text
+                x={x0 + 1 + bw / 2}
+                y={y + h / 2 + 3.4}
+                textAnchor="middle"
+                className="axis-label"
+                style={{ fill: st.ink, fontSize: 9.5 }}
+              >
+                {label}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </>
+  );
+}
+
+function AgreeLegend({ models, param }) {
+  if (!models || models.length < 2) return null;
+  const c = AGREE_PARAMS[param];
+  return (
+    <div className="panel-sub" style={{ marginTop: 6, fontSize: 11 }}>
+      Uyum şeridi — {c.pair} arasındaki aynı saatteki fark: ✓ hemfikir ({"<"} {c.thPartial}) · ~ kısmen ({c.thMid}) ·
+      ≠ ayrışıyor ({">"} {c.thSplit}). Her dilim o dilimdeki en büyük farka göre renklenir; şeridin üzerine gelince
+      hangi modellerin ayrıştığı yazar.
+    </div>
+  );
+}
 
 function WindArrow({ dir, color }) {
   // Ok rüzgarın ESTİĞİ yönü gösterir (geldiği yön + 180°)
@@ -1520,7 +1786,7 @@ function WindMatrix({ models, unit = "kmh", step = 1 }) {
               <td style={{ ...stickyTd, color: "var(--ink-soft)" }}>uyum</td>
               {cols.map((c, k) => {
                 const a = agreement[k];
-                const st = WIND_AGREE_STYLE[a.level];
+                const st = AGREE_STYLE[a.level];
                 const text = `${timeText(c.p)} TSİ — modeller ${st.text}\n` + a.reasons.join("\n");
                 return (
                   <td
@@ -1607,6 +1873,550 @@ function WindLegend({ unit = "kmh" }) {
         Kırmızı çerçeve ve uyarı rozeti: MGM fırtına eşiği aşılıyor — 8 bofor · 17.2 m/s ≈ 62 km/s ≈ 34 knot (kaynak: MGM
         Beaufort rüzgâr ıskalası)
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Nem (bağıl nem, %)
+// Eksen HER ZAMAN 0–100: otomatik ölçek nemde yanıltıcıdır (%58–%64 arası bir gün,
+// dar eksende dramatik bir dalgalanma gibi görünür). Arka planda iki referans bant:
+// %85 üstü doygunluğa yakın (sis / çiy / yoğuşma), %30 altı kuru.
+// Not: ECMWF IFS 2 m bağıl nemi ham yayınlamıyor; değer sıcaklık + çiy noktasından
+// hesaplanıyor (bkz. lib/forecast.js → relativeHumidityFrom).
+// ---------------------------------------------------------------------------
+
+const RH_WET = 85; // bu değerin üstü "doygunluğa yakın"
+const RH_DRY = 30; // bu değerin altı "kuru"
+
+function HumidityChart({ models }) {
+  const w = 800,
+    h = 236,
+    padL = 34,
+    padR = 10,
+    padT = 14,
+    padB = 44;
+  const plotW = w - padL - padR,
+    plotH = h - padT - padB;
+
+  const n = models[0]?.series.length || 0;
+  const hasAny = models.some((m) => m.series.some((s) => s.humidity != null));
+  if (!hasAny || n < 2) {
+    return <div className="err">Bu modeller için nem verisi yok.</div>;
+  }
+
+  const x = (i) => padL + (i / (n - 1)) * plotW;
+  const y = (v) => padT + plotH - (v / 100) * plotH;
+  const cellW = plotW / (n - 1);
+  const timeAxis = buildTimeAxis(models[0].series, x);
+  const cov = computeCoverage(models, "humidity");
+
+  return (
+    <svg className="chart" viewBox={`0 0 ${w} ${h + AGREE_STRIP_EXTRA}`}>
+      <rect x={padL} y={y(100)} width={plotW} height={y(RH_WET) - y(100)} fill="var(--navy)" opacity={0.09} />
+      <rect x={padL} y={y(RH_DRY)} width={plotW} height={y(0) - y(RH_DRY)} fill="var(--amber)" opacity={0.08} />
+      {cov && (
+        <rect
+          x={x(cov.firstEnd)}
+          y={padT}
+          width={Math.max(0, x(n - 1) - x(cov.firstEnd))}
+          height={plotH}
+          fill="var(--line)"
+          opacity={0.22}
+        />
+      )}
+      {[0, 25, 50, 75, 100].map((v) => (
+        <line
+          key={`hgrid-${v}`}
+          x1={padL}
+          y1={y(v)}
+          x2={padL + plotW}
+          y2={y(v)}
+          stroke="var(--line)"
+          strokeWidth="1"
+          opacity={0.3}
+        />
+      ))}
+      {renderTimeAxis(timeAxis, padT, padT + plotH, h - 30, h - 17, h - 5)}
+      {[0, 25, 50, 75, 100].map((v) => (
+        <text key={`hlab-${v}`} className="axis-label" x="4" y={y(v) + 3}>
+          %{v}
+        </text>
+      ))}
+      <text className="axis-label" x={padL + 6} y={y(93)} style={{ fill: "var(--navy)" }}>
+        doygunluğa yakın — sis / çiy
+      </text>
+      <text className="axis-label" x={padL + 6} y={y(12)} style={{ fill: "var(--amber)" }}>
+        kuru
+      </text>
+      {models.map((m) => {
+        const pts = m.series
+          .map((s, i) => (s.humidity != null ? `${x(i)},${y(s.humidity)}` : null))
+          .filter(Boolean)
+          .join(" ");
+        if (!pts) return null;
+        return (
+          <polyline
+            key={m.id}
+            className={"model-line" + (m.dashed ? " dashed" : "")}
+            stroke={m.color}
+            points={pts}
+          />
+        );
+      })}
+      <AgreeStrip models={models} param="humidity" x={x} cellW={cellW} padL={padL} plotW={plotW} y={h + 4} />
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Basınç (deniz seviyesine indirgenmiş, hPa)
+// Kullanıcıyı ilgilendiren mutlak değer değil DEĞİŞİM HIZIDIR: 3 saatte 2 hPa'dan hızlı
+// bir düşüş havanın bozulduğunu, hızlı yükseliş açtığını söyler (denizcilikte klasik eşik).
+// Bu yüzden çizgilerin altında iki şerit var: üstte eğilim (3 saatlik değişimin model
+// ortancası), altta her zamanki uyum şeridi.
+// Neden pressure_msl: her modelin kendi yükselti haritası farklı; yüzey basıncını
+// karşılaştırmak modelleri değil modellerin rakımını karşılaştırmak olurdu.
+// ---------------------------------------------------------------------------
+
+const PRESSURE_STD = 1013.25; // standart atmosfer
+const PRESSURE_TICK_STEPS = [1, 2, 5, 10, 20, 25, 50];
+const TREND_HOURS = 3;
+const TREND_FAST = 2; // |değişim| ≥ 2 hPa / 3 saat → hızlı
+const TREND_FLAT = 0.5; // |değişim| < 0.5 hPa / 3 saat → sabit
+const TREND_SCALE = [
+  { key: "fastDown", color: "#C2622A", label: `hızlı düşüş (≤ −${TREND_FAST} hPa/${TREND_HOURS}s)` },
+  { key: "down", color: "#E0B080", label: "düşüş" },
+  { key: "flat", color: "#DDE0DB", label: `sabit (±${TREND_FLAT})` },
+  { key: "up", color: "#9CBFB6", label: "yükseliş" },
+  { key: "fastUp", color: "#1E7A6B", label: `hızlı yükseliş (≥ +${TREND_FAST} hPa/${TREND_HOURS}s)` },
+];
+const TREND_COLOR = Object.fromEntries(TREND_SCALE.map((t) => [t.key, t.color]));
+
+function trendKey(d) {
+  if (d <= -TREND_FAST) return "fastDown";
+  if (d < -TREND_FLAT) return "down";
+  if (d >= TREND_FAST) return "fastUp";
+  if (d > TREND_FLAT) return "up";
+  return "flat";
+}
+
+// i. saatte modellerin 3 saatlik basınç değişimi: ortanca + modeller aynı yönde mi.
+function pressureTrendAt(models, i) {
+  const j = Math.max(0, i - TREND_HOURS);
+  const ds = models
+    .map((m) => {
+      const a = numOrNull(m.series[i]?.pressure);
+      const b = numOrNull(m.series[j]?.pressure);
+      return a == null || b == null ? null : a - b;
+    })
+    .filter((v) => v != null)
+    .sort((a, b) => a - b);
+  if (!ds.length) return null;
+  const median = ds[Math.floor(ds.length / 2)];
+  // Yönde uzlaşı: ya hepsi aynı işaretli, ya da ortanca zaten "sabit" bandında.
+  const sameWay = ds[0] > 0 || ds[ds.length - 1] < 0 || Math.abs(median) < TREND_FLAT;
+  return { median, sameWay, n: ds.length };
+}
+
+function PressureChart({ models }) {
+  const w = 800,
+    h = 236,
+    padL = 44, // 4 haneli hPa etiketleri + "eğilim" satır başlığı için diğer grafiklerden geniş
+    padR = 10,
+    padT = 14,
+    padB = 44;
+  const plotW = w - padL - padR,
+    plotH = h - padT - padB;
+  const trendY = h + 3,
+    trendH = 16;
+  const agreeY = trendY + trendH + 3;
+
+  const n = models[0]?.series.length || 0;
+  const allVals = models.flatMap((m) => m.series.map((s) => s.pressure)).filter((v) => v != null);
+  if (!allVals.length || n < 2) {
+    return <div className="err">Bu modeller için basınç verisi yok.</div>;
+  }
+
+  // Eksen adımı veri aralığına göre seçilir: sabit 2 hPa adım uzun periyotlarda eksen
+  // etiketlerini üst üste bindiriyordu.
+  const rawSpan = Math.max(2, Math.max(...allVals) - Math.min(...allVals));
+  const tickStep =
+    PRESSURE_TICK_STEPS.find((k) => rawSpan / k <= 9) ?? PRESSURE_TICK_STEPS[PRESSURE_TICK_STEPS.length - 1];
+  const min = Math.floor(Math.min(...allVals) / tickStep) * tickStep;
+  const max = Math.ceil(Math.max(...allVals) / tickStep) * tickStep;
+  const span = max - min || tickStep;
+  const x = (i) => padL + (i / (n - 1)) * plotW;
+  const y = (v) => padT + plotH - ((v - min) / span) * plotH;
+  const cellW = plotW / (n - 1);
+  const ticks = [];
+  for (let v = min; v <= max; v += tickStep) ticks.push(v);
+  const timeAxis = buildTimeAxis(models[0].series, x);
+  const cov = computeCoverage(models, "pressure");
+
+  // Eğilim şeridi uyum şeridiyle aynı dilimleri kullanır; her dilimi o dilimdeki EN BELİRGİN
+  // değişim temsil eder. Saat saat çizilseydi uzun periyotlarda ince çizgilerden bir tarama
+  // deseni çıkardı.
+  const trends = models[0].series.map((_, i) => pressureTrendAt(models, i));
+  const trendRuns = buildStripSegments(
+    trends,
+    cellW,
+    (t) => (t ? Math.abs(t.median) : -1),
+    (t) => (t ? `${trendKey(t.median)}|${t.sameWay}` : "na")
+  );
+
+  return (
+    <svg className="chart" viewBox={`0 0 ${w} ${agreeY + AGREE_STRIP_H + 4}`}>
+      {cov && (
+        <rect
+          x={x(cov.firstEnd)}
+          y={padT}
+          width={Math.max(0, x(n - 1) - x(cov.firstEnd))}
+          height={plotH}
+          fill="var(--line)"
+          opacity={0.22}
+        />
+      )}
+      {ticks.map((v) => (
+        <line
+          key={`pgrid-${v}`}
+          x1={padL}
+          y1={y(v)}
+          x2={padL + plotW}
+          y2={y(v)}
+          stroke="var(--line)"
+          strokeWidth="1"
+          opacity={0.28}
+        />
+      ))}
+      {PRESSURE_STD > min && PRESSURE_STD < max && (
+        <>
+          <line
+            x1={padL}
+            y1={y(PRESSURE_STD)}
+            x2={padL + plotW}
+            y2={y(PRESSURE_STD)}
+            stroke="var(--ink-soft)"
+            strokeWidth="1.25"
+            opacity={0.6}
+          />
+          <text className="axis-label" x={padL + plotW - 4} y={y(PRESSURE_STD) - 4} textAnchor="end">
+            1013.25 hPa — standart atmosfer
+          </text>
+        </>
+      )}
+      {renderTimeAxis(timeAxis, padT, padT + plotH, h - 30, h - 17, h - 5)}
+      {ticks.map((v) => (
+        <text key={`plab-${v}`} className="axis-label" x="2" y={y(v) + 3}>
+          {v}
+        </text>
+      ))}
+      {models.map((m) => {
+        const pts = m.series
+          .map((s, i) => (s.pressure != null ? `${x(i)},${y(s.pressure)}` : null))
+          .filter(Boolean)
+          .join(" ");
+        if (!pts) return null;
+        return (
+          <polyline
+            key={m.id}
+            className={"model-line" + (m.dashed ? " dashed" : "")}
+            stroke={m.color}
+            points={pts}
+          />
+        );
+      })}
+      <text className="axis-label" x="4" y={trendY + trendH / 2 + 3.2}>
+        eğilim
+      </text>
+      {trendRuns.map((r) => {
+        const t = r.peak;
+        if (!t) return null;
+        const x0 = Math.max(padL, x(r.from) - cellW / 2);
+        const x1 = Math.min(padL + plotW, x(r.to) + cellW / 2);
+        if (x1 - x0 <= 0) return null;
+        const from = parseTsiTime(models[0].series[r.from]?.time);
+        const to = parseTsiTime(models[0].series[r.to]?.time);
+        const range =
+          from && to
+            ? `${formatAxisDate(from.date)} ${formatHourLabel(from.hour)} – ${formatAxisDate(to.date)} ${formatHourLabel(to.hour)}`
+            : "";
+        const tip =
+          `${range} TSİ · ${TREND_HOURS} saatlik değişim (model ortancası), en belirgin ` +
+          `${t.median > 0 ? "+" : ""}${formatOneDecimal(t.median)} hPa` +
+          (t.sameWay ? "" : " · modeller değişimin yönünde ayrışıyor");
+        return (
+          <g key={`trend-${r.from}`}>
+            <title>{tip}</title>
+            <rect
+              x={x0}
+              y={trendY}
+              width={x1 - x0}
+              height={trendH}
+              fill={TREND_COLOR[trendKey(t.median)]}
+              opacity={t.sameWay ? 1 : 0.45}
+            />
+          </g>
+        );
+      })}
+      <AgreeStrip models={models} param="pressure" x={x} cellW={cellW} padL={padL} plotW={plotW} y={agreeY} />
+    </svg>
+  );
+}
+
+function PressureLegend({ models }) {
+  return (
+    <>
+      <div
+        className="panel-sub"
+        style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", alignItems: "center", marginTop: 8, fontSize: 11 }}
+      >
+        <span style={{ color: "var(--ink-soft)" }}>eğilim:</span>
+        {TREND_SCALE.map((t) => (
+          <span key={t.key} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 12, height: 10, borderRadius: 2, background: t.color, display: "inline-block" }} />
+            {t.label}
+          </span>
+        ))}
+      </div>
+      <div className="panel-sub" style={{ marginTop: 4, fontSize: 11 }}>
+        Eğilim şeridi son {TREND_HOURS} saatteki değişimin model ortancasıdır; modeller değişimin yönünde ayrışıyorsa
+        renk soluklaşır. Değerler deniz seviyesine indirgenmiştir.
+      </div>
+      <AgreeLegend models={models} param="pressure" />
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bulutluluk — model × saat matrisi
+// 7 modeli %0 ile %100 arasında zıplayan çizgilerle göstermek okunmuyor; ECMWF kendi
+// meteogramında bile bunu kutularla veriyor. Rüzgar tablosuyla aynı desen kullanılır:
+// hücre rengi kapalılık kademesi (MGM'nin açık / az bulutlu / parçalı bulutlu / çok bulutlu /
+// kapalı sınıflandırması), sayı yüzde, en altta uyum satırı.
+// ---------------------------------------------------------------------------
+
+const CLOUD_SCALE = [
+  { min: 0, color: "#F1F4EF", ink: "var(--ink)", label: "açık", range: "%0–10" },
+  { min: 10, color: "#DDE3DE", ink: "var(--ink)", label: "az bulutlu", range: "%10–30" },
+  { min: 30, color: "#BFC8C3", ink: "var(--ink)", label: "parçalı bulutlu", range: "%30–60" },
+  { min: 60, color: "#8E9B96", ink: "#FFFFFF", label: "çok bulutlu", range: "%60–90" },
+  { min: 90, color: "#63706B", ink: "#FFFFFF", label: "kapalı", range: "%90–100" },
+];
+
+function cloudIndex(v) {
+  let k = 0;
+  CLOUD_SCALE.forEach((c, i) => {
+    if (v >= c.min) k = i;
+  });
+  return k;
+}
+
+function CloudMatrix({ models, step = 1 }) {
+  const scrollRef = useRef(null);
+  const [info, setInfo] = useState(null);
+  const series0 = models[0]?.series || [];
+  const cols = [];
+  series0.forEach((s, i) => {
+    const p = parseTsiTime(s.time);
+    if (p && p.hour % step === 0) cols.push({ i, p });
+  });
+  const nowIdx = findNowIndex(series0);
+  const nowCol = nowIdx >= 0 ? Math.floor(nowIdx / step) * step : -1;
+  const agreement = cols.map((c) => computeSpreadAgreementAt(models, c.i, "cloud"));
+
+  useEffect(() => {
+    const box = scrollRef.current;
+    if (!box) return;
+    const el = box.querySelector('[data-now="1"]');
+    if (el) box.scrollLeft = Math.max(0, el.offsetLeft - 110);
+  }, [step, models.length, series0.length]);
+
+  const cellW = 42;
+  const stickyTd = {
+    position: "sticky",
+    left: 0,
+    zIndex: 1,
+    background: "var(--paper)",
+    boxShadow: "3px 0 0 var(--paper)",
+    textAlign: "left",
+    padding: "0 8px 0 0",
+    whiteSpace: "nowrap",
+    fontFamily: '"IBM Plex Mono", monospace',
+    fontSize: 11,
+  };
+
+  function timeText(p) {
+    return `${formatAxisDate(p.date)} ${formatWeekdayAbbr3(p.date)} ${formatHourLabel(p.hour)}`;
+  }
+
+  const hasAny = models.some((m) => m.series.some((s) => s.cloud_cover != null));
+  if (!hasAny) return <div className="err">Bu modeller için bulutluluk verisi yok.</div>;
+
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div ref={scrollRef} style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 4 }}>
+        <table style={{ borderCollapse: "separate", borderSpacing: 2, fontFamily: '"IBM Plex Mono", monospace', width: "auto" }}>
+          <thead>
+            <tr>
+              <th style={{ ...stickyTd, fontSize: 10, color: "var(--ink-soft)", fontWeight: 400 }}>TSİ</th>
+              {cols.map((c, k) => {
+                const newDay = k === 0 || c.p.hour < step || cols[k - 1].p.date.getUTCDate() !== c.p.date.getUTCDate();
+                const isNow = c.i === nowCol;
+                return (
+                  <th
+                    key={c.i}
+                    style={{
+                      minWidth: cellW,
+                      fontSize: 10,
+                      fontWeight: isNow ? 600 : 400,
+                      color: isNow ? NOW_TEAL : "var(--ink-soft)",
+                      textAlign: "center",
+                      borderLeft: newDay && k > 0 ? "1px dashed var(--line)" : "none",
+                      lineHeight: 1.25,
+                      padding: "0 0 2px",
+                      verticalAlign: "bottom",
+                    }}
+                  >
+                    {newDay ? (
+                      <>
+                        {formatAxisDate(c.p.date)} {formatWeekdayAbbr3(c.p.date)}
+                        <br />
+                      </>
+                    ) : (
+                      <br />
+                    )}
+                    {String(c.p.hour).padStart(2, "0")}
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {models.map((m) => (
+              <tr key={m.id}>
+                <td style={stickyTd}>
+                  <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: m.color, marginRight: 6 }} />
+                  {m.label}
+                </td>
+                {cols.map((c) => {
+                  const v = numOrNull(m.series[c.i]?.cloud_cover);
+                  const isNow = c.i === nowCol;
+                  if (v == null) {
+                    return (
+                      <td
+                        key={c.i}
+                        data-now={isNow ? "1" : undefined}
+                        style={{ width: cellW, height: 26, textAlign: "center", borderRadius: 4, border: "1px dashed var(--line)", color: "var(--ink-faint)", fontSize: 10 }}
+                        title={`${m.label} · ${timeText(c.p)}: veri yok`}
+                      >
+                        —
+                      </td>
+                    );
+                  }
+                  const k = cloudIndex(v);
+                  const detail = `${m.label} · ${timeText(c.p)} TSİ\nBulutluluk: %${Math.round(v)} — ${CLOUD_SCALE[k].label}`;
+                  return (
+                    <td
+                      key={c.i}
+                      data-now={isNow ? "1" : undefined}
+                      title={detail}
+                      onClick={() => setInfo(detail)}
+                      style={{
+                        width: cellW,
+                        height: 26,
+                        textAlign: "center",
+                        verticalAlign: "middle",
+                        borderRadius: 4,
+                        background: CLOUD_SCALE[k].color,
+                        color: CLOUD_SCALE[k].ink,
+                        cursor: "pointer",
+                        fontSize: 11,
+                        boxShadow: isNow ? `inset 0 0 0 2px ${NOW_TEAL}` : "none",
+                      }}
+                    >
+                      {Math.round(v)}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+            <tr>
+              <td style={{ ...stickyTd, color: "var(--ink-soft)" }}>uyum</td>
+              {cols.map((c, k) => {
+                const a = agreement[k];
+                const st = AGREE_STYLE[a.level];
+                const cfg = AGREE_PARAMS.cloud;
+                const text = a.lo
+                  ? `${timeText(c.p)} TSİ — modeller ${st.text}\n` +
+                    `${a.lo.label} ${cfg.fmt(a.lo.v)} ↔ ${a.hi.label} ${cfg.fmt(a.hi.v)}, fark ${cfg.fmtSpread(a.spread)}` +
+                    (a.count < models.length ? `\n(${a.count} modelin verisi var)` : "")
+                  : `${timeText(c.p)} TSİ — karşılaştırma için en az 2 modelin verisi gerekiyor.`;
+                return (
+                  <td
+                    key={c.i}
+                    title={text}
+                    onClick={() => setInfo(text)}
+                    style={{
+                      width: cellW,
+                      height: 22,
+                      textAlign: "center",
+                      borderRadius: 4,
+                      background: st.bg,
+                      color: st.ink,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {st.mark}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div
+        className="panel-sub"
+        style={{ fontSize: 11, marginTop: 6, minHeight: 16, whiteSpace: "pre-line", color: info ? "var(--ink)" : "var(--ink-soft)" }}
+      >
+        {info || "Ayrıntı için bir hücrenin üzerine gel ya da dokun. Tablo yatay kaydırılabilir."}
+      </div>
+    </div>
+  );
+}
+
+function CloudLegend({ models }) {
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div className="panel-sub" style={{ fontSize: 10, marginBottom: 4 }}>
+        Hücre rengi — gökyüzünün bulutla kaplı oranı · sayı: %
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap" }}>
+        {CLOUD_SCALE.map((c) => (
+          <div
+            key={c.label}
+            className="panel-sub"
+            style={{ flex: "1 1 62px", textAlign: "center", fontSize: 9.5, lineHeight: 1.35, padding: "0 1px" }}
+          >
+            <div style={{ height: 10, borderRadius: 2, background: c.color, marginBottom: 3, border: "1px solid var(--line)" }} />
+            {c.label}
+            <br />
+            {c.range}
+          </div>
+        ))}
+      </div>
+      {models && models.length > 1 && (
+        <div className="panel-sub" style={{ fontSize: 10, marginTop: 8, lineHeight: 1.5 }}>
+          <strong style={{ fontWeight: 600 }}>Uyum:</strong> ✓ hemfikir ({"<"} {AGREE_PARAMS.cloud.thPartial}) · ~ kısmen (
+          {AGREE_PARAMS.cloud.thMid}) · ≠ ayrışıyor ({">"} {AGREE_PARAMS.cloud.thSplit}) — en kapalı ve en açık
+          modelin farkı.
+          <br />
+          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, border: `2px solid ${NOW_TEAL}`, marginRight: 4, verticalAlign: -1 }} />
+          Koyu turkuaz çerçeve: şu anki saat.
+        </div>
+      )}
     </div>
   );
 }
