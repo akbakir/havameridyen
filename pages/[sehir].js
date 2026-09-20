@@ -1216,7 +1216,8 @@ function AgreementLegend({ threshold, onChange }) {
 const KN_PER_KMH = 0.539957;
 const STORM_MS = 17.2; // MGM: 8 bofor (fırtına) alt sınırı — 17.2 m/s ≈ 62 km/s ≈ 34 knot
 const STORM_KMH = STORM_MS * 3.6;
-const STORM_RED = "#B8322A";
+const STORM_RED = "#8F2420"; // uyarı çerçevesi ve rozeti
+const NOW_TEAL = "#14574C"; // "şimdi" sütununun çerçevesi (turkuazın bir ton koyusu)
 
 // Uyum kriterleri (knot cinsinden)
 const WIND_CALM_KT = 3; // bu hızın altındaki modeller yön karşılaştırmasına katılmaz
@@ -1344,6 +1345,31 @@ function WindArrow({ dir, color }) {
   );
 }
 
+// Fırtına eşiği aşılan hücrenin sağ üst köşesindeki uyarı rozeti
+function StormBadge() {
+  return (
+    <span
+      aria-label="Fırtına eşiği aşılıyor"
+      style={{
+        position: "absolute",
+        top: 1,
+        right: 1,
+        width: 13,
+        height: 13,
+        borderRadius: 3,
+        background: STORM_RED,
+        color: "#FFFFFF",
+        fontSize: 10,
+        lineHeight: "13px",
+        textAlign: "center",
+        fontWeight: 700,
+      }}
+    >
+      !
+    </span>
+  );
+}
+
 function WindMatrix({ models, unit = "kmh", step = 1 }) {
   const scrollRef = useRef(null);
   const [info, setInfo] = useState(null);
@@ -1401,7 +1427,7 @@ function WindMatrix({ models, unit = "kmh", step = 1 }) {
                       minWidth: cellW,
                       fontSize: 10,
                       fontWeight: isNow ? 600 : 400,
-                      color: isNow ? "var(--teal)" : "var(--ink-soft)",
+                      color: isNow ? NOW_TEAL : "var(--ink-soft)",
                       textAlign: "center",
                       borderLeft: newDay && k > 0 ? "1px dashed var(--line)" : "none",
                       lineHeight: 1.25,
@@ -1473,9 +1499,15 @@ function WindMatrix({ models, unit = "kmh", step = 1 }) {
                         color: ink,
                         cursor: "pointer",
                         lineHeight: 1.1,
-                        boxShadow: storm ? `inset 0 0 0 2px ${STORM_RED}` : isNow ? "inset 0 0 0 1.5px var(--teal)" : "none",
+                        position: "relative",
+                        boxShadow: storm
+                          ? `inset 0 0 0 2px ${STORM_RED}`
+                          : isNow
+                          ? `inset 0 0 0 2px ${NOW_TEAL}`
+                          : "none",
                       }}
                     >
+                      {storm && <StormBadge />}
                       {dir != null && <WindArrow dir={dir} color={ink} />}
                       <div style={{ fontSize: 11, fontWeight: 500 }}>{Math.round(toWindUnit(spd, unit))}</div>
                       <div style={{ fontSize: 9, opacity: 0.8 }}>{gust != null ? Math.round(toWindUnit(gust, unit)) : "—"}</div>
@@ -1551,8 +1583,29 @@ function WindLegend({ unit = "kmh" }) {
         {WIND_SPD_PARTIAL} kt) · ≠ ayrışıyor (ikisi birden, ya da ≥ {WIND_DIR_SPLIT}° / ≥ {WIND_SPD_SPLIT} kt). {WIND_CALM_KT} kt
         altındaki sakin rüzgarda yön karşılaştırılmaz.
         <br />
-        <span style={{ color: STORM_RED }}>▢</span> Kırmızı çerçeve: MGM fırtına eşiği aşılıyor — 8 bofor · 17.2 m/s ≈ 62 km/s ≈
-        34 knot (kaynak: MGM Beaufort rüzgâr ıskalası)
+        <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, border: `2px solid ${NOW_TEAL}`, marginRight: 4, verticalAlign: -1 }} />
+        Koyu turkuaz çerçeve: şu anki saat.
+        <br />
+        <span
+          style={{
+            display: "inline-block",
+            width: 12,
+            height: 12,
+            borderRadius: 3,
+            background: STORM_RED,
+            color: "#FFFFFF",
+            fontSize: 9,
+            lineHeight: "12px",
+            textAlign: "center",
+            fontWeight: 700,
+            marginRight: 4,
+            verticalAlign: -1,
+          }}
+        >
+          !
+        </span>
+        Kırmızı çerçeve ve uyarı rozeti: MGM fırtına eşiği aşılıyor — 8 bofor · 17.2 m/s ≈ 62 km/s ≈ 34 knot (kaynak: MGM
+        Beaufort rüzgâr ıskalası)
       </div>
     </div>
   );
