@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Layout from "../components/Layout";
+import AgreeMark from "../components/AgreeMark";
 import { isFavorite, toggleFavorite } from "../lib/favorites";
 import { CITY_CHIPS, cityHref, slugify } from "../lib/slugify";
 import { MODELS } from "../lib/forecast";
@@ -1411,11 +1412,12 @@ function computeWindAgreementAt(models, i) {
 }
 
 // Rüzgar tablosu, sıcaklık şeridi ve (ileride) diğer parametreler aynı uyum dilini kullanır.
+// İşaretler (✓ ~ ≠) components/AgreeMark.js içinde SVG olarak çizilir.
 const AGREE_STYLE = {
-  ok: { bg: "#DDE0DB", ink: "var(--ink)", mark: "✓", text: "hemfikir" },
-  partial: { bg: "#F0C98A", ink: "var(--ink)", mark: "~", text: "kısmen" },
-  split: { bg: "var(--amber)", ink: "#FFFFFF", mark: "≠", text: "ayrışıyor" },
-  na: { bg: "transparent", ink: "var(--ink-faint)", mark: "·", text: "veri yok" },
+  ok: { bg: "#DDE0DB", ink: "var(--ink)", text: "hemfikir" },
+  partial: { bg: "#F0C98A", ink: "var(--ink)", text: "kısmen" },
+  split: { bg: "var(--amber)", ink: "#FFFFFF", text: "ayrışıyor" },
+  na: { bg: "transparent", ink: "var(--ink-faint)", text: "veri yok" },
 };
 
 // ---------------------------------------------------------------------------
@@ -1477,6 +1479,10 @@ const AGREE_PARAMS = {
 const STRIP_MIN_BLOCK = 24; // bir uyum dilimi en az bu kadar geniş çizilir (viewBox birimi)
 const STRIP_STEPS = [1, 3, 6, 12, 24]; // dilim uzunluğu saat cinsinden; periyoda göre seçilir
 const AGREE_STRIP_H = 18;
+// Şerit etiketi: SVG işaret + metin
+const STRIP_FONT = 9.5;
+const STRIP_ICON = 9;
+const STRIP_GAP = 3;
 const AGREE_STRIP_EXTRA = 30; // şerit için viewBox'a eklenen yükseklik
 
 // Şerit dilimleri — uyum şeridi ve basınç eğilim şeridi tarafından paylaşılır.
@@ -1551,10 +1557,15 @@ function AgreeStrip({ models, param, x, cellW, padL, plotW, y, h = AGREE_STRIP_H
         const peak = b.peak;
         const st = AGREE_STYLE[peak.level];
         // Etiket bloğa sığdığı kadar uzun yazılır; sığmazsa yalnız işaret kalır.
-        const wide = `${st.mark} ${st.text} (en çok ${cfg.fmtSpread(peak.spread)})`;
-        const mid = `${st.mark} ${st.text}`;
-        const fits = (t) => bw >= t.length * 5.2 + 10;
-        const label = peak.lo && fits(wide) ? wide : fits(mid) ? mid : bw >= 13 ? st.mark : "";
+        // İşaret SVG olarak çizilir (fontlarda ✓/≠ yok); IBM Plex Mono'da her karakter 0.6em genişliğinde.
+        const CH = STRIP_FONT * 0.6;
+        const wide = `${st.text} (en çok ${cfg.fmtSpread(peak.spread)})`;
+        const mid = st.text;
+        const need = (t) => STRIP_ICON + STRIP_GAP + t.length * CH + 8;
+        const label = peak.lo && bw >= need(wide) ? wide : bw >= need(mid) ? mid : "";
+        const showIcon = label !== "" || bw >= STRIP_ICON + 4;
+        const groupW = label ? STRIP_ICON + STRIP_GAP + label.length * CH : STRIP_ICON;
+        const gx = x0 + 1 + bw / 2 - groupW / 2;
         const from = parseTsiTime(models[0].series[b.from]?.time);
         const to = parseTsiTime(models[0].series[b.to]?.time);
         const range =
@@ -1572,13 +1583,16 @@ function AgreeStrip({ models, param, x, cellW, padL, plotW, y, h = AGREE_STRIP_H
           <g key={`agree-${param}-${b.from}`}>
             <title>{tip}</title>
             <rect x={x0 + 1} y={y} width={bw} height={h} rx={3} fill={st.bg} />
+            {showIcon && (
+              <AgreeMark level={peak.level} x={gx} y={y + (h - STRIP_ICON) / 2} size={STRIP_ICON} color={st.ink} strokeWidth={1.9} />
+            )}
             {label && (
               <text
-                x={x0 + 1 + bw / 2}
+                x={gx + STRIP_ICON + STRIP_GAP}
                 y={y + h / 2 + 3.4}
-                textAnchor="middle"
+                textAnchor="start"
                 className="axis-label"
-                style={{ fill: st.ink, fontSize: 9.5 }}
+                style={{ fill: st.ink, fontSize: STRIP_FONT }}
               >
                 {label}
               </text>
@@ -1595,8 +1609,8 @@ function AgreeLegend({ models, param }) {
   const c = AGREE_PARAMS[param];
   return (
     <div className="panel-sub" style={{ marginTop: 6, fontSize: 11 }}>
-      Uyum şeridi — {c.pair} arasındaki aynı saatteki fark: ✓ hemfikir ({"<"} {c.thPartial}) · ~ kısmen ({c.thMid}) ·
-      ≠ ayrışıyor ({">"} {c.thSplit}). Her dilim o dilimdeki en büyük farka göre renklenir; şeridin üzerine gelince
+      Uyum şeridi — {c.pair} arasındaki aynı saatteki fark: <AgreeMark level="ok" /> hemfikir ({"<"} {c.thPartial}) ·{" "}
+      <AgreeMark level="partial" /> kısmen ({c.thMid}) · <AgreeMark level="split" /> ayrışıyor ({">"} {c.thSplit}). Her dilim o dilimdeki en büyük farka göre renklenir; şeridin üzerine gelince
       hangi modellerin ayrıştığı yazar.
     </div>
   );
@@ -1805,7 +1819,7 @@ function WindMatrix({ models, unit = "kmh", step = 1 }) {
                       cursor: "pointer",
                     }}
                   >
-                    {st.mark}
+                    <AgreeMark level={a.level} size={11} color={st.ink} strokeWidth={1.9} />
                   </td>
                 );
               })}
@@ -1845,8 +1859,8 @@ function WindLegend({ unit = "kmh" }) {
         ))}
       </div>
       <div className="panel-sub" style={{ fontSize: 10, marginTop: 8, lineHeight: 1.5 }}>
-        <strong style={{ fontWeight: 600 }}>Uyum:</strong> ✓ hemfikir · ~ kısmen (yön farkı ≥ {WIND_DIR_PARTIAL}° veya hız farkı ≥{" "}
-        {WIND_SPD_PARTIAL} kt) · ≠ ayrışıyor (ikisi birden, ya da ≥ {WIND_DIR_SPLIT}° / ≥ {WIND_SPD_SPLIT} kt). {WIND_CALM_KT} kt
+        <strong style={{ fontWeight: 600 }}>Uyum:</strong> <AgreeMark level="ok" /> hemfikir · <AgreeMark level="partial" /> kısmen (yön
+        farkı ≥ {WIND_DIR_PARTIAL}° veya hız farkı ≥ {WIND_SPD_PARTIAL} kt) · <AgreeMark level="split" /> ayrışıyor (ikisi birden, ya da ≥ {WIND_DIR_SPLIT}° / ≥ {WIND_SPD_SPLIT} kt). {WIND_CALM_KT} kt
         altındaki sakin rüzgarda yön karşılaştırılmaz.
         <br />
         <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, border: `2px solid ${NOW_TEAL}`, marginRight: 4, verticalAlign: -1 }} />
@@ -2369,7 +2383,7 @@ function CloudMatrix({ models, step = 1 }) {
                       cursor: "pointer",
                     }}
                   >
-                    {st.mark}
+                    <AgreeMark level={a.level} size={11} color={st.ink} strokeWidth={1.9} />
                   </td>
                 );
               })}
@@ -2409,8 +2423,9 @@ function CloudLegend({ models }) {
       </div>
       {models && models.length > 1 && (
         <div className="panel-sub" style={{ fontSize: 10, marginTop: 8, lineHeight: 1.5 }}>
-          <strong style={{ fontWeight: 600 }}>Uyum:</strong> ✓ hemfikir ({"<"} {AGREE_PARAMS.cloud.thPartial}) · ~ kısmen (
-          {AGREE_PARAMS.cloud.thMid}) · ≠ ayrışıyor ({">"} {AGREE_PARAMS.cloud.thSplit}) — en kapalı ve en açık
+          <strong style={{ fontWeight: 600 }}>Uyum:</strong> <AgreeMark level="ok" /> hemfikir ({"<"}{" "}
+          {AGREE_PARAMS.cloud.thPartial}) · <AgreeMark level="partial" /> kısmen ({AGREE_PARAMS.cloud.thMid}) ·{" "}
+          <AgreeMark level="split" /> ayrışıyor ({">"} {AGREE_PARAMS.cloud.thSplit}) — en kapalı ve en açık
           modelin farkı.
           <br />
           <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, border: `2px solid ${NOW_TEAL}`, marginRight: 4, verticalAlign: -1 }} />

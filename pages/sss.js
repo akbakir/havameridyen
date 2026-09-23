@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Layout from "../components/Layout";
+import AgreeMark from "../components/AgreeMark";
 
 const FOOTER = [
   { href: "/hakkinda", label: "Hakkında" },
@@ -39,9 +40,15 @@ const FAQS = [
           <thead>
             <tr>
               <th style={FAQ_TH}></th>
-              <th style={FAQ_TH}>✓ hemfikir</th>
-              <th style={FAQ_TH}>~ kısmen</th>
-              <th style={FAQ_TH}>≠ ayrışıyor</th>
+              <th style={FAQ_TH}>
+                <AgreeMark level="ok" /> hemfikir
+              </th>
+              <th style={FAQ_TH}>
+                <AgreeMark level="partial" /> kısmen
+              </th>
+              <th style={FAQ_TH}>
+                <AgreeMark level="split" /> ayrışıyor
+              </th>
             </tr>
           </thead>
           <tbody>
