@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Layout from "../components/Layout";
-import LineChartPanel, { LINE_CHARTS } from "../components/LineChartPanel";
+import LineChartPanel, { LINE_CHARTS, defaultStepFor } from "../components/LineChartPanel";
 import PrecipPanel from "../components/PrecipPanel";
 import MatrixPanel, { MATRICES } from "../components/MatrixPanel";
+import ModelDetails from "../components/ModelDetails";
 import { isFavorite, toggleFavorite } from "../lib/favorites";
 import { CITY_CHIPS, cityHref, slugify } from "../lib/slugify";
 import { MODELS } from "../lib/forecast";
@@ -25,8 +26,9 @@ export default function SehirPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(null);
   const [fav, setFav] = useState(false);
-  const [tableTimeIndex, setTableTimeIndex] = useState(0);
-  const [tableInterval, setTableInterval] = useState(1);
+  // Ortak seçili zaman (Paket 4): i = dilimin ilk saati, step = aralık (1/3/6 saat), reveal = tablodan
+  // gezinince artar → grafikler seçili dilimi görünür yapacak kadar kayar.
+  const [selection, setSelection] = useState({ i: 0, step: defaultStepFor("3d"), reveal: 0 });
   const [activeModels, setActiveModels] = useState(
     () => new Set(MODELS.filter((m) => m.defaultActive).map((m) => m.id))
   );
@@ -82,23 +84,28 @@ export default function SehirPage() {
     };
   }, [location, period, activeModelsKey]);
 
-  // Şehir veya periyot değişince tablo "şimdi"ye konumlanır. Model aç/kapa gibi yeniden
-  // yüklemelerde kullanıcının seçtiği saat korunur. Veri yine 00:00 TSİ'den başlar; ← ile geriye gidilebilir.
+  // Şehir veya periyot değişince seçili zaman "şimdi"ye konumlanır; periyot değişince aralık varsayılana döner
+  // (Saatlik 1s, 3 gün 3s, 7/16 gün 6s). Model aç/kapa gibi yeniden yüklemelerde seçilen zaman korunur.
+  // Veri 00:00 TSİ'den başlar; ← ile geriye gidilebilir.
   const jumpToNowRef = useRef(true);
   useEffect(() => {
     jumpToNowRef.current = true;
   }, [period, location]);
+  useEffect(() => {
+    setSelection((s) => ({ ...s, step: defaultStepFor(period) }));
+  }, [period]);
 
   useEffect(() => {
     if (!forecast) return;
     const series = forecast.models[0]?.series || [];
     const max = Math.max(0, series.length - 1);
-    if (jumpToNowRef.current) {
-      jumpToNowRef.current = false;
-      setTableTimeIndex(nowTargetIndex(series, tableInterval));
-      return;
-    }
-    setTableTimeIndex((i) => Math.min(Math.max(0, i), max));
+    const jump = jumpToNowRef.current;
+    jumpToNowRef.current = false;
+    const now = findNowIndex(series);
+    setSelection((s) => {
+      if (jump) return { ...s, i: now < 0 ? 0 : now - (now % s.step) };
+      return { ...s, i: Math.min(Math.max(0, s.i), max) };
+    });
   }, [forecast]);
 
   function onSearchChange(e) {
@@ -132,32 +139,32 @@ export default function SehirPage() {
     setFav(isFavorite(location.name));
   }
 
-  const tableSeriesLen = forecast?.models[0]?.series.length || 0;
-  const maxTableIndex = Math.max(0, tableSeriesLen - 1);
-  const safeTableIndex = Math.min(Math.max(0, tableTimeIndex), maxTableIndex);
-  const formattedTableTime = formatTableTime(forecast, safeTableIndex);
-  const nowTarget = forecast ? nowTargetIndex(forecast.models[0]?.series || [], tableInterval) : -1;
-  const nowAvailable = forecast ? findNowIndex(forecast.models[0]?.series || []) >= 0 : false;
-  const noProbLabels = forecast ? forecast.models.filter((m) => !modelHasPrecipProb(m)).map((m) => m.label) : [];
+  const seriesLen = forecast?.models[0]?.series.length || 0;
+  const nowIndex = status === "ok" && forecast ? findNowIndex(forecast.models[0]?.series || []) : -1;
 
-  function goToNow() {
-    if (!forecast) return;
-    setTableTimeIndex(nowTargetIndex(forecast.models[0]?.series || [], tableInterval));
+  // Grafiğe / matrise tıklama: tablo o dilime ve o grafiğin aralığına gider
+  function selectAt(i, step) {
+    setSelection((s) => ({ ...s, i: i - (i % step), step }));
+  }
+
+  function setTableStep(step) {
+    setSelection((s) => ({ i: s.i - (s.i % step), step, reveal: s.reveal + 1 }));
   }
 
   function goToPrevTime() {
-    setTableTimeIndex((i) => Math.max(0, i - tableInterval));
+    setSelection((s) => ({ ...s, i: Math.max(0, s.i - s.step), reveal: s.reveal + 1 }));
   }
 
   function goToNextTime() {
-    setTableTimeIndex((i) => Math.min(maxTableIndex, i + tableInterval));
+    setSelection((s) => ({ ...s, i: Math.min(Math.max(0, seriesLen - 1), s.i + s.step), reveal: s.reveal + 1 }));
   }
 
-  function changeTableInterval(hrs) {
-    setTableInterval(hrs);
-    // Pencereler hizalı kalsın diye mevcut indeksi yeni aralığın katına yuvarla.
-    setTableTimeIndex((i) => Math.floor(i / hrs) * hrs);
+  function goToNow() {
+    if (nowIndex < 0) return;
+    setSelection((s) => ({ ...s, i: nowIndex - (nowIndex % s.step), reveal: s.reveal + 1 }));
   }
+
+  const panelProps = { models: forecast?.models, period, status, selection, onSelect: selectAt };
 
   function resetModels() {
     setActiveModels(new Set(MODELS.filter((m) => m.defaultActive).map((m) => m.id)));
@@ -260,136 +267,35 @@ export default function SehirPage() {
           onReset={resetModels}
         />
         <div className="charts-stack">
-          <LineChartPanel cfg={LINE_CHARTS.temp} models={forecast?.models} period={period} status={status} />
+          {/* Paket 4: Hava durumu matrisi en üstte; tüm panellerde ortak seçili zaman */}
+          <MatrixPanel cfg={MATRICES.wx} {...panelProps} />
 
-          {/* Paket 3: Toplam yağış, Bulutluluk ve Rüzgar da aynı düzende (Bulutluluk yağış ile rüzgar arasında) */}
-          <PrecipPanel models={forecast?.models} period={period} status={status} />
+          <LineChartPanel cfg={LINE_CHARTS.temp} {...panelProps} />
 
-          <MatrixPanel cfg={MATRICES.cloud} models={forecast?.models} period={period} status={status} />
+          <PrecipPanel {...panelProps} />
 
-          <MatrixPanel cfg={MATRICES.wind} models={forecast?.models} period={period} status={status} />
+          <MatrixPanel cfg={MATRICES.cloud} {...panelProps} />
 
-          <LineChartPanel cfg={LINE_CHARTS.humidity} models={forecast?.models} period={period} status={status} />
+          <MatrixPanel cfg={MATRICES.wind} {...panelProps} />
 
-          <LineChartPanel cfg={LINE_CHARTS.cape} models={forecast?.models} period={period} status={status} />
+          <LineChartPanel cfg={LINE_CHARTS.humidity} {...panelProps} />
 
-          <LineChartPanel cfg={LINE_CHARTS.pressure} models={forecast?.models} period={period} status={status} />
+          <LineChartPanel cfg={LINE_CHARTS.cape} {...panelProps} />
+
+          <LineChartPanel cfg={LINE_CHARTS.pressure} {...panelProps} />
         </div>
       </div>
 
-      <div className="panel">
-        <div className="panel-head">
-          <div className="panel-title-group">
-            <div className="panel-title">Model detayları</div>
-            <div className="panel-sub">
-              {status === "ok" ? formattedTableTime : ""}
-              {status === "ok" && nowAvailable && safeTableIndex === nowTarget && (
-                <span style={NOW_BADGE_STYLE}>şimdi</span>
-              )}
-            </div>
-          </div>
-          <div className="table-controls">
-            <div className="unit-toggle">
-              {[1, 3, 6].map((hrs) => (
-                <button
-                  key={hrs}
-                  type="button"
-                  className={tableInterval === hrs ? "active" : ""}
-                  onClick={() => changeTableInterval(hrs)}
-                >
-                  {hrs}s
-                </button>
-              ))}
-            </div>
-            <div className="time-nav">
-              <button
-                type="button"
-                onClick={goToPrevTime}
-                disabled={status !== "ok" || safeTableIndex <= 0}
-                aria-label="Önceki"
-              >
-                ←
-              </button>
-              <button
-                type="button"
-                onClick={goToNow}
-                disabled={status !== "ok" || !nowAvailable}
-                aria-label="Şimdiki saate git"
-                style={{ width: "auto", padding: "0 10px", fontSize: 12 }}
-              >
-                Şimdi
-              </button>
-              <button
-                type="button"
-                onClick={goToNextTime}
-                disabled={status !== "ok" || safeTableIndex >= maxTableIndex}
-                aria-label="Sonraki"
-              >
-                →
-              </button>
-            </div>
-          </div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Model</th>
-              <th>Sıcaklık</th>
-              <th>Yağış olasılığı</th>
-              <th>Yağış ({tableInterval}s toplam, mm)</th>
-              <th>Rüzgar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {status === "loading" && (
-              <tr>
-                <td colSpan={5} className="loading">
-                  Veri yükleniyor…
-                </td>
-              </tr>
-            )}
-            {status === "error" && (
-              <tr>
-                <td colSpan={5} className="err">
-                  Veri alınamadı
-                </td>
-              </tr>
-            )}
-            {status === "ok" &&
-              forecast.models.map((m) => {
-                const point = m.series[safeTableIndex];
-                const precipSum = sumPrecipWindow(m.series, safeTableIndex, tableInterval);
-                return (
-                  <tr key={m.id}>
-                    <td className="station">
-                      <span className="dot" style={{ background: m.color }} />
-                      {m.label}
-                    </td>
-                    <td>{point && point.temp != null ? formatOneDecimal(point.temp) + "°C" : "—"}</td>
-                    <td>
-                      {point && point.precip_prob != null ? (
-                        "%" + point.precip_prob
-                      ) : modelHasPrecipProb(m) ? (
-                        "—"
-                      ) : (
-                        <span title={`${m.label} yağış olasılığı sunmuyor`}>—*</span>
-                      )}
-                    </td>
-                    <td>{formatPrecipMm(precipSum)}</td>
-                    <td>
-                      <WindCell speed={point?.wind_speed} direction={point?.wind_direction} />
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
-        {status === "ok" && noProbLabels.length > 0 && (
-          <div className="panel-sub" style={{ marginTop: 8, fontSize: 11 }}>
-            * {joinTr(noProbLabels)} yağış olasılığı sunmuyor.
-          </div>
-        )}
-      </div>
+      <ModelDetails
+        models={forecast?.models}
+        status={status}
+        selection={selection}
+        nowIndex={nowIndex}
+        onStep={setTableStep}
+        onPrev={goToPrevTime}
+        onNext={goToNextTime}
+        onNow={goToNow}
+      />
 
       <Link href="/modeller" className="explain-link">
         <div>
@@ -400,98 +306,6 @@ export default function SehirPage() {
       </Link>
     </Layout>
   );
-}
-
-const COMPASS_8 = ["K", "KD", "D", "GD", "G", "GB", "B", "KB"];
-
-function degreesToCompass(deg) {
-  if (deg == null || Number.isNaN(Number(deg))) return null;
-  const normalized = ((Number(deg) % 360) + 360) % 360;
-  return COMPASS_8[Math.round(normalized / 45) % 8];
-}
-
-// Tablolarda sıcaklık ve rüzgar tek ondalıkla gösterilir (örn. 23.4°C, 12.6 km/s).
-function formatOneDecimal(v) {
-  if (v == null || Number.isNaN(Number(v))) return "—";
-  return Number(v).toFixed(1);
-}
-
-function formatPrecipMm(amount) {
-  if (amount == null || Number.isNaN(Number(amount))) return "—";
-  return Number(amount).toFixed(1);
-}
-
-function WindCell({ speed, direction }) {
-  if (speed == null && direction == null) return "—";
-  const compass = degreesToCompass(direction);
-  const speedText = speed == null ? "—" : `${formatOneDecimal(speed)} km/s`;
-  return (
-    <span className="wind-cell">
-      {direction != null && (
-        <span
-          className="wind-arrow"
-          style={{ transform: `rotate(${direction}deg)` }}
-          title={`${Math.round(direction)}°${compass ? ` ${compass}` : ""}`}
-          aria-hidden="true"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 20 V6" />
-            <path d="M6 12 l6-6 6 6" />
-          </svg>
-        </span>
-      )}
-      <span>
-        {speedText}
-        {compass ? ` ${compass}` : ""}
-      </span>
-    </span>
-  );
-}
-
-// API'den gelen zamanlar TSİ duvar saatidir ("YYYY-MM-DDTHH:mm", ek/offset yok; bkz. lib/forecast.js).
-// Tarayıcının kendi saat diliminden etkilenmemek için metin doğrudan ayrıştırılır; tarih/gün
-// hesapları için UTC tabanlı bir Date üretilir ve yalnızca getUTC* / timeZone:"UTC" ile okunur.
-function parseTsiTime(t) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(t || "");
-  if (!m) return null;
-  const hour = +m[4];
-  return { hour, date: new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], hour, +m[5])) };
-}
-
-function formatHourLabel(hour) {
-  return String(hour).padStart(2, "0") + ":00";
-}
-
-function formatTableTime(forecast, index) {
-  const p = parseTsiTime(forecast?.models[0]?.series[index]?.time);
-  if (!p) return "";
-  const tarih = p.date.toLocaleDateString("tr-TR", { day: "numeric", month: "long", timeZone: "UTC" });
-  const gun = formatWeekdayAbbr3(p.date);
-  return `${tarih} ${gun} ${formatHourLabel(p.hour)} TSİ`;
-}
-
-// Seçilen tablo aralığı (1/3/6 saat) için, endIndex dahil olmak üzere geriye doğru toplam yağış.
-function sumPrecipWindow(series, endIndex, interval) {
-  const start = Math.max(0, endIndex - interval + 1);
-  let sum = 0;
-  let any = false;
-  for (let i = start; i <= endIndex; i++) {
-    const v = series[i]?.precip_amount;
-    if (v != null && !Number.isNaN(Number(v))) {
-      sum += Number(v);
-      any = true;
-    }
-  }
-  return any ? sum : null;
-}
-
-// Sabit 3 harfli Türkçe gün kısaltmaları (Intl'in "short" biçimi bazı günlerde 3'ten uzun
-// dönebiliyor, örn. "Çarş"). getUTCDay(): 0=Pazar, 1=Pazartesi, ... 6=Cumartesi.
-// (Date, parseTsiTime ile UTC tabanlı üretildiği için getUTCDay kullanılır.)
-const WEEKDAY_ABBR_3 = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
-
-function formatWeekdayAbbr3(d) {
-  return WEEKDAY_ABBR_3[d.getUTCDay()];
 }
 
 // ---------------------------------------------------------------------------
@@ -604,17 +418,8 @@ function ModelPicker({ activeModels, onToggle, onReset }) {
 }
 
 // ---------------------------------------------------------------------------
-// Ortak yardımcılar: TSİ "şimdi", Türkçe liste
+// Ortak yardımcı: TSİ "şimdi"
 // ---------------------------------------------------------------------------
-
-const NOW_BADGE_STYLE = {
-  marginLeft: 8,
-  padding: "1px 6px",
-  borderRadius: 4,
-  background: "var(--teal)",
-  color: "#FFFFFF",
-  fontSize: 10,
-};
 
 // TSİ sabit UTC+3 (Türkiye 2016'dan beri yaz/kış saati uygulamıyor).
 function tsiNowKey() {
@@ -626,24 +431,9 @@ function findNowIndex(series) {
   return (series || []).findIndex((s) => typeof s.time === "string" && s.time.startsWith(key));
 }
 
-// Tablonun "şimdi" konumu: şimdiki saat, seçili aralığın (1/3/6 saat) katına yuvarlanır.
-function nowTargetIndex(series, interval) {
-  const idx = findNowIndex(series);
-  if (idx < 0) return 0;
-  const step = interval || 1;
-  return Math.floor(idx / step) * step;
-}
-
-function modelHasPrecipProb(m) {
-  return (m.series || []).some((s) => s.precip_prob != null);
-}
-
-function joinTr(items) {
-  if (items.length <= 1) return items.join("");
-  return `${items.slice(0, -1).join(", ")} ve ${items[items.length - 1]}`;
-}
-
-// Grafikler ve matrisler:
+// Grafikler, matrisler ve tablo:
 // - Sıcaklık, Nem, CAPE, Basınç: components/LineChartPanel.js
 // - Toplam yağış: components/PrecipPanel.js
-// - Bulutluluk ve Rüzgar (model × zaman matrisleri): components/MatrixPanel.js
+// - Hava durumu, Bulutluluk ve Rüzgar (model × zaman matrisleri): components/MatrixPanel.js
+// - Hava durumu ifadesi ve ikonları: components/WeatherCond.js
+// - Model detayları: components/ModelDetails.js

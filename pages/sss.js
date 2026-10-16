@@ -126,7 +126,9 @@ const FAQS = [
       <>
         <p style={{ margin: "0 0 12px" }}>
           Açık renkli bant 06:00–18:00 TSİ gündüz saatleridir; 06, 12 ve 18 dikmeleri saati okumayı kolaylaştırır.
-          Teal dikey çizgi ve tablolardaki koyu turkuaz çerçeve şu anki saati gösterir.
+          Teal dikey çizgi ve tablolardaki koyu turkuaz çerçeve şu anki saati gösterir. Bir grafiğe ya da tabloya
+          tıklayınca sayfanın altındaki Model detayları o zamana gider; seçtiğin dilim bütün grafiklerde kesikli koyu
+          bir çerçeveyle gösterilir. Tablodaki ← Şimdi → düğmeleri bu çerçeveyi her yerde birlikte kaydırır.
         </p>
         <p style={{ margin: 0 }}>
           Sıcaklıkta 30 °C çizgisi koyu çizilir. Nemde %85 üstü "doygunluğa yakın" (sis, çiy) ve %30 altı "kuru"
@@ -149,16 +151,41 @@ const FAQS = [
   },
   {
     num: "05",
+    q: "Hava durumu ifadesi nasıl belirleniyor?",
+    a: (
+      <>
+        <p style={{ margin: "0 0 12px" }}>
+          Her model için saat saat bakılır. Modelin o günkü toplam yağışı en az 0.2 mm ve o saatteki yağışı en az 0.1
+          mm ise yağış ifadesi kullanılır. Ayrımı o saatin CAPE değeri yapar: 500 J/kg ve altı &quot;Yağmurlu&quot;, 500
+          üstü &quot;Sağanak Yağışlı&quot;, 1000 üstü &quot;Gök Gürültülü Sağanak Yağışlı&quot;. JMA CAPE vermediği için
+          JMA&apos;da yağış hep &quot;Yağmurlu&quot; görünür.
+        </p>
+        <p style={{ margin: "0 0 12px" }}>
+          Yağış yoksa bulutluluk sınıfı yazılır: Açık (%0–10), Az Bulutlu (%10–30), Parçalı Bulutlu (%30–50), Çok
+          Bulutlu (%50–90) ya da Kapalı (%90–100). 20:00–06:00 arasında açık, az ve parçalı bulutlu ikonlarında güneş
+          yerine ay çizilir. 3 ve 6 saatlik görünümde dilimdeki en belirgin durum gösterilir: yağış bulut sınıfından
+          önce gelir, bulutta daha kapalı olanı seçilir.
+        </p>
+        <p style={{ margin: 0 }}>
+          Hava durumu tablosunun uyum satırında, o saatte modellerin en az yarısı yağış veriyorsa yağış verenlerin
+          oranına, vermiyorsa ortanca bulut sınıfındaki yağışsız modellerin oranına bakılır: %75 ve üstü hemfikir,
+          %50–75 kısmen, altı ayrışıyor.
+        </p>
+      </>
+    ),
+  },
+  {
+    num: "06",
     q: "Veriler ne sıklıkla güncelleniyor?",
     a: "Modelden modele değişir: ECMWF, GFS, ICON, UKMO, ARPEGE ve JMA günde 4 kez, GEM günde 2 kez güncellenir. havameridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır.",
   },
   {
-    num: "06",
+    num: "07",
     q: "Bu MGM'nin resmi sitesi mi?",
     a: "Hayır. havameridyen bağımsız, kişisel bir karşılaştırma aracıdır — Meteoroloji Genel Müdürlüğü ile bir bağlantısı yoktur. Afet veya acil durum kararları için lütfen MGM'nin resmi uyarılarını takip et.",
   },
   {
-    num: "07",
+    num: "08",
     q: "Favorilerim nerede saklanıyor?",
     a: "Yalnızca kendi cihazında, tarayıcının yerel deposunda (localStorage) saklanır. Hesap oluşturmana gerek yok, hiçbir veri sunucuya gönderilmez. Tarayıcı verilerini temizlersen favorilerin de silinir.",
   },

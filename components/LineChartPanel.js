@@ -14,6 +14,8 @@
 //   Etiket bloğa sığarsa yazılır; üzerine gelince açıklama çıkar. Tek model seçiliyse şerit yok.
 // - Grafik altında yalnız anahtar kalır; açıklama metinleri SSS'te.
 // - Verisi biten modelin çizgisi son noktasında küçük bir noktayla biter (taralı bölge yok).
+// - Ortak seçili zaman (Paket 4): grafiğe tıklayınca Model detayları o dilime gider ve tablo aralığı bu
+//   grafiğin aralığını alır; seçili dilim tüm grafiklerde kesikli koyu çerçeveyle gösterilir.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import AgreeMark from "./AgreeMark";
@@ -300,6 +302,43 @@ export function useNowIndex(times) {
   }, [times]);
 }
 
+// Seçili dilim çerçevesi (tüm grafik ve matrislerde). selection: { i, step, reveal }
+export function SelFrame({ geo, n, selection, y0, y1 }) {
+  if (!geo || !selection || selection.i < 0 || selection.i >= n) return null;
+  const x0 = geo.x(selection.i);
+  const x1 = geo.x(Math.min(n, selection.i + selection.step));
+  return (
+    <rect
+      x={x0 - 2}
+      y={y0}
+      width={Math.max(2, x1 - x0) + 4}
+      height={y1 - y0}
+      rx="3"
+      fill="rgba(31,42,36,.035)"
+      stroke="#1F2A24"
+      strokeWidth="1.3"
+      strokeDasharray="4 2"
+      pointerEvents="none"
+    />
+  );
+}
+
+// Tablodaki ← Şimdi → / aralık değişince seçili dilim görünmüyorsa grafik onu gösterecek kadar kayar.
+export function useRevealSelection(scRef, geo, selection) {
+  const reveal = selection ? selection.reveal : 0;
+  const doneRef = useRef(reveal);
+  useEffect(() => {
+    const el = scRef.current;
+    if (!el || !geo || !selection || doneRef.current === reveal) return;
+    doneRef.current = reveal;
+    const x0 = geo.x(selection.i);
+    const x1 = geo.x(selection.i + selection.step);
+    if (x0 < el.scrollLeft + 8 || x1 > el.scrollLeft + el.clientWidth - 8) {
+      el.scrollLeft = Math.max(0, x0 - el.clientWidth * 0.3);
+    }
+  }, [scRef, geo, selection, reveal]);
+}
+
 export function Chip({ bg, ink, level, children }) {
   return (
     <span className="lc-chip" style={{ background: bg, color: ink }}>
@@ -309,7 +348,7 @@ export function Chip({ bg, ink, level, children }) {
   );
 }
 
-export default function LineChartPanel({ cfg, models, period, status, extraTitle }) {
+export default function LineChartPanel({ cfg, models, period, status, extraTitle, selection, onSelect }) {
   const [step, setStep] = useState(defaultStepFor(period));
   useEffect(() => setStep(defaultStepFor(period)), [period]);
 
@@ -391,6 +430,7 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
 
   const nowIdx = useNowIndex(times);
   const { more, onScroll } = useSyncedScroll(scRef, geo, period, nowIdx);
+  useRevealSelection(scRef, geo, selection);
 
   function showTip(e, content) {
     const pt = e.touches ? e.touches[0] : e;
@@ -422,6 +462,14 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
   function onLeave() {
     setHoverI(null);
     setTip(null);
+  }
+
+  function onClick(e) {
+    if (!geo || !onSelect || !(e.target.getAttribute && e.target.getAttribute("data-hit"))) return;
+    const box = e.currentTarget.getBoundingClientRect();
+    let i = Math.round((e.clientX - box.left - X0) / geo.pxh / step) * step;
+    i = Math.max(0, Math.min(n - 1, i));
+    onSelect(i, step);
   }
 
   function rangeText(b) {
@@ -599,6 +647,7 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
         aria-label={cfg.title}
         onMouseMove={onMove}
         onMouseLeave={onLeave}
+        onClick={onClick}
         onTouchStart={(e) => {
           onMove(e);
           setTimeout(onLeave, 2600);
@@ -758,7 +807,8 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
               </g>
             );
           })}
-        <rect data-hit="1" x={X0} y={PT} width={x(n) - X0} height={geo.PH} fill="transparent" />
+        <SelFrame geo={geo} n={n} selection={selection} y0={PT - 2} y1={PB + 2} />
+        <rect data-hit="1" x={X0} y={PT} width={x(n) - X0} height={geo.PH} fill="transparent" style={{ cursor: onSelect ? "pointer" : undefined }} />
       </svg>
     );
   }

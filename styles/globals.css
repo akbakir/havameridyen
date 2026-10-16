@@ -414,15 +414,6 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--line); }
 td.station { font-family: "IBM Plex Sans", sans-serif; font-weight: 500; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; }
 .panel:has(table) { overflow-x: auto; }
-.wind-cell { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
-.wind-arrow {
-  display: inline-flex;
-  width: 14px;
-  height: 14px;
-  color: var(--ink);
-  flex-shrink: 0;
-}
-.wind-arrow svg { display: block; width: 14px; height: 14px; margin: 0; }
 .loading, .err { font-family: "IBM Plex Mono", monospace; font-size: 12px; padding: 20px 0; text-align: center; }
 .err { color: var(--coral); }
 
@@ -782,3 +773,14 @@ footer { position: relative; z-index: 2; border-top: 1px solid var(--line); padd
 .mx-controls .unit-toggle { margin-left: 0; }
 .lc-thr { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--ink-soft); }
 .lc-thr .unit-toggle { margin-left: 0; }
+
+/* Hava durumu matrisi ve Model detayları (components/MatrixPanel.js, components/ModelDetails.js) — Paket 4, Ekim 2026 */
+.lc-ik { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-soft); padding-right: 6px; }
+.md-wrap { overflow-x: auto; margin-top: 8px; }
+.md-table { font-variant-numeric: tabular-nums; }
+.md-table th { padding: 8px; white-space: nowrap; vertical-align: bottom; }
+.md-table th .u { display: block; font-size: 9px; text-transform: none; letter-spacing: 0; color: var(--ink-faint); }
+.md-table td { padding: 8px; white-space: nowrap; }
+.md-table td.cond { font-family: "IBM Plex Sans", sans-serif; }
+.md-table td.cond span { display: inline-flex; align-items: center; gap: 6px; }
+.md-table td.na { color: var(--ink-faint); }

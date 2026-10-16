@@ -1,14 +1,17 @@
-// Model × zaman matrisleri — Rüzgar ve Bulutluluk (Paket 3, Ekim 2026).
+// Model × zaman matrisleri — Hava durumu (Paket 4), Bulutluluk ve Rüzgar (Paket 3), Ekim 2026.
 // Çizgi grafiklerle aynı düzen: sabit sol sütun (model adları), 1s / 3s / 6s, gün çizgileri, 06–18 gündüz
 // şeridi, saat etiketleri, "şimdi" sütunu koyu turkuaz çerçeve, 16 günde yatay kaydırma ve diğer grafiklerle
 // saat üzerinden birlikte kayma, altta yalnız anahtar (açıklamalar SSS'te).
 // - Uyum satırı dilimin en ayrışık saatinden; komşu aynı seviyeler tek blokta birleşir, etiket sığarsa
 //   yazılır, üzerine gelince açıklama çıkar. Tek model seçiliyse uyum satırı yok.
 // - Bulutlulukta hücre genişliği çizgi grafiklerle aynı ölçektedir; rüzgarda okun ve sayıların sığması
-//   için hücre en az 30 px'tir (16 günde matris daha uzun kayar, saat eşlemesi bozulmaz).
+//   için hücre en az 30 px'tir, hava durumunda ikon için en az 28 px (16 günde matris daha uzun kayar, saat
+//   eşlemesi bozulmaz).
+// - Hücreye ya da sütuna tıklayınca Model detayları o dilime gider (ortak seçili zaman, kesikli çerçeve).
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import AgreeMark from "./AgreeMark";
+import { WX_KEY, WxIcon, slotCond, wxAgreeAt } from "./WeatherCond";
 import {
   AGREE_STYLE_LC,
   Chip,
@@ -24,9 +27,11 @@ import {
   numOrNull,
   pad2,
   parseTime,
+  SelFrame,
   tipStyle,
   trPossessive,
   useNowIndex,
+  useRevealSelection,
   useSyncedScroll,
   useWidth,
 } from "./LineChartPanel";
@@ -41,7 +46,8 @@ function slotText(times, s0, step) {
   if (!p) return "";
   const day = `${p.day} ${MON3[p.mon]} ${DAY3[p.wd]}`;
   if (step === 1) return `${day} ${pad2(p.hour)}:00 TSİ`;
-  return `${day} ${pad2(p.hour)}:00–${pad2((p.hour + step) % 24)}:00 TSİ`;
+  const e = parseTime(times[Math.min(times.length - 1, s0 + step - 1)]);
+  return `${day} ${pad2(p.hour)}:00–${pad2(e ? e.hour : p.hour)}:59 TSİ`;
 }
 
 function hourText(times, i) {
@@ -341,9 +347,77 @@ const CLOUD = {
     )),
 };
 
-export const MATRICES = { wind: WIND, cloud: CLOUD };
+// ---------------------------------------------------------------------------
+// Hava durumu: hücrede dilimdeki en belirgin durumun ikonu (kurallar: components/WeatherCond.js).
+// ---------------------------------------------------------------------------
+const WX = {
+  key: "wx",
+  title: "Hava durumu",
+  rowH: 34,
+  minCell: 28,
+  field: "cloud_cover",
+  sub: (step, models) =>
+    `${step === 1 ? "saatlik" : `${step} saatlik dilim · dilimdeki en belirgin durum`} · ${models.length} model`,
+  cell(m, s0, step, cw, RH, times) {
+    const sc = slotCond(m, s0, step);
+    if (!sc) return null;
+    const sz = Math.min(26, cw - 4);
+    let rs = 0;
+    for (let i = s0; i < s0 + step && i < times.length; i++) rs += numOrNull(m.series[i]?.precip_amount) || 0;
+    const cc = numOrNull(m.series[sc.i]?.cloud_cover);
+    const e = numOrNull(m.series[sc.i]?.cape);
+    return {
+      svg: (
+        <>
+          <rect x="1" y="1" width={cw - 2} height={RH - 2} fill="transparent" />
+          <WxIcon ic={sc.ic} size={sz} x={(cw - sz) / 2} y={(RH - sz) / 2} />
+        </>
+      ),
+      tip: (
+        <>
+          <b>
+            {m.label} · {sc.text}
+          </b>
+          <div className="lc-mono">{slotText(times, s0, step)}</div>
+          <div>
+            Yağış {rs < 0.05 ? "yok" : `${rs.toFixed(1)} mm`}
+            {step > 1 ? " (dilim toplamı)" : ""} · Bulut %{cc == null ? "—" : Math.round(cc)}
+            {e != null ? ` · CAPE ${Math.round(e)} J/kg` : ""}
+          </div>
+          {step > 1 && <div className="lc-mono">en belirgin saat {hourText(times, sc.i)}</div>}
+        </>
+      ),
+    };
+  },
+  agree: wxAgreeAt,
+  agreeLabels: (b) => {
+    const t = AGREE_STYLE_LC[b.level].text;
+    return b.peak ? [`${t} · ${b.peak.inClass}/${b.peak.n} ${b.peak.mode}`, t] : [t];
+  },
+  agreeTip: (pk, times) => (
+    <>
+      <div>
+        En ayrışık saat {hourText(times, pk.i)} · {pk.n} modelin {pk.inClass}&apos;{trPossessive(pk.inClass)}{" "}
+        {pk.mode === "yağış" ? "yağış veriyor" : `aynı sınıfta: ${pk.mode}`}
+      </div>
+      <div className="lc-mono lc-rule">
+        Modellerin en az yarısı yağış veriyorsa yağış verenlerin oranı, değilse ortanca bulut sınıfındaki yağışsız
+        modellerin oranı: % 75 ve üstü hemfikir, % 50–75 kısmen, altı ayrışıyor.
+      </div>
+    </>
+  ),
+  key: () =>
+    WX_KEY.map(([ic, t]) => (
+      <span key={ic} className="lc-ik">
+        <WxIcon ic={ic} size={18} />
+        {t}
+      </span>
+    )),
+};
 
-export default function MatrixPanel({ cfg, models, period, status }) {
+export const MATRICES = { wx: WX, wind: WIND, cloud: CLOUD };
+
+export default function MatrixPanel({ cfg, models, period, status, selection, onSelect }) {
   const [step, setStep] = useState(defaultStepFor(period));
   useEffect(() => setStep(defaultStepFor(period)), [period]);
   const [unitId, setUnitId] = useState(cfg.units ? cfg.units[0].id : null);
@@ -399,6 +473,7 @@ export default function MatrixPanel({ cfg, models, period, status }) {
 
   const nowIdx = useNowIndex(times);
   const { more, onScroll } = useSyncedScroll(scRef, geo, period, nowIdx);
+  useRevealSelection(scRef, geo, selection);
 
   const cells = useMemo(() => {
     if (!geo) return [];
@@ -440,6 +515,21 @@ export default function MatrixPanel({ cfg, models, period, status }) {
         {cfg.agreeTip(b.peak, times)}
       </>
     );
+  }
+
+  // hücreye ya da sütuna tıklama → ortak seçili zaman (üstteki gün/saat başlığı hariç)
+  function onClick(e) {
+    if (!geo || !onSelect) return;
+    const box = e.currentTarget.getBoundingClientRect();
+    const g = e.target.closest && e.target.closest("[data-cell]");
+    let c;
+    if (g) c = cells[+g.getAttribute("data-cell")].c;
+    else {
+      if (e.clientY - box.top < TOP - 6) return;
+      c = Math.floor((e.clientX - box.left - X0) / geo.cw);
+    }
+    if (c < 0 || c >= geo.cols) return;
+    onSelect(c * step, step);
   }
 
   // --- çizim ---
@@ -523,6 +613,8 @@ export default function MatrixPanel({ cfg, models, period, status }) {
         aria-label={cfg.title}
         onMouseMove={onMove}
         onMouseLeave={() => setTip(null)}
+        onClick={onClick}
+        style={{ cursor: onSelect ? "pointer" : undefined }}
         onTouchStart={(e) => {
           onMove(e);
           setTimeout(() => setTip(null), 2600);
@@ -542,7 +634,7 @@ export default function MatrixPanel({ cfg, models, period, status }) {
               ·
             </text>
           ) : (
-            <g key={k} data-cell={k} style={{ cursor: "help" }} transform={`translate(${x(r.c * step)},${TOP + r.mi * RH})`}>
+            <g key={k} data-cell={k} transform={`translate(${x(r.c * step)},${TOP + r.mi * RH})`}>
               {r.svg}
             </g>
           )
@@ -582,6 +674,7 @@ export default function MatrixPanel({ cfg, models, period, status }) {
               </g>
             );
           })}
+        <SelFrame geo={geo} n={n} selection={selection} y0={TOP - 4} y1={(multi ? AY + STRIP_H : BOT) + 3} />
       </svg>
     );
   }

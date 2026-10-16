@@ -6,11 +6,13 @@
 //   sayılır; modellerin en az % 75'i aynı taraftaysa "yağışta uzlaşı" ya da "yağış yok", değilse
 //   "modeller bölünmüş". Eşik anahtardaki düğmelerle değiştirilebilir.
 //   (Yağış olasılığı kullanılmaz: UKMO ve ARPEGE bu değeri sunmuyor.)
+// - Tıklanan dilim ortak seçili zamandır (Model detayları oraya gider; bkz. LineChartPanel SelFrame).
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Chip,
   DAY3,
+  SelFrame,
   LABW,
   MIN_PXH,
   MON3,
@@ -24,6 +26,7 @@ import {
   tipStyle,
   trPossessive,
   useNowIndex,
+  useRevealSelection,
   useSyncedScroll,
   useWidth,
 } from "./LineChartPanel";
@@ -84,10 +87,11 @@ function slotText(times, s0, step) {
   if (!p) return "";
   const day = `${p.day} ${MON3[p.mon]} ${DAY3[p.wd]}`;
   if (step === 1) return `${day} ${pad2(p.hour)}:00 TSİ`;
-  return `${day} ${pad2(p.hour)}:00–${pad2((p.hour + step) % 24)}:00 TSİ`;
+  const e = parseTime(times[Math.min(times.length - 1, s0 + step - 1)]);
+  return `${day} ${pad2(p.hour)}:00–${pad2(e ? e.hour : p.hour)}:59 TSİ`;
 }
 
-export default function PrecipPanel({ models, period, status }) {
+export default function PrecipPanel({ models, period, status, selection, onSelect }) {
   const [step, setStep] = useState(defaultStepFor(period));
   useEffect(() => setStep(defaultStepFor(period)), [period]);
   const [threshold, setThreshold] = useState(RAIN_THRESHOLD_DEFAULT);
@@ -149,6 +153,7 @@ export default function PrecipPanel({ models, period, status }) {
 
   const nowIdx = useNowIndex(times);
   const { more, onScroll } = useSyncedScroll(scRef, geo, period, nowIdx);
+  useRevealSelection(scRef, geo, selection);
 
   function showTip(e, content) {
     const pt = e.touches ? e.touches[0] : e;
@@ -177,6 +182,13 @@ export default function PrecipPanel({ models, period, status }) {
     const c = Math.max(0, Math.min(geo.cols - 1, Math.floor((pt.clientX - box.left - X0) / geo.cw)));
     setHoverC(c);
     showTip(e, slotTip(c));
+  }
+
+  function onClick(e) {
+    if (!geo || !onSelect || !(e.target.getAttribute && e.target.getAttribute("data-hit"))) return;
+    const box = e.currentTarget.getBoundingClientRect();
+    const c = Math.max(0, Math.min(geo.cols - 1, Math.floor((e.clientX - box.left - X0) / geo.cw)));
+    onSelect(c * step, step);
   }
 
   function slotTip(c) {
@@ -265,6 +277,7 @@ export default function PrecipPanel({ models, period, status }) {
         aria-label="Toplam yağış"
         onMouseMove={onMove}
         onMouseLeave={onLeave}
+        onClick={onClick}
         onTouchStart={(e) => {
           onMove(e);
           setTimeout(onLeave, 2600);
@@ -360,7 +373,8 @@ export default function PrecipPanel({ models, period, status }) {
               </g>
             );
           })}
-        <rect data-hit="1" x={X0} y={PT} width={x(n) - X0} height={PH} fill="transparent" />
+        <SelFrame geo={geo} n={n} selection={selection} y0={PT - 2} y1={PB + 2} />
+        <rect data-hit="1" x={X0} y={PT} width={x(n) - X0} height={PH} fill="transparent" style={{ cursor: onSelect ? "pointer" : undefined }} />
       </svg>
     );
   }
