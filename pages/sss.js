@@ -80,11 +80,18 @@ const FAQS = [
           "yağış bekliyor" sayılır. Modellerin en az %75'i aynı yöndeyse uzlaşı, altındaysa "modeller bölünmüş"
           gösterilir. Yağış olasılığı kullanılmaz, çünkü UKMO ve ARPEGE bu değeri sunmuyor.
         </p>
+        <p style={{ margin: "0 0 12px" }}>
+          <strong style={{ color: "var(--ink)", fontWeight: 600 }}>CAPE'de</strong> de sınıfa bakılır: 500 J/kg altı,
+          500–1000 J/kg (sağanak) ve 1000 J/kg üstü (gök gürültülü). Ortanca sınıftaki modellerin oranı %75 ve üstüyse
+          hemfikir, %50–75 kısmen, altındaysa ayrışıyor.
+        </p>
         <p style={{ margin: 0 }}>
-          Grafiklerin altındaki uyum şeridi saat saat değil dilim dilim çizilir (3 günlük görünümde 3 saatlik, 16
-          günlükte günlük dilimler) ve her dilim o dilimdeki <em>en büyük</em> farka göre renklenir. Böylece ayrışma
-          ortalama alınarak yumuşatılmaz, şerit de okunaklı kalır. Bir dilimin üzerine gelince hangi iki modelin
-          ayrıştığı yazar.
+          Grafiklerin altındaki uyum şeridi saat saat değil dilim dilim çizilir ve her dilim o dilimdeki{" "}
+          <em>en büyük</em> farka göre renklenir; böylece ayrışma ortalama alınarak yumuşatılmaz. Şerit, grafikte
+          seçtiğin 1s / 3s / 6s aralığından bağımsız olarak saatlik veriden hesaplanır. Aynı seviyedeki komşu dilimler
+          tek blokta birleşir; blok yeterince genişse içinde seviye ve "en çok 3.2°" gibi o bloktaki en büyük fark
+          yazar. Şeridin üzerine gelince hangi iki modelin ayrıştığı görünür. Tek model seçiliyken şerit gösterilmez —
+          karşılaştıracak model yoktur.
         </p>
       </>
     ),
@@ -103,21 +110,44 @@ const FAQS = [
           Nem, bağıl nemdir (%). ECMWF IFS 2 metre bağıl nemi ham olarak yayınlamadığı için bu modelin nem değeri, yine
           modelin kendi sıcaklık ve çiy noktası tahminlerinden Magnus formülüyle hesaplanır.
         </p>
+        <p style={{ margin: "12px 0 0" }}>
+          Basınç grafiğinin altındaki eğilim şeridi son 3 saatteki değişimin model ortancasıdır: 3 saatte 2 hPa'dan hızlı
+          düşüş havanın bozulabileceğini, hızlı yükseliş açılacağını gösterir. Modeller değişimin yönünde ayrışıyorsa
+          renk soluklaşır.
+        </p>
       </>
     ),
   },
   {
     num: "04",
+    q: "Grafiklerdeki bantlar ve çizgiler ne gösteriyor?",
+    a: (
+      <>
+        <p style={{ margin: "0 0 12px" }}>
+          Açık renkli bant 06:00–18:00 TSİ gündüz saatleridir; 06, 12 ve 18 dikmeleri saati okumayı kolaylaştırır.
+          Teal dikey çizgi ve tablolardaki koyu turkuaz çerçeve şu anki saati gösterir.
+        </p>
+        <p style={{ margin: 0 }}>
+          Sıcaklıkta 30 °C çizgisi koyu çizilir. Nemde %85 üstü "doygunluğa yakın" (sis, çiy) ve %30 altı "kuru"
+          bantlarla, basınçta 1013.25 hPa standart atmosfer çizgisiyle, CAPE'de 500 J/kg (sağanak) ve 1000 J/kg (gök
+          gürültülü) çizgileriyle işaretlenir. Modellerin tahmin süreleri farklıdır; süresi biten modelin çizgisi bir
+          noktayla biter. 16 günlük görünümde grafikler yatay kaydırılır ve birlikte kayar.
+        </p>
+      </>
+    ),
+  },
+  {
+    num: "05",
     q: "Veriler ne sıklıkla güncelleniyor?",
     a: "Modelden modele değişir: ECMWF, GFS, ICON, UKMO, ARPEGE ve JMA günde 4 kez, GEM günde 2 kez güncellenir. havameridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır.",
   },
   {
-    num: "05",
+    num: "06",
     q: "Bu MGM'nin resmi sitesi mi?",
     a: "Hayır. havameridyen bağımsız, kişisel bir karşılaştırma aracıdır — Meteoroloji Genel Müdürlüğü ile bir bağlantısı yoktur. Afet veya acil durum kararları için lütfen MGM'nin resmi uyarılarını takip et.",
   },
   {
-    num: "06",
+    num: "07",
     q: "Favorilerim nerede saklanıyor?",
     a: "Yalnızca kendi cihazında, tarayıcının yerel deposunda (localStorage) saklanır. Hesap oluşturmana gerek yok, hiçbir veri sunucuya gönderilmez. Tarayıcı verilerini temizlersen favorilerin de silinir.",
   },

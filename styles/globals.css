@@ -741,3 +741,38 @@ footer { position: relative; z-index: 2; border-top: 1px solid var(--line); padd
 @media (max-width: 360px) {
   nav { gap: 4px 14px; font-size: 13px; }
 }
+/* ---------------------------------------------------------------------------
+   Çizgi grafik paneli (components/LineChartPanel.js) — Paket 2, Ekim 2026
+   Sol eksen sabit, çizim alanı yatay kaydırılır; altta yalnız anahtar.
+   --------------------------------------------------------------------------- */
+.lc { display: flex; margin-top: 14px; position: relative; }
+.lc-y { flex: 0 0 56px; }
+.lc-y svg, .lc-sc svg { display: block; }
+.lc-sc { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #9AA49A #E3E8E1; padding-bottom: 4px; }
+.lc-sc::-webkit-scrollbar { height: 9px; }
+.lc-sc::-webkit-scrollbar-track { background: #E3E8E1; border-radius: 6px; }
+.lc-sc::-webkit-scrollbar-thumb { background: #9AA49A; border-radius: 6px; }
+.lc.more::after { content: ""; position: absolute; right: 0; top: 0; bottom: 14px; width: 28px; pointer-events: none; background: linear-gradient(90deg, rgba(247, 249, 245, 0), var(--paper)); }
+.lc-ov { position: absolute; left: 56px; right: 0; top: 0; bottom: 0; pointer-events: none; overflow: hidden; }
+.lc-ov span { position: absolute; font: 10px "IBM Plex Mono", monospace; white-space: nowrap; background: rgba(247, 249, 245, 0.75); padding: 0 3px; border-radius: 3px; }
+.lc-key { display: flex; flex-wrap: wrap; gap: 6px; font: 10px "IBM Plex Mono", monospace; margin-top: 6px; padding-left: 56px; }
+.lc-key:empty { display: none; }
+.lc-chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 4px; padding: 2px 6px 2px 4px; }
+.lc-key-lab { color: var(--ink-soft); align-self: center; }
+.lc-br { flex-basis: 100%; height: 0; }
+.lc-tip { position: fixed; z-index: 50; pointer-events: none; background: var(--ink); color: var(--paper); border-radius: 8px; padding: 8px 10px; font: 12px/1.4 "IBM Plex Sans", sans-serif; max-width: 270px; box-shadow: 0 6px 18px rgba(20, 30, 25, 0.25); }
+.lc-tip b { font-weight: 600; }
+.lc-tip .lc-mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; opacity: 0.85; }
+.lc-tip .lc-rule { display: block; margin-top: 4px; }
+.lc-tip .lc-row { display: flex; justify-content: space-between; gap: 14px; font: 11px "IBM Plex Mono", monospace; }
+.lc-tip .lc-row i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.lc-tip .lc-dim { margin-top: 4px; opacity: 0.85; }
+
+/* Panel başlığı tek satır: alt yazı sığmazsa "…" ile kısalır, seçim düğmeleri hep sağda (11 Ekim 2026). */
+.panel-head-left { flex: 1 1 auto; flex-wrap: nowrap; }
+.panel-head-left .panel-title { flex: none; white-space: nowrap; }
+.panel-head-left .panel-sub { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 520px) {
+  .panel-head { flex-wrap: wrap; }
+  .panel-head-left { flex-basis: 100%; }
+}
