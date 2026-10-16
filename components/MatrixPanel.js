@@ -10,6 +10,7 @@
 // - Hücreye ya da sütuna tıklayınca Model detayları o dilime gider (ortak seçili zaman, kesikli çerçeve).
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import AgreeMark from "./AgreeMark";
 import { WX_KEY, WxIcon, slotCond, wxAgreeAt } from "./WeatherCond";
 import {
@@ -144,6 +145,7 @@ function windAgreeAt(models, i) {
 const WIND = {
   key: "wind",
   title: "Rüzgar",
+  term: { href: "/terimler#hamle", label: "Hamle nedir?" },
   rowH: 40,
   minCell: 30,
   field: "wind_speed",
@@ -732,6 +734,11 @@ export default function MatrixPanel({ cfg, models, period, status, selection, on
                   </Chip>
                 ))}
               </>
+            )}
+            {cfg.term && (
+              <Link className="lc-term" href={cfg.term.href}>
+                {cfg.term.label}
+              </Link>
             )}
           </div>
         </>

@@ -3,6 +3,7 @@ import Layout from "../components/Layout";
 
 const FOOTER = [
   { href: "/sss", label: "SSS" },
+  { href: "/terimler", label: "Terimler" },
   { href: "/yasal", label: "Yasal" },
 ];
 

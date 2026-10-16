@@ -4,6 +4,7 @@ import Layout from "../components/Layout";
 const FOOTER = [
   { href: "/hakkinda", label: "Hakkında" },
   { href: "/sss", label: "SSS" },
+  { href: "/terimler", label: "Terimler" },
 ];
 
 const MODEL_KAYNAKLARI = [

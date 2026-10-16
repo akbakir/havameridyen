@@ -784,3 +784,18 @@ footer { position: relative; z-index: 2; border-top: 1px solid var(--line); padd
 .md-table td.cond { font-family: "IBM Plex Sans", sans-serif; }
 .md-table td.cond span { display: inline-flex; align-items: center; gap: 6px; }
 .md-table td.na { color: var(--ink-faint); }
+
+/* Terimler sayfası ve grafiklerdeki "… nedir?" bağlantıları (pages/terimler.js) — Paket 5, Ekim 2026 */
+.lc-term { margin-left: auto; align-self: center; color: var(--teal); text-decoration: none; }
+.lc-term:hover { text-decoration: underline; }
+.terms-intro { color: var(--ink-soft); margin: 6px 0 0; }
+.terms-toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 4px; }
+.terms-toc a { font: 500 12.5px "IBM Plex Mono", monospace; color: var(--teal); text-decoration: none; border: 1px solid var(--line); background: var(--paper); border-radius: 16px; padding: 4px 10px; }
+.terms-toc a:hover { border-color: var(--teal); }
+.terms { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.term { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; scroll-margin-top: 16px; }
+.term:target { border-color: var(--teal); }
+.term h2 { font: 600 17px "Space Grotesk", sans-serif; margin: 0 0 2px; }
+.term-sub { font: 12px "IBM Plex Mono", monospace; color: var(--ink-soft); margin-bottom: 8px; }
+.term p { margin: 0 0 8px; font-size: 14.5px; line-height: 1.55; }
+.term-ours { background: #E6F0EC; border-left: 3px solid var(--teal); border-radius: 6px; padding: 8px 11px; font-size: 13.5px; line-height: 1.55; }

@@ -7,6 +7,7 @@ const HOME_FOOTER = [
   { href: "/modeller", label: "Modeller" },
   { href: "/hakkinda", label: "Hakkında" },
   { href: "/sss", label: "SSS" },
+  { href: "/terimler", label: "Terimler" },
   { href: "/yasal", label: "Yasal" },
 ];
 

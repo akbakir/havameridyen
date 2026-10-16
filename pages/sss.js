@@ -4,6 +4,7 @@ import AgreeMark from "../components/AgreeMark";
 
 const FOOTER = [
   { href: "/hakkinda", label: "Hakkında" },
+  { href: "/terimler", label: "Terimler" },
   { href: "/yasal", label: "Yasal" },
 ];
 
@@ -93,6 +94,13 @@ const FAQS = [
           yazar. Şeridin üzerine gelince hangi iki modelin ayrıştığı görünür. Rüzgar ve bulutluluk tablolarındaki uyum
           satırı da aynı yolla, her sütunun en ayrışık saatine göre çizilir; yağışta ise şerit günlüktür. Tek model
           seçiliyken şerit gösterilmez — karşılaştıracak model yoktur.
+        </p>
+        <p style={{ margin: "12px 0 0" }}>
+          CAPE, ortanca, hamle gibi kavramların açıklaması{" "}
+          <Link href="/terimler" style={{ color: "var(--teal)" }}>
+            Terimler
+          </Link>{" "}
+          sayfasında.
         </p>
       </>
     ),

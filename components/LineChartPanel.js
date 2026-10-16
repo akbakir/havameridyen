@@ -12,12 +12,14 @@
 // - Uyum şeridi saatlik veriden hesaplanır (seçilen aralıktan bağımsız); dilim uzunluğu aralıktan kısa
 //   olmaz ve en az 24 px'tir; dilimi en ayrışık saat temsil eder; komşu aynı seviyeler birleşir.
 //   Etiket bloğa sığarsa yazılır; üzerine gelince açıklama çıkar. Tek model seçiliyse şerit yok.
-// - Grafik altında yalnız anahtar kalır; açıklama metinleri SSS'te.
+// - Grafik altında yalnız anahtar kalır; açıklama metinleri SSS'te. CAPE ve Basınç'ta anahtarın sonunda
+//   Terimler sayfasına bağlantı var (Paket 5).
 // - Verisi biten modelin çizgisi son noktasında küçük bir noktayla biter (taralı bölge yok).
 // - Ortak seçili zaman (Paket 4): grafiğe tıklayınca Model detayları o dilime gider ve tablo aralığı bu
 //   grafiğin aralığını alır; seçili dilim tüm grafiklerde kesikli koyu çerçeveyle gösterilir.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import AgreeMark from "./AgreeMark";
 
 export const DAY3 = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
@@ -134,6 +136,7 @@ export const LINE_CHARTS = {
     ],
     agree: { type: "class" },
     fmt: (v) => `${Math.round(v)} J/kg`,
+    term: { href: "/terimler#cape", label: "CAPE nedir?" },
   },
   pressure: {
     key: "pressure",
@@ -145,6 +148,7 @@ export const LINE_CHARTS = {
     trend: true,
     agree: { type: "spread", partial: 2, split: 4, unit: " hPa", pair: "en yüksek ve en düşük basınç veren model" },
     fmt: (v) => `${f1(v)} hPa`,
+    term: { href: "/terimler#basinc", label: "Basınç eğilimi nedir?" },
   },
 };
 
@@ -866,6 +870,11 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
                   {AGREE_STYLE_LC[l].text}
                 </Chip>
               ))}
+            {cfg.term && (
+              <Link className="lc-term" href={cfg.term.href}>
+                {cfg.term.label}
+              </Link>
+            )}
           </div>
         </>
       )}

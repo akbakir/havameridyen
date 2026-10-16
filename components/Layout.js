@@ -13,6 +13,7 @@ const SITE_NAV = [
 const DEFAULT_FOOTER = [
   { href: "/hakkinda", label: "Hakkında" },
   { href: "/sss", label: "SSS" },
+  { href: "/terimler", label: "Terimler" },
   { href: "/yasal", label: "Yasal" },
 ];
 
