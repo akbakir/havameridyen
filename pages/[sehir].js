@@ -1463,17 +1463,6 @@ const AGREE_PARAMS = {
     fmt: (v) => `${formatOneDecimal(v)} hPa`,
     fmtSpread: (v) => `${formatOneDecimal(v)} hPa`,
   },
-  cloud: {
-    key: "cloud_cover",
-    partial: 25,
-    split: 50,
-    thPartial: "%25",
-    thMid: "%25–50",
-    thSplit: "%50",
-    pair: "en kapalı ve en açık model",
-    fmt: (v) => `%${Math.round(v)}`,
-    fmtSpread: (v) => `%${Math.round(v)}`,
-  },
 };
 
 const STRIP_MIN_BLOCK = 24; // bir uyum dilimi en az bu kadar geniş çizilir (viewBox birimi)
@@ -2210,20 +2199,46 @@ function PressureLegend({ models }) {
 // kapalı sınıflandırması), sayı yüzde, en altta uyum satırı.
 // ---------------------------------------------------------------------------
 
+// MGM sınıfları (web + mobil genel kural, 8 ve 11 Ekim 2026): üst sınır dahil —
+// ≤ %10 açık · ≤ %30 az bulutlu · ≤ %50 parçalı bulutlu · ≤ %90 çok bulutlu · > %90 kapalı.
 const CLOUD_SCALE = [
-  { min: 0, color: "#F1F4EF", ink: "var(--ink)", label: "açık", range: "%0–10" },
-  { min: 10, color: "#DDE3DE", ink: "var(--ink)", label: "az bulutlu", range: "%10–30" },
-  { min: 30, color: "#BFC8C3", ink: "var(--ink)", label: "parçalı bulutlu", range: "%30–60" },
-  { min: 60, color: "#8E9B96", ink: "#FFFFFF", label: "çok bulutlu", range: "%60–90" },
-  { min: 90, color: "#63706B", ink: "#FFFFFF", label: "kapalı", range: "%90–100" },
+  { max: 10, color: "#F1F4EF", ink: "var(--ink)", label: "açık", range: "%0–10" },
+  { max: 30, color: "#DDE3DE", ink: "var(--ink)", label: "az bulutlu", range: "%10–30" },
+  { max: 50, color: "#BFC8C3", ink: "var(--ink)", label: "parçalı bulutlu", range: "%30–50" },
+  { max: 90, color: "#8E9B96", ink: "#FFFFFF", label: "çok bulutlu", range: "%50–90" },
+  { max: 100, color: "#63706B", ink: "#FFFFFF", label: "kapalı", range: "%90–100" },
 ];
 
 function cloudIndex(v) {
-  let k = 0;
-  CLOUD_SCALE.forEach((c, i) => {
-    if (v >= c.min) k = i;
-  });
-  return k;
+  for (let k = 0; k < CLOUD_SCALE.length - 1; k++) {
+    if (v <= CLOUD_SCALE[k].max) return k;
+  }
+  return CLOUD_SCALE.length - 1;
+}
+
+// Bulutluluk uyumu — sınıf yöntemi (B2, 11 Ekim 2026): modellerin sınıflarının ortancası alınır
+// ve o sınıftaki modellerin oranına bakılır (% 75 ve üstü hemfikir, % 50–75 kısmen, altı ayrışıyor).
+// Ortanca, sıralı sınıflardan ortadaki (çift sayıda modelde üstteki) seçilir: ortalama alınmaz,
+// böylece hiçbir modelin bulunmadığı bir sınıfa düşülmez.
+// Sayıya gelen iyelik eki: 1'i, 2'si, 3'ü, 4'ü, 5'i, 6'sı, 7'si …
+function trPossessive(n) {
+  return { 0: "ı", 1: "i", 2: "si", 3: "ü", 4: "ü", 5: "i", 6: "sı", 7: "si", 8: "i", 9: "u" }[n % 10];
+}
+
+function computeCloudClassAgreementAt(models, i) {
+  const pts = models
+    .map((m) => {
+      const v = numOrNull(m.series[i]?.cloud_cover);
+      return v == null ? null : { label: m.label, k: cloudIndex(v) };
+    })
+    .filter(Boolean);
+  if (pts.length < 2) return { level: "na", count: pts.length };
+  const ks = pts.map((p) => p.k).sort((a, b) => a - b);
+  const mode = ks[Math.floor(ks.length / 2)];
+  const inClass = pts.filter((p) => p.k === mode).length;
+  const pct = inClass / pts.length;
+  const level = pct >= 0.75 ? "ok" : pct >= 0.5 ? "partial" : "split";
+  return { level, pct, inClass, count: pts.length, mode };
 }
 
 function CloudMatrix({ models, step = 1 }) {
@@ -2237,7 +2252,7 @@ function CloudMatrix({ models, step = 1 }) {
   });
   const nowIdx = findNowIndex(series0);
   const nowCol = nowIdx >= 0 ? Math.floor(nowIdx / step) * step : -1;
-  const agreement = cols.map((c) => computeSpreadAgreementAt(models, c.i, "cloud"));
+  const agreement = cols.map((c) => computeCloudClassAgreementAt(models, c.i));
 
   useEffect(() => {
     const box = scrollRef.current;
@@ -2360,12 +2375,12 @@ function CloudMatrix({ models, step = 1 }) {
               {cols.map((c, k) => {
                 const a = agreement[k];
                 const st = AGREE_STYLE[a.level];
-                const cfg = AGREE_PARAMS.cloud;
-                const text = a.lo
-                  ? `${timeText(c.p)} TSİ — modeller ${st.text}\n` +
-                    `${a.lo.label} ${cfg.fmt(a.lo.v)} ↔ ${a.hi.label} ${cfg.fmt(a.hi.v)}, fark ${cfg.fmtSpread(a.spread)}` +
-                    (a.count < models.length ? `\n(${a.count} modelin verisi var)` : "")
-                  : `${timeText(c.p)} TSİ — karşılaştırma için en az 2 modelin verisi gerekiyor.`;
+                const text =
+                  a.level !== "na"
+                    ? `${timeText(c.p)} TSİ — modeller ${st.text}\n` +
+                      `${a.count} modelin ${a.inClass}'${trPossessive(a.inClass)} aynı sınıfta: ${CLOUD_SCALE[a.mode].label} (${CLOUD_SCALE[a.mode].range})` +
+                      (a.count < models.length ? `\n(${a.count} modelin verisi var)` : "")
+                    : `${timeText(c.p)} TSİ — karşılaştırma için en az 2 modelin verisi gerekiyor.`;
                 return (
                   <td
                     key={c.i}
@@ -2423,10 +2438,9 @@ function CloudLegend({ models }) {
       </div>
       {models && models.length > 1 && (
         <div className="panel-sub" style={{ fontSize: 10, marginTop: 8, lineHeight: 1.5 }}>
-          <strong style={{ fontWeight: 600 }}>Uyum:</strong> <AgreeMark level="ok" /> hemfikir ({"<"}{" "}
-          {AGREE_PARAMS.cloud.thPartial}) · <AgreeMark level="partial" /> kısmen ({AGREE_PARAMS.cloud.thMid}) ·{" "}
-          <AgreeMark level="split" /> ayrışıyor ({">"} {AGREE_PARAMS.cloud.thSplit}) — en kapalı ve en açık
-          modelin farkı.
+          <strong style={{ fontWeight: 600 }}>Uyum:</strong> ortanca bulut sınıfındaki modellerin oranı —{" "}
+          <AgreeMark level="ok" /> hemfikir (% 75 ve üstü) · <AgreeMark level="partial" /> kısmen (% 50–75) ·{" "}
+          <AgreeMark level="split" /> ayrışıyor (% 50 altı).
           <br />
           <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, border: `2px solid ${NOW_TEAL}`, marginRight: 4, verticalAlign: -1 }} />
           Koyu turkuaz çerçeve: şu anki saat.

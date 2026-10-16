@@ -16,7 +16,6 @@ const AGREE_ROWS = [
   ["Sıcaklık", "< 2 °C", "2–4 °C", "> 4 °C"],
   ["Nem", "< %10", "%10–20", "> %20"],
   ["Basınç", "< 2 hPa", "2–4 hPa", "> 4 hPa"],
-  ["Bulutluluk", "< %25", "%25–50", "> %50"],
 ];
 
 const FAQS = [
@@ -32,8 +31,8 @@ const FAQS = [
     a: (
       <>
         <p style={{ margin: "0 0 12px" }}>
-          Her parametrede aynı soru sorulur: o saatte en düşük ve en yüksek değeri veren modeller arasındaki fark ne
-          kadar? Ortalama ya da ortanca alınmaz — amaç tek bir "genel tahmin" üretmek değil, modellerin nerede
+          Sıcaklık, nem ve basınçta aynı soru sorulur: o saatte en düşük ve en yüksek değeri veren modeller arasındaki
+          fark ne kadar? Ortalama ya da ortanca alınmaz — amaç tek bir "genel tahmin" üretmek değil, modellerin nerede
           ayrıştığını göstermektir.
         </p>
         <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 13, margin: "0 0 12px" }}>
@@ -62,6 +61,13 @@ const FAQS = [
             ))}
           </tbody>
         </table>
+        <p style={{ margin: "0 0 12px" }}>
+          <strong style={{ color: "var(--ink)", fontWeight: 600 }}>Bulutlulukta</strong> fark yerine sınıfa bakılır:
+          her modelin değeri açık (%0–10), az bulutlu (%10–30), parçalı bulutlu (%30–50), çok bulutlu (%50–90) ya da
+          kapalı (%90–100) sınıfına yerleştirilir. Modellerin sınıflarının ortancası bulunur ve o sınıftaki modellerin
+          oranına bakılır: %75 ve üstü hemfikir, %50–75 kısmen, altı ayrışıyor. Örneğin 5 modelin 4'ü "çok bulutlu"
+          diyorsa, değerleri %55 ile %88 arasında dağılsa bile modeller hemfikirdir.
+        </p>
         <p style={{ margin: "0 0 12px" }}>
           <strong style={{ color: "var(--ink)", fontWeight: 600 }}>Rüzgarda</strong> tek bir fark yerine yön ve hız
           birlikte değerlendirilir: modeller arasındaki en büyük yön farkı 90°'yi ya da en büyük hız farkı 10 knot'u
