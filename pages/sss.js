@@ -11,7 +11,7 @@ const FOOTER = [
 const FAQ_TH = { textAlign: "left", fontWeight: 600, color: "var(--ink)", padding: "6px 10px 6px 0", borderBottom: "1px solid var(--line)", whiteSpace: "nowrap" };
 const FAQ_TD = { padding: "6px 10px 6px 0", borderBottom: "1px solid var(--line)", verticalAlign: "top" };
 
-// Uyum eşikleri — grafiklerdeki AGREE_PARAMS ile aynı değerler (pages/[sehir].js).
+// Uyum eşikleri — grafiklerdeki LINE_CHARTS ayarlarıyla aynı değerler (components/LineChartPanel.js).
 const AGREE_ROWS = [
   ["Sıcaklık", "< 2 °C", "2–4 °C", "> 4 °C"],
   ["Nem", "< %10", "%10–20", "> %20"],
@@ -90,8 +90,9 @@ const FAQS = [
           <em>en büyük</em> farka göre renklenir; böylece ayrışma ortalama alınarak yumuşatılmaz. Şerit, grafikte
           seçtiğin 1s / 3s / 6s aralığından bağımsız olarak saatlik veriden hesaplanır. Aynı seviyedeki komşu dilimler
           tek blokta birleşir; blok yeterince genişse içinde seviye ve "en çok 3.2°" gibi o bloktaki en büyük fark
-          yazar. Şeridin üzerine gelince hangi iki modelin ayrıştığı görünür. Tek model seçiliyken şerit gösterilmez —
-          karşılaştıracak model yoktur.
+          yazar. Şeridin üzerine gelince hangi iki modelin ayrıştığı görünür. Rüzgar ve bulutluluk tablolarındaki uyum
+          satırı da aynı yolla, her sütunun en ayrışık saatine göre çizilir; yağışta ise şerit günlüktür. Tek model
+          seçiliyken şerit gösterilmez — karşılaştıracak model yoktur.
         </p>
       </>
     ),
@@ -131,7 +132,17 @@ const FAQS = [
           Sıcaklıkta 30 °C çizgisi koyu çizilir. Nemde %85 üstü "doygunluğa yakın" (sis, çiy) ve %30 altı "kuru"
           bantlarla, basınçta 1013.25 hPa standart atmosfer çizgisiyle, CAPE'de 500 J/kg (sağanak) ve 1000 J/kg (gök
           gürültülü) çizgileriyle işaretlenir. Modellerin tahmin süreleri farklıdır; süresi biten modelin çizgisi bir
-          noktayla biter. 16 günlük görünümde grafikler yatay kaydırılır ve birlikte kayar.
+          noktayla biter. 16 günlük görünümde grafikler ve tablolar yatay kaydırılır ve saat üzerinden birlikte kayar.
+        </p>
+        <p style={{ margin: "12px 0 0" }}>
+          Toplam yağışta her çubuk, seçtiğin 1 / 3 / 6 saatlik dilimdeki toplam yağıştır; modeller yan yana durur.
+          Bulutluluk tablosunda hücre o dilimin ortalamasıdır ve rengi bulut sınıfını gösterir.
+        </p>
+        <p style={{ margin: "12px 0 0" }}>
+          Rüzgar tablosunda hücre rengi ortalama rüzgar hızının bofor kademesidir (MGM Beaufort rüzgâr ıskalası). Ok
+          rüzgarın estiği yönü gösterir; üstteki sayı ortalama hız, alttaki hamledir (o saatteki en yüksek ani rüzgar).
+          3 ve 6 saatlik görünümde hücre dilimin ilk saatini gösterir. Koyu kırmızı çerçeve MGM fırtına eşiğinin (8
+          bofor · 17.2 m/s ≈ 62 km/s ≈ 34 knot) aşıldığı saatleri işaretler.
         </p>
       </>
     ),

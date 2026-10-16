@@ -1,4 +1,6 @@
 // Çizgi grafik paneli — Sıcaklık, Nem, CAPE ve Basınç aynı bileşeni kullanır (Paket 2, Ekim 2026).
+// Ortak yardımcılar (zaman, birlikte kaydırma, genişlik, anahtar çipi, ipucu konumu) buradan dışa açılır;
+// Toplam yağış (PrecipPanel) ve model × zaman matrisleri (MatrixPanel) de bunları kullanır.
 //
 // Kurallar (web taslağı, 11 Ekim 2026 kararları):
 // - Yatay çizgiler parametreye göre (sıcaklıkta 2 °C'de bir); eksen en düşük / en yüksek model değerinin
@@ -16,16 +18,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AgreeMark from "./AgreeMark";
 
-const DAY3 = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
-const MON3 = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
-const LABW = 56; // sabit sol eksen genişliği
-const MIN_PXH = 4; // saat başına en az piksel
-const X0 = 4;
+export const DAY3 = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+export const MON3 = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+export const LABW = 56; // sabit sol eksen genişliği
+export const MIN_PXH = 4; // saat başına en az piksel
+export const X0 = 4;
 const PT = 26; // çizim alanının üstü (gün etiketleri bunun üstünde)
-const STRIP_H = 18;
+export const STRIP_H = 18;
 const STRIP_MIN_BLOCK = 24;
 const STRIP_STEPS = [1, 3, 6, 12, 24];
-const MONO = '"IBM Plex Mono", Menlo, monospace';
+export const MONO = '"IBM Plex Mono", Menlo, monospace';
 
 export const AGREE_STYLE_LC = {
   ok: { bg: "#DDE0DB", ink: "#1F2A24", text: "hemfikir" },
@@ -53,34 +55,34 @@ function trendKey(d) {
   return "flat";
 }
 
-const f1 = (v) => (v == null ? "—" : (Math.round(v * 10) / 10).toFixed(1));
-const pad2 = (n) => String(n).padStart(2, "0");
+export const f1 = (v) => (v == null ? "—" : (Math.round(v * 10) / 10).toFixed(1));
+export const pad2 = (n) => String(n).padStart(2, "0");
 const pickStep = (span, steps) => steps.find((k) => span / k <= 9) ?? steps[steps.length - 1];
 const capeClass = (v) => (v > 1000 ? 2 : v > 500 ? 1 : 0);
 const CAPE_CLASS_TEXT = ["500 J/kg altı", "500–1000 J/kg", "1000 J/kg üstü"];
 
-function trPossessive(n) {
+export function trPossessive(n) {
   return { 0: "ı", 1: "i", 2: "si", 3: "ü", 4: "ü", 5: "i", 6: "sı", 7: "si", 8: "i", 9: "u" }[n % 10];
 }
 
-function numOrNull(v) {
+export function numOrNull(v) {
   return v != null && !Number.isNaN(Number(v)) ? Number(v) : null;
 }
 
 // "YYYY-MM-DDTHH:mm" (TSİ) → parçalar
-function parseTime(t) {
+export function parseTime(t) {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})/.exec(t || "");
   if (!m) return null;
   const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
   return { day: +m[3], mon: +m[2] - 1, wd: d.getUTCDay(), hour: +m[4] };
 }
 
-function timeText(t) {
+export function timeText(t) {
   const p = parseTime(t);
   return p ? `${p.day} ${MON3[p.mon]} ${DAY3[p.wd]} ${pad2(p.hour)}:00` : "";
 }
 
-function tsiNowKey() {
+export function tsiNowKey() {
   return new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 13);
 }
 
@@ -218,8 +220,8 @@ function buildSegments(n, pxh, step, at, rank, group) {
 }
 
 // --- Saat üzerinden birlikte kaydırma ---
-const SYNC = new Set();
-function syncFrom(src) {
+export const SYNC = new Set();
+export function syncFrom(src) {
   const hr = src.el.scrollLeft / src.pxh;
   SYNC.forEach((o) => {
     if (o === src || !o.el) return;
@@ -232,7 +234,7 @@ function syncFrom(src) {
 }
 
 // Kutunun genişliği (kutu yükleme bittikten sonra oluştuğu için ref yerine öğenin kendisi izlenir)
-function useWidth(el) {
+export function useWidth(el) {
   const [w, setW] = useState(0);
   useEffect(() => {
     if (!el) return undefined;
@@ -249,7 +251,56 @@ function useWidth(el) {
   return w;
 }
 
-function Chip({ bg, ink, level, children }) {
+// Birlikte kaydırma + açılışta "şimdi"nin gününe konumlanma (tüm grafik ve matris panelleri).
+// geo: { pxh, W, x(i) } — pxh saat başına piksel; farklı hücre genişliğindeki paneller saat üzerinden eşlenir.
+export function useSyncedScroll(scRef, geo, period, nowIdx) {
+  const syncRef = useRef({ el: null, pxh: 1, prog: null, onMore: null });
+  const scrollKeyRef = useRef("");
+  const [more, setMore] = useState(false);
+
+  useEffect(() => {
+    const el = scRef.current;
+    if (!el || !geo) return undefined;
+    const me = syncRef.current;
+    me.el = el;
+    me.pxh = geo.pxh;
+    me.onMore = () => setMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    SYNC.add(me);
+    const key = `${period}|${geo.W}`;
+    if (scrollKeyRef.current !== key) {
+      scrollKeyRef.current = key;
+      const dayStart = nowIdx >= 0 ? nowIdx - (nowIdx % 24) : 0;
+      el.scrollLeft = geo.W > el.clientWidth ? Math.max(0, geo.x(dayStart) - 2) : 0;
+    }
+    me.onMore();
+    return () => SYNC.delete(me);
+  }, [scRef, geo, period, nowIdx]);
+
+  function onScroll() {
+    const me = syncRef.current;
+    const el = scRef.current;
+    if (!el) return;
+    setMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    if (me.prog != null && Math.abs(el.scrollLeft - me.prog) <= 1) {
+      me.prog = null;
+      return;
+    }
+    me.prog = null;
+    syncFrom(me);
+  }
+
+  return { more, onScroll };
+}
+
+// "şimdi"nin serideki sırası (yoksa -1)
+export function useNowIndex(times) {
+  return useMemo(() => {
+    const k = tsiNowKey();
+    return times.findIndex((t) => typeof t === "string" && t.startsWith(k));
+  }, [times]);
+}
+
+export function Chip({ bg, ink, level, children }) {
   return (
     <span className="lc-chip" style={{ background: bg, color: ink }}>
       {level && <AgreeMark level={level} size={10} color={ink} strokeWidth={1.9} />}
@@ -264,10 +315,7 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
 
   const [boxEl, setBoxEl] = useState(null);
   const scRef = useRef(null);
-  const syncRef = useRef({ el: null, pxh: 1, prog: null, onMore: null });
-  const scrollKeyRef = useRef("");
   const width = useWidth(boxEl);
-  const [more, setMore] = useState(false);
   const [hoverI, setHoverI] = useState(null);
   const [tip, setTip] = useState(null);
 
@@ -341,42 +389,8 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
     );
   }, [geo, n, step, models, cfg]);
 
-  const nowIdx = useMemo(() => {
-    const k = tsiNowKey();
-    return times.findIndex((t) => typeof t === "string" && t.startsWith(k));
-  }, [times]);
-
-  // birlikte kaydırma + açılışta "şimdi"nin günü
-  useEffect(() => {
-    const el = scRef.current;
-    if (!el || !geo) return undefined;
-    const me = syncRef.current;
-    me.el = el;
-    me.pxh = geo.pxh;
-    me.onMore = () => setMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-    SYNC.add(me);
-    const key = `${period}|${geo.W}`;
-    if (scrollKeyRef.current !== key) {
-      scrollKeyRef.current = key;
-      const dayStart = nowIdx >= 0 ? nowIdx - (nowIdx % 24) : 0;
-      el.scrollLeft = geo.W > el.clientWidth ? Math.max(0, geo.x(dayStart) - 2) : 0;
-    }
-    me.onMore();
-    return () => SYNC.delete(me);
-  }, [geo, period, nowIdx]);
-
-  function onScroll() {
-    const me = syncRef.current;
-    const el = scRef.current;
-    if (!el) return;
-    setMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-    if (me.prog != null && Math.abs(el.scrollLeft - me.prog) <= 1) {
-      me.prog = null;
-      return;
-    }
-    me.prog = null;
-    syncFrom(me);
-  }
+  const nowIdx = useNowIndex(times);
+  const { more, onScroll } = useSyncedScroll(scRef, geo, period, nowIdx);
 
   function showTip(e, content) {
     const pt = e.touches ? e.touches[0] : e;
@@ -814,7 +828,7 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
   );
 }
 
-function tipStyle(t) {
+export function tipStyle(t) {
   const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
   const vh = typeof window !== "undefined" ? window.innerHeight : 800;
   const left = t.x + 280 > vw - 8 ? Math.max(8, t.x - 274) : t.x + 14;

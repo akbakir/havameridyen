@@ -776,3 +776,9 @@ footer { position: relative; z-index: 2; border-top: 1px solid var(--line); padd
   .panel-head { flex-wrap: wrap; }
   .panel-head-left { flex-basis: 100%; }
 }
+
+/* Toplam yağış ve model × zaman matrisleri (components/PrecipPanel.js, components/MatrixPanel.js) — Paket 3, Ekim 2026 */
+.mx-controls { display: flex; gap: 8px; margin-left: auto; flex-shrink: 0; }
+.mx-controls .unit-toggle { margin-left: 0; }
+.lc-thr { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--ink-soft); }
+.lc-thr .unit-toggle { margin-left: 0; }
