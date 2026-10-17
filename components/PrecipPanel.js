@@ -9,6 +9,7 @@
 // - Tıklanan dilim ortak seçili zamandır (Model detayları oraya gider; bkz. LineChartPanel SelFrame).
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { RAIN_DAY_DEFAULT, groupDays, rainDayAgreement } from "../lib/agreement";
 import {
   Chip,
   DAY3,
@@ -33,9 +34,7 @@ import {
 
 const PT = 26;
 const PH = 150;
-const RAIN_THRESHOLD_DEFAULT = 0.2;
 const RAIN_THRESHOLD_OPTIONS = [0.2, 0.5, 1, 2, 5];
-const RAIN_AGREE = 0.75;
 const RAIN_GRID = [0.2, 0.5, 1, 2, 5, 10, 20, 50];
 
 const RAIN_STATE = {
@@ -46,41 +45,7 @@ const RAIN_STATE = {
 
 const mm = (v) => (Math.round(v * 10) / 10).toFixed(1);
 
-// Saatlik seriyi TSİ takvim günlerine böler: [{ key:"YYYY-MM-DD", h0, h1 }] (h1 hariç)
-function groupDays(times) {
-  const days = [];
-  times.forEach((t, i) => {
-    const k = String(t || "").slice(0, 10);
-    const last = days[days.length - 1];
-    if (!last || last.key !== k) days.push({ key: k, h0: i, h1: i + 1 });
-    else last.h1 = i + 1;
-  });
-  return days;
-}
-
-function rainDay(models, d, threshold) {
-  let n = 0;
-  let wet = 0;
-  const per = [];
-  for (const m of models) {
-    let sum = 0;
-    let any = false;
-    for (let i = d.h0; i < d.h1; i++) {
-      const v = numOrNull(m.series[i]?.precip_amount);
-      if (v != null) {
-        sum += v;
-        any = true;
-      }
-    }
-    if (!any) continue;
-    n++;
-    const w = sum >= threshold - 1e-9;
-    if (w) wet++;
-    per.push({ m, sum, wet: w });
-  }
-  const st = n < 2 ? null : wet / n >= RAIN_AGREE ? "wet" : (n - wet) / n >= RAIN_AGREE ? "dry" : "mixed";
-  return { ...d, n, wet, per, st };
-}
+// Günlük uyum kuralı (eşik, % 75) ve günlere bölme: lib/agreement.js (rainDayAgreement, groupDays)
 
 function slotText(times, s0, step) {
   const p = parseTime(times[s0]);
@@ -94,7 +59,7 @@ function slotText(times, s0, step) {
 export default function PrecipPanel({ models, period, status, selection, onSelect }) {
   const [step, setStep] = useState(defaultStepFor(period));
   useEffect(() => setStep(defaultStepFor(period)), [period]);
-  const [threshold, setThreshold] = useState(RAIN_THRESHOLD_DEFAULT);
+  const [threshold, setThreshold] = useState(RAIN_DAY_DEFAULT);
 
   const [boxEl, setBoxEl] = useState(null);
   const scRef = useRef(null);
@@ -148,7 +113,7 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
 
   const days = useMemo(() => {
     if (!geo || !multi) return [];
-    return groupDays(models[0].series.map((s) => s.time)).map((d) => rainDay(models, d, threshold));
+    return groupDays(models[0].series.map((s) => s.time)).map((d) => rainDayAgreement(models, d, threshold));
   }, [geo, multi, models, threshold]);
 
   const nowIdx = useNowIndex(times);

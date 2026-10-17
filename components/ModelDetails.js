@@ -7,7 +7,8 @@
 //   Yağış = dilim toplamı, diğer değerler dilimin ilk saati ("… 06:00–08:59 TSİ · anlık 06:00").
 
 import { DAY3, MON3, f1, numOrNull, pad2, parseTime } from "./LineChartPanel";
-import { WxIcon, condAt, slotCond } from "./WeatherCond";
+import { WxIcon } from "./WeatherCond";
+import { condAt, slotCond } from "../lib/agreement";
 
 const COMPASS_8 = ["K", "KD", "D", "GD", "G", "GB", "B", "KB"];
 const compass = (d) => COMPASS_8[Math.round((((d % 360) + 360) % 360) / 45) % 8];

@@ -12,7 +12,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AgreeMark from "./AgreeMark";
-import { WX_KEY, WxIcon, slotCond, wxAgreeAt } from "./WeatherCond";
+import { WX_KEY, WxIcon } from "./WeatherCond";
+import {
+  KN_PER_KMH,
+  LEVEL_ORDER,
+  STORM_KMH,
+  WIND_CALM_KT,
+  WIND_DIR_PARTIAL,
+  WIND_DIR_SPLIT,
+  WIND_SPD_PARTIAL,
+  WIND_SPD_SPLIT,
+  beaufortIndex,
+  classAgreement,
+  cloudClass,
+  slotCond,
+  weatherAgreement,
+  windAgreement,
+} from "../lib/agreement";
 import {
   AGREE_STYLE_LC,
   Chip,
@@ -39,7 +55,6 @@ import {
 
 const TOP = 40; // satırların başladığı y (üstte gün ve saat etiketleri)
 const NOW_FRAME = "#14574C";
-const LEVEL_ORDER = { na: -1, ok: 0, partial: 1, split: 2 };
 const CH = 5.7; // 9.5 px yazıda ortalama karakter genişliği
 
 function slotText(times, s0, step) {
@@ -60,87 +75,25 @@ function hourText(times, i) {
 // Rüzgar: hücre o dilimin ilk saatinin değeri; renk ortalama hızın bofor kademesi (MGM ıskalası),
 // ok rüzgarın estiği yön, üstte ortalama hız, altta hamle. 8 bofor (fırtına) ve üstü koyu kırmızı çerçeve.
 // ---------------------------------------------------------------------------
-const KN_PER_KMH = 0.539957;
-const STORM_KMH = 17.2 * 3.6; // MGM: 8 bofor alt sınırı — 17.2 m/s ≈ 62 km/s ≈ 34 knot
+// Eşikler (bofor, fırtına 8 bofor ≈ 62 km/s, uyum 90°/10 kt, 135°/20 kt, sakin 3 kt): lib/agreement.js
 const STORM_RED = "#8F2420";
-const WIND_CALM_KT = 3;
-const WIND_DIR_PARTIAL = 90;
-const WIND_DIR_SPLIT = 135;
-const WIND_SPD_PARTIAL = 10;
-const WIND_SPD_SPLIT = 20;
 const COMPASS_8 = ["K", "KD", "D", "GD", "G", "GB", "B", "KB"];
 
+// Renk ve adlar; sıra lib/agreement.js BEAUFORT_MS kademeleriyle aynı (beaufortIndex)
 const BEAUFORT = [
-  { ms: 0, color: "#D2D5D1", label: "0–1 sakin/esinti" },
-  { ms: 1.6, color: "#D2C4B3", label: "2 hafif" },
-  { ms: 3.4, color: "#D0B296", label: "3 tatlı" },
-  { ms: 5.5, color: "#CEA177", label: "4 orta" },
-  { ms: 8.0, color: "#CB8F57", label: "5 sert" },
-  { ms: 10.8, color: "#BF6B2D", label: "6 kuvvetli" },
-  { ms: 13.9, color: "#9C5625", label: "7 fırtınamsı" },
-  { ms: 17.2, color: "#7A431F", label: "8 fırtına" },
-  { ms: 20.8, color: "#593017", label: "9 kuvvetli fırtına" },
-  { ms: 24.5, color: "#3A1E10", label: "10+ tam fırtına" },
+  { color: "#D2D5D1", label: "0–1 sakin/esinti" },
+  { color: "#D2C4B3", label: "2 hafif" },
+  { color: "#D0B296", label: "3 tatlı" },
+  { color: "#CEA177", label: "4 orta" },
+  { color: "#CB8F57", label: "5 sert" },
+  { color: "#BF6B2D", label: "6 kuvvetli" },
+  { color: "#9C5625", label: "7 fırtınamsı" },
+  { color: "#7A431F", label: "8 fırtına" },
+  { color: "#593017", label: "9 kuvvetli fırtına" },
+  { color: "#3A1E10", label: "10+ tam fırtına" },
 ];
 
-function beaufortIndex(kmh) {
-  const ms = kmh / 3.6;
-  let k = 0;
-  BEAUFORT.forEach((b, i) => {
-    if (ms >= b.ms) k = i;
-  });
-  return k;
-}
-
 const compass = (d) => COMPASS_8[Math.round((((d % 360) + 360) % 360) / 45) % 8];
-
-function angleDiff(a, b) {
-  const d = Math.abs(a - b) % 360;
-  return d > 180 ? 360 - d : d;
-}
-
-function windAgreeAt(models, i) {
-  const pts = models
-    .map((m) => {
-      const spd = numOrNull(m.series[i]?.wind_speed);
-      return spd == null ? null : { m, kt: spd * KN_PER_KMH, dir: numOrNull(m.series[i]?.wind_direction) };
-    })
-    .filter(Boolean);
-  if (pts.length < 2) return { level: "na", rank: -1, i };
-  let slow = pts[0];
-  let fast = pts[0];
-  for (const p of pts) {
-    if (p.kt < slow.kt) slow = p;
-    if (p.kt > fast.kt) fast = p;
-  }
-  const sp = fast.kt - slow.kt;
-  const dirPts = pts.filter((p) => p.kt >= WIND_CALM_KT && p.dir != null);
-  const calm = pts.filter((p) => !(p.kt >= WIND_CALM_KT && p.dir != null));
-  let ds = 0;
-  let pair = null;
-  for (let a = 0; a < dirPts.length; a++)
-    for (let b = a + 1; b < dirPts.length; b++) {
-      const d = angleDiff(dirPts[a].dir, dirPts[b].dir);
-      if (d > ds) {
-        ds = d;
-        pair = [dirPts[a], dirPts[b]];
-      }
-    }
-  const dirBad = ds >= WIND_DIR_PARTIAL;
-  const spdBad = sp >= WIND_SPD_PARTIAL;
-  const split = (dirBad && spdBad) || ds >= WIND_DIR_SPLIT || sp >= WIND_SPD_SPLIT;
-  return {
-    level: split ? "split" : dirBad || spdBad ? "partial" : "ok",
-    rank: ds / WIND_DIR_SPLIT + sp / WIND_SPD_SPLIT,
-    ds,
-    sp,
-    slow,
-    fast,
-    pair,
-    calm,
-    i,
-  };
-}
 
 const WIND = {
   key: "wind",
@@ -207,7 +160,7 @@ const WIND = {
       ),
     };
   },
-  agree: windAgreeAt,
+  agree: windAgreement,
   agreeLabels: (b) => [AGREE_STYLE_LC[b.level].text],
   agreeTip: (pk, times) => (
     <>
@@ -250,33 +203,17 @@ const WIND = {
 // MGM sınıfları (üst sınır dahil): ≤ %10 açık · ≤ %30 az bulutlu · ≤ %50 parçalı bulutlu ·
 // ≤ %90 çok bulutlu · > %90 kapalı. Uyum sınıf yöntemiyle: ortanca sınıftaki modellerin oranı.
 // ---------------------------------------------------------------------------
+// Renk ve adlar; sınıf sınırları lib/agreement.js CLOUD_LIMITS (cloudClass)
 const CLOUD_SCALE = [
-  { max: 10, color: "#F1F4EF", ink: "#1F2A24", label: "açık", range: "%0–10" },
-  { max: 30, color: "#DDE3DE", ink: "#1F2A24", label: "az bulutlu", range: "%10–30" },
-  { max: 50, color: "#BFC8C3", ink: "#1F2A24", label: "parçalı bulutlu", range: "%30–50" },
-  { max: 90, color: "#8E9B96", ink: "#FFFFFF", label: "çok bulutlu", range: "%50–90" },
-  { max: 100, color: "#63706B", ink: "#FFFFFF", label: "kapalı", range: "%90–100" },
+  { color: "#F1F4EF", ink: "#1F2A24", label: "açık", range: "%0–10" },
+  { color: "#DDE3DE", ink: "#1F2A24", label: "az bulutlu", range: "%10–30" },
+  { color: "#BFC8C3", ink: "#1F2A24", label: "parçalı bulutlu", range: "%30–50" },
+  { color: "#8E9B96", ink: "#FFFFFF", label: "çok bulutlu", range: "%50–90" },
+  { color: "#63706B", ink: "#FFFFFF", label: "kapalı", range: "%90–100" },
 ];
 
-function cloudIndex(v) {
-  for (let k = 0; k < CLOUD_SCALE.length - 1; k++) if (v <= CLOUD_SCALE[k].max) return k;
-  return CLOUD_SCALE.length - 1;
-}
-
-function cloudAgreeAt(models, i) {
-  const pts = models
-    .map((m) => {
-      const v = numOrNull(m.series[i]?.cloud_cover);
-      return v == null ? null : { m, k: cloudIndex(v) };
-    })
-    .filter(Boolean);
-  if (pts.length < 2) return { level: "na", rank: -1, i };
-  const ks = pts.map((p) => p.k).sort((a, b) => a - b);
-  const mode = ks[Math.floor(ks.length / 2)];
-  const inClass = pts.filter((p) => p.k === mode).length;
-  const pct = inClass / pts.length;
-  return { level: pct >= 0.75 ? "ok" : pct >= 0.5 ? "partial" : "split", rank: 1 - pct, pct, inClass, n: pts.length, mode, i };
-}
+const cloudIndex = cloudClass;
+const cloudAgreeAt = (models, i) => classAgreement(models, i, "cloud_cover", cloudClass);
 
 const CLOUD = {
   key: "cloud",
@@ -391,7 +328,7 @@ const WX = {
       ),
     };
   },
-  agree: wxAgreeAt,
+  agree: weatherAgreement,
   agreeLabels: (b) => {
     const t = AGREE_STYLE_LC[b.level].text;
     return b.peak ? [`${t} · ${b.peak.inClass}/${b.peak.n} ${b.peak.mode}`, t] : [t];

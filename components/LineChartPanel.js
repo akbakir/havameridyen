@@ -21,6 +21,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AgreeMark from "./AgreeMark";
+import {
+  SPREAD_RULES,
+  TREND_FAST,
+  TREND_FLAT,
+  TREND_HOURS,
+  capeClass,
+  classAgreement,
+  numOrNull,
+  pressureTrend,
+  spreadAgreement,
+  trendKey,
+} from "../lib/agreement";
+
+// Uyum ve eğilim kuralları (eşikler dahil) lib/agreement.js içinde; bu dosya yalnız çizer.
+export { numOrNull };
 
 export const DAY3 = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
 export const MON3 = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
@@ -39,9 +54,6 @@ export const AGREE_STYLE_LC = {
   split: { bg: "#D98E2B", ink: "#FFFFFF", text: "ayrışıyor" },
 };
 
-const TREND_HOURS = 3;
-const TREND_FAST = 2;
-const TREND_FLAT = 0.5;
 const TREND = [
   { key: "fastDown", color: "#C2622A", ink: "#FFFFFF", text: "hızlı düşüş", legend: `hızlı düşüş (≤ −${TREND_FAST} hPa/${TREND_HOURS}s)` },
   { key: "down", color: "#E0B080", ink: "#1F2A24", text: "düşüş", legend: "düşüş" },
@@ -51,26 +63,13 @@ const TREND = [
 ];
 const TREND_BY = Object.fromEntries(TREND.map((t) => [t.key, t]));
 
-function trendKey(d) {
-  if (d <= -TREND_FAST) return "fastDown";
-  if (d < -TREND_FLAT) return "down";
-  if (d >= TREND_FAST) return "fastUp";
-  if (d > TREND_FLAT) return "up";
-  return "flat";
-}
-
 export const f1 = (v) => (v == null ? "—" : (Math.round(v * 10) / 10).toFixed(1));
 export const pad2 = (n) => String(n).padStart(2, "0");
 const pickStep = (span, steps) => steps.find((k) => span / k <= 9) ?? steps[steps.length - 1];
-const capeClass = (v) => (v > 1000 ? 2 : v > 500 ? 1 : 0);
 const CAPE_CLASS_TEXT = ["500 J/kg altı", "500–1000 J/kg", "1000 J/kg üstü"];
 
 export function trPossessive(n) {
   return { 0: "ı", 1: "i", 2: "si", 3: "ü", 4: "ü", 5: "i", 6: "sı", 7: "si", 8: "i", 9: "u" }[n % 10];
-}
-
-export function numOrNull(v) {
-  return v != null && !Number.isNaN(Number(v)) ? Number(v) : null;
 }
 
 // "YYYY-MM-DDTHH:mm" (TSİ) → parçalar
@@ -105,7 +104,7 @@ export const LINE_CHARTS = {
     tick: (v) => `${v}°`,
     grid: () => 2,
     highlight: 30,
-    agree: { type: "spread", partial: 2, split: 4, unit: "°", pair: "en sıcak ve en soğuk model" },
+    agree: { type: "spread", ...SPREAD_RULES.temp, unit: "°", pair: "en sıcak ve en soğuk model" },
     fmt: (v) => `${f1(v)}°`,
   },
   humidity: {
@@ -119,7 +118,7 @@ export const LINE_CHARTS = {
       { from: 85, to: 100, fill: "#2C4A6E", opacity: 0.09, label: "doygunluğa yakın — sis / çiy", color: "#2C4A6E" },
       { from: 0, to: 30, fill: "#D98E2B", opacity: 0.08, label: "kuru", color: "#B06F17" },
     ],
-    agree: { type: "spread", partial: 10, split: 20, unit: " puan", pair: "en nemli ve en kuru model" },
+    agree: { type: "spread", ...SPREAD_RULES.humidity, unit: " puan", pair: "en nemli ve en kuru model" },
     fmt: (v) => `%${Math.round(v)}`,
   },
   cape: {
@@ -146,63 +145,20 @@ export const LINE_CHARTS = {
     grid: (span) => pickStep(span, [1, 2, 5, 10, 20, 25, 50]),
     refs: [{ v: 1013.25, label: "1013.25 hPa — standart atmosfer" }],
     trend: true,
-    agree: { type: "spread", partial: 2, split: 4, unit: " hPa", pair: "en yüksek ve en düşük basınç veren model" },
+    agree: { type: "spread", ...SPREAD_RULES.pressure, unit: " hPa", pair: "en yüksek ve en düşük basınç veren model" },
     fmt: (v) => `${f1(v)} hPa`,
     term: { href: "/terimler#basinc", label: "Basınç eğilimi nedir?" },
   },
 };
 
-// --- Uyum hesapları ---
-function spreadAt(cfg, models, i) {
-  const pts = models
-    .map((m) => ({ m, v: numOrNull(m.series[i]?.[cfg.key]) }))
-    .filter((p) => p.v != null);
-  if (pts.length < 2) return { level: "na", rank: -1, n: pts.length, i };
-  let lo = pts[0];
-  let hi = pts[0];
-  for (const p of pts) {
-    if (p.v < lo.v) lo = p;
-    if (p.v > hi.v) hi = p;
-  }
-  const sp = hi.v - lo.v;
-  const a = cfg.agree;
-  const level = sp < a.partial ? "ok" : sp <= a.split ? "partial" : "split";
-  return { level, rank: sp, spread: sp, lo, hi, n: pts.length, i };
-}
-
-// CAPE: sınıf yöntemi (< 500 · 500–1000 · > 1000 J/kg); ortanca sınıf sıralı sınıflardan seçilir.
-function classAt(cfg, models, i) {
-  const pts = models
-    .map((m) => ({ m, v: numOrNull(m.series[i]?.[cfg.key]) }))
-    .filter((p) => p.v != null);
-  if (pts.length < 2) return { level: "na", rank: -1, n: pts.length, i };
-  const ks = pts.map((p) => capeClass(p.v)).sort((a, b) => a - b);
-  const mode = ks[Math.floor(ks.length / 2)];
-  const inClass = pts.filter((p) => capeClass(p.v) === mode).length;
-  const pct = inClass / pts.length;
-  const level = pct >= 0.75 ? "ok" : pct >= 0.5 ? "partial" : "split";
-  return { level, rank: 1 - pct, pct, inClass, mode, n: pts.length, i, pts };
-}
-
+// --- Uyum hesapları (kurallar lib/agreement.js'te) ---
 function agreeAt(cfg, models, i) {
-  return cfg.agree.type === "class" ? classAt(cfg, models, i) : spreadAt(cfg, models, i);
+  return cfg.agree.type === "class"
+    ? classAgreement(models, i, cfg.key, capeClass)
+    : spreadAgreement(models, i, cfg.key, cfg.agree);
 }
 
-function trendAt(models, i) {
-  const j = Math.max(0, i - TREND_HOURS);
-  const ds = models
-    .map((m) => {
-      const a = numOrNull(m.series[i]?.pressure);
-      const b = numOrNull(m.series[j]?.pressure);
-      return a == null || b == null ? null : a - b;
-    })
-    .filter((v) => v != null)
-    .sort((a, b) => a - b);
-  if (!ds.length) return null;
-  const med = ds[Math.floor(ds.length / 2)];
-  const same = ds[0] > 0 || ds[ds.length - 1] < 0 || Math.abs(med) < TREND_FLAT;
-  return { med, same, i };
-}
+const trendAt = pressureTrend;
 
 // Dilimler: uzunluk STRIP_STEPS'ten (aralıktan kısa değil, en az STRIP_MIN_BLOCK px); dilimi en belirgin
 // saat temsil eder; aynı gruptaki komşu dilimler tek blokta birleşir.
