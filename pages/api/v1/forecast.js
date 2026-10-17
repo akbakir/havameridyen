@@ -9,7 +9,9 @@
 //
 // Yanıt (saatler TSİ, "YYYY-MM-DDTHH:mm"):
 //   { v: 1, location: {lat, lon}, days, timezone, generated_at, time: [...],
-//     models: [{ id, label, color, hourly: { temp: [...], feels_like: [...], ... } }],
+//     models: [{ id, label, color, calculated, hourly: { temp: [...], feels_like: [...], ... } }],
+//     calculated: modelin kendi yayınlamadığı, bizim hesapladığımız alanlar (ör. ["lifted_index"]) —
+//     uygulamada yanında "hesaplanan" yazar.
 //     consensus: { hourly: [...], daily: [...] } }   ← ortanca + uyum (lib/consensus.js)
 // Uyum seviyeleri: ok (hemfikir) · partial (kısmen) · split (ayrışıyor) · na (karşılaştıracak model yok) ·
 // none (yağış / kar: hiçbir model eşiği aşmıyor — satır gösterilmez).
@@ -95,12 +97,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const f = await getForecastDays(c.lat, c.lon, c.days, c.models);
+    const f = await getForecastDays(c.lat, c.lon, c.days, c.models, { levels: true });
     const time = f.models[0]?.series.map((s) => s.time) || [];
     const models = f.models.map((m) => {
       const hourly = {};
       for (const [out, key] of HOURLY_FIELDS) hourly[out] = m.series.map((s) => s[key] ?? null);
-      return { id: m.id, label: m.label, color: m.color, hourly };
+      return { id: m.id, label: m.label, color: m.color, calculated: m.calculated, hourly };
     });
     res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
     return res.status(200).json({
