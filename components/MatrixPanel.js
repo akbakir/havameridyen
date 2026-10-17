@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AgreeMark from "./AgreeMark";
-import { WX_KEY, WxIcon } from "./WeatherCond";
+import { WX_KEY, WX_KEY_SNOW, WxIcon } from "./WeatherCond";
 import {
   KN_PER_KMH,
   LEVEL_ORDER,
@@ -25,6 +25,7 @@ import {
   beaufortIndex,
   classAgreement,
   cloudClass,
+  condAt,
   slotCond,
   weatherAgreement,
   windAgreement,
@@ -345,8 +346,8 @@ const WX = {
       </div>
     </>
   ),
-  key: () =>
-    WX_KEY.map(([ic, t]) => (
+  key: (models) =>
+    [...WX_KEY, ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.snow)) ? WX_KEY_SNOW : [])].map(([ic, t]) => (
       <span key={ic} className="lc-ik">
         <WxIcon ic={ic} size={18} />
         {t}
@@ -661,7 +662,7 @@ export default function MatrixPanel({ cfg, models, period, status, selection, on
             </div>
           </div>
           <div className="lc-key">
-            {cfg.key()}
+            {cfg.key(models)}
             {multi && (
               <>
                 <span className="lc-br" />

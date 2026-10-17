@@ -166,13 +166,14 @@ const FAQS = [
           Her model için saat saat bakılır. Modelin o günkü toplam yağışı en az 0.2 mm ve o saatteki yağışı en az 0.1
           mm ise yağış ifadesi kullanılır. Ayrımı o saatin CAPE değeri yapar: 500 J/kg ve altı &quot;Yağmurlu&quot;, 500
           üstü &quot;Sağanak Yağışlı&quot;, 1000 üstü &quot;Gök Gürültülü Sağanak Yağışlı&quot;. JMA CAPE vermediği için
-          JMA&apos;da yağış hep &quot;Yağmurlu&quot; görünür.
+          JMA&apos;da yağış hep &quot;Yağmurlu&quot; görünür. O saatteki yağışın en az yarısı kar ise aynı ayrımla
+          &quot;Kar Yağışlı&quot;, &quot;Kar Sağanağı&quot; ya da &quot;Gök Gürültülü Kar Sağanağı&quot; yazılır.
         </p>
         <p style={{ margin: "0 0 12px" }}>
           Yağış yoksa bulutluluk sınıfı yazılır: Açık (%0–10), Az Bulutlu (%10–30), Parçalı Bulutlu (%30–50), Çok
           Bulutlu (%50–90) ya da Kapalı (%90–100). 20:00–06:00 arasında açık, az ve parçalı bulutlu ikonlarında güneş
           yerine ay çizilir. 3 ve 6 saatlik görünümde dilimdeki en belirgin durum gösterilir: yağış bulut sınıfından
-          önce gelir, bulutta daha kapalı olanı seçilir.
+          önce gelir (aynı türde kar yağmurdan önce), bulutta daha kapalı olanı seçilir.
         </p>
         <p style={{ margin: 0 }}>
           Hava durumu tablosunun uyum satırında, o saatte modellerin en az yarısı yağış veriyorsa yağış verenlerin

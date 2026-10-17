@@ -1,6 +1,6 @@
-// Hava durumu ikonları (Paket 4, Ekim 2026) — Hava durumu matrisi ve Model detayları tablosu kullanır.
-// Durum ifadesinin kuralları (yağış / sağanak / bulut sınıfı, dilimde en belirgin durum, uyum) sunucu
-// madde 2a'dan beri lib/agreement.js içinde: condAt, slotCond, weatherAgreement.
+// Hava durumu ikonları (Paket 4, Ekim 2026; kar ikonları sunucu madde 4) — Hava durumu matrisi ve Model
+// detayları tablosu kullanır. Durum ifadesinin kuralları (yağış / sağanak / kar / bulut sınıfı, dilimde en
+// belirgin durum, uyum) sunucu madde 2a'dan beri lib/agreement.js içinde: condAt, slotCond, weatherAgreement.
 
 // --- ikonlar (36 × 36) ---
 function Cloud({ dark }) {
@@ -40,6 +40,31 @@ const DROP_LINES = [
 function Drops({ n }) {
   return DROP_LINES.slice(0, n).map((p) => (
     <line key={p.join()} x1={p[0]} y1={p[1]} x2={p[2]} y2={p[3]} stroke="#3B6FB6" strokeWidth="2" strokeLinecap="round" />
+  ));
+}
+
+// Kar tanesi: üç çizgili yıldız (yağmur damlalarının yerinde)
+const FLAKES = {
+  3: [
+    [12, 30],
+    [19.5, 31.5],
+    [27, 30],
+  ],
+  4: [
+    [9.5, 29.5],
+    [16, 32.5],
+    [22.5, 29.5],
+    [29, 32.5],
+  ],
+};
+
+function Flakes({ n }) {
+  return FLAKES[n].map(([x, y]) => (
+    <g key={x + "," + y} stroke="#4F86C6" strokeWidth="1.4" strokeLinecap="round">
+      <line x1={x - 2.6} y1={y} x2={x + 2.6} y2={y} />
+      <line x1={x - 1.3} y1={y - 2.25} x2={x + 1.3} y2={y + 2.25} />
+      <line x1={x - 1.3} y1={y + 2.25} x2={x + 1.3} y2={y - 2.25} />
+    </g>
   ));
 }
 
@@ -115,6 +140,41 @@ function IconBody({ ic }) {
           <path d="M20 22l-5 7h4l-3 6 8-9h-4.5z" fill="#F2B640" />
         </>
       );
+    case "snow":
+      return (
+        <>
+          <g transform="translate(0,-3)">
+            <Cloud />
+          </g>
+          <Flakes n={3} />
+        </>
+      );
+    case "snowshower":
+      return (
+        <>
+          <g transform="translate(0,-3)">
+            <Cloud dark />
+          </g>
+          <Flakes n={4} />
+        </>
+      );
+    case "snowstorm":
+      return (
+        <>
+          <g transform="translate(0,-3)">
+            <Cloud dark />
+          </g>
+          <g stroke="#4F86C6" strokeWidth="1.4" strokeLinecap="round">
+            <line x1="7.4" y1="30" x2="12.6" y2="30" />
+            <line x1="8.7" y1="27.75" x2="11.3" y2="32.25" />
+            <line x1="8.7" y1="32.25" x2="11.3" y2="27.75" />
+            <line x1="25.4" y1="30" x2="30.6" y2="30" />
+            <line x1="26.7" y1="27.75" x2="29.3" y2="32.25" />
+            <line x1="26.7" y1="32.25" x2="29.3" y2="27.75" />
+          </g>
+          <path d="M20 22l-5 7h4l-3 6 8-9h-4.5z" fill="#F2B640" />
+        </>
+      );
     default:
       return null;
   }
@@ -138,4 +198,11 @@ export const WX_KEY = [
   ["rain", "Yağmurlu"],
   ["shower", "Sağanak Yağışlı"],
   ["storm", "Gök Gürültülü Sağanak"],
+];
+
+// Kar ikonları açıklamada yalnız gösterilen dönemde en az bir modelde kar ifadesi varsa görünür
+export const WX_KEY_SNOW = [
+  ["snow", "Kar Yağışlı"],
+  ["snowshower", "Kar Sağanağı"],
+  ["snowstorm", "Gök Gürültülü Kar Sağanağı"],
 ];
