@@ -1,0 +1,120 @@
+// Mobil uygulama ve widget'lar için tahmin servisi, sürüm 1 (sunucu madde 2b, Ekim 2026).
+// Mobil uygulama Open-Meteo'yu doğrudan çağırmaz; bütün istekler bu servisten ve önbellekten geçer.
+//
+// GET /api/v1/forecast?lat=40.77&lon=29.92&days=7&models=ecmwf_ifs,gfs_seamless
+//   lat, lon  zorunlu; 2 ondalığa yuvarlanır (~1 km). Yuvarlanmamış ya da model sırası farklı istek,
+//             aynı içeriğin tek adreste önbelleğe alınması için kanonik adrese yönlendirilir (308).
+//   days      1–16, varsayılan 7
+//   models    virgülle model kimlikleri; yoksa varsayılan beş model (ECMWF, GFS, ICON, UKMO, ARPEGE)
+//
+// Yanıt (saatler TSİ, "YYYY-MM-DDTHH:mm"):
+//   { v: 1, location: {lat, lon}, days, timezone, generated_at, time: [...],
+//     models: [{ id, label, color, hourly: { temp: [...], feels_like: [...], ... } }],
+//     consensus: { hourly: [...], daily: [...] } }   ← ortanca + uyum (lib/consensus.js)
+// Uyum seviyeleri: ok (hemfikir) · partial (kısmen) · split (ayrışıyor) · na (karşılaştıracak model yok) ·
+// none (yağış / kar: hiçbir model eşiği aşmıyor — satır gösterilmez).
+
+import { MODELS, defaultActiveModelIds, getForecastDays, MAX_DAYS } from "../../../lib/forecast";
+import { buildConsensus } from "../../../lib/consensus";
+
+const VALID_IDS = new Set(MODELS.map((m) => m.id));
+const DEFAULT_DAYS = 7;
+
+// Capacitor uygulaması (Android: https://localhost, iOS: capacitor://localhost) ve yerel geliştirme
+const ALLOWED_ORIGINS = new Set(["capacitor://localhost", "https://localhost", "http://localhost"]);
+
+// Saatlik alanlar: API adı ← lib/forecast.js seri alanı
+const HOURLY_FIELDS = [
+  ["temp", "temp"],
+  ["feels_like", "feels_like"],
+  ["precip", "precip_amount"],
+  ["precip_prob", "precip_prob"],
+  ["snowfall", "snowfall"],
+  ["snow_depth", "snow_depth"],
+  ["wind_speed", "wind_speed"],
+  ["wind_direction", "wind_direction"],
+  ["wind_gust", "wind_gust"],
+  ["humidity", "humidity"],
+  ["dew_point", "dew_point"],
+  ["pressure", "pressure"],
+  ["cloud_cover", "cloud_cover"],
+  ["cape", "cape"],
+  ["cin", "cin"],
+  ["lifted_index", "lifted_index"],
+];
+
+const round2 = (v) => Math.round(v * 100) / 100;
+
+function cors(req, res) {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Max-Age", "86400");
+  }
+  res.setHeader("Vary", "Origin");
+}
+
+function canonical(query) {
+  const lat = parseFloat(query.lat);
+  const lon = parseFloat(query.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  const days = query.days == null ? DEFAULT_DAYS : parseInt(query.days, 10);
+  if (!Number.isInteger(days) || days < 1 || days > MAX_DAYS) return null;
+  const asked =
+    typeof query.models === "string" && query.models
+      ? query.models.split(",").map((s) => s.trim()).filter((id) => VALID_IDS.has(id))
+      : defaultActiveModelIds();
+  const ids = MODELS.map((m) => m.id).filter((id) => asked.includes(id));
+  const models = ids.length ? ids : defaultActiveModelIds();
+  return { lat: round2(lat), lon: round2(lon), days, models };
+}
+
+function canonicalSearch(c) {
+  return `lat=${c.lat.toFixed(2)}&lon=${c.lon.toFixed(2)}&days=${c.days}&models=${c.models.join(",")}`;
+}
+
+export default async function handler(req, res) {
+  cors(req, res);
+  if (req.method === "OPTIONS") return res.status(204).end();
+  if (req.method !== "GET") {
+    res.setHeader("Allow", "GET, OPTIONS");
+    return res.status(405).json({ error: "yalnız GET" });
+  }
+
+  const c = canonical(req.query);
+  if (!c) return res.status(400).json({ error: "lat (−90…90), lon (−180…180) gerekli; days 1–16" });
+
+  // Kanonik adres: CDN aynı içeriği tek anahtarla saklasın
+  const search = canonicalSearch(c);
+  const asked = (req.url || "").split("?")[1] || "";
+  if (asked !== search) {
+    res.setHeader("Cache-Control", "public, s-maxage=86400");
+    return res.redirect(308, `/api/v1/forecast?${search}`);
+  }
+
+  try {
+    const f = await getForecastDays(c.lat, c.lon, c.days, c.models);
+    const time = f.models[0]?.series.map((s) => s.time) || [];
+    const models = f.models.map((m) => {
+      const hourly = {};
+      for (const [out, key] of HOURLY_FIELDS) hourly[out] = m.series.map((s) => s[key] ?? null);
+      return { id: m.id, label: m.label, color: m.color, hourly };
+    });
+    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+    return res.status(200).json({
+      v: 1,
+      location: { lat: c.lat, lon: c.lon },
+      days: c.days,
+      timezone: f.timezone,
+      generated_at: f.generated_at,
+      time,
+      models,
+      consensus: buildConsensus(f.models),
+    });
+  } catch (e) {
+    res.setHeader("Cache-Control", "no-store");
+    return res.status(502).json({ error: "Hava tahmin verisi alınamadı" });
+  }
+}
