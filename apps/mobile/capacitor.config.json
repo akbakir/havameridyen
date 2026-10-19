@@ -1,0 +1,8 @@
+{
+  "appId": "com.havameridyen.app",
+  "appName": "havameridyen",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  }
+}

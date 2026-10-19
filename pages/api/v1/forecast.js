@@ -18,12 +18,10 @@
 
 import { MODELS, defaultActiveModelIds, getForecastDays, MAX_DAYS } from "../../../lib/forecast";
 import { buildConsensus } from "../../../lib/consensus";
+import { cors } from "../../../lib/apiCors";
 
 const VALID_IDS = new Set(MODELS.map((m) => m.id));
 const DEFAULT_DAYS = 7;
-
-// Capacitor uygulaması (Android: https://localhost, iOS: capacitor://localhost) ve yerel geliştirme
-const ALLOWED_ORIGINS = new Set(["capacitor://localhost", "https://localhost", "http://localhost"]);
 
 // Saatlik alanlar: API adı ← lib/forecast.js seri alanı
 const HOURLY_FIELDS = [
@@ -47,17 +45,6 @@ const HOURLY_FIELDS = [
 
 const round2 = (v) => Math.round(v * 100) / 100;
 
-function cors(req, res) {
-  const origin = req.headers.origin;
-  if (origin && ALLOWED_ORIGINS.has(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    res.setHeader("Access-Control-Max-Age", "86400");
-  }
-  res.setHeader("Vary", "Origin");
-}
-
 function canonical(query) {
   const lat = parseFloat(query.lat);
   const lon = parseFloat(query.lon);
@@ -71,6 +58,18 @@ function canonical(query) {
   const ids = MODELS.map((m) => m.id).filter((id) => asked.includes(id));
   const models = ids.length ? ids : defaultActiveModelIds();
   return { lat: round2(lat), lon: round2(lon), days, models };
+}
+
+// İstek kanonik biçimde mi: yalnız lat, lon, days, models; her biri kanonik yazımıyla
+function isCanonical(query, c) {
+  const keys = Object.keys(query).sort().join(",");
+  return (
+    keys === "days,lat,lon,models" &&
+    query.lat === c.lat.toFixed(2) &&
+    query.lon === c.lon.toFixed(2) &&
+    query.days === String(c.days) &&
+    query.models === c.models.join(",")
+  );
 }
 
 function canonicalSearch(c) {
@@ -88,10 +87,11 @@ export default async function handler(req, res) {
   const c = canonical(req.query);
   if (!c) return res.status(400).json({ error: "lat (−90…90), lon (−180…180) gerekli; days 1–16" });
 
-  // Kanonik adres: CDN aynı içeriği tek anahtarla saklasın
+  // Kanonik adres: CDN aynı içeriği tek anahtarla saklasın. Ham adres yazısı değil, çözülmüş parametreler
+  // karşılaştırılır: Vercel sorgudaki virgülü %2C'ye çevirebiliyor; ham karşılaştırmada çok modelli istek
+  // kendine yönlenip döngüye giriyordu (18 Ekim düzeltmesi).
   const search = canonicalSearch(c);
-  const asked = (req.url || "").split("?")[1] || "";
-  if (asked !== search) {
+  if (!isCanonical(req.query, c)) {
     res.setHeader("Cache-Control", "public, s-maxage=86400");
     return res.redirect(308, `/api/v1/forecast?${search}`);
   }
