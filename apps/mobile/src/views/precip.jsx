@@ -27,9 +27,9 @@ export function Amt({ v, u, none = "yağış yok", dec = 1 }) {
 }
 
 // withDay: ızgaranın başında "Günlük toplam yağış" satırı (Sayfa 2 kartı)
-// compact (Sayfa 2 kartı, 20 Ekim): iki sütun; "Son 12 saat" satırı kendi başına — MGM şiddet etiketi miktarın hemen
-// arkasında (miktarın şiddetini vurgular; sığmazsa miktarın altında), bu satır diğer satırların etiket genişliğini
-// daraltmaz. Kar kalınlığının saati yazılmaz (kartın üstünde zaten yazıyor).
+// compact (Sayfa 2 kartı, 20 Ekim, Ali Kemal): iki sütun, miktarlar alt alta hizalı; MGM şiddet etiketi "Son 12 saat"
+// satırında miktarın hemen solunda (etiket sütununun sağ ucunda). Kar kalınlığının saati yazılmaz (kartın üstünde
+// zaten yazıyor).
 export function PrecipGrid({ m, i, day, times, withDay = false, compact = false }) {
   const hh = pad(parseT(times[i]).h);
   const r12 = sum12(m, i);
@@ -46,13 +46,11 @@ export function PrecipGrid({ m, i, day, times, withDay = false, compact = false 
         )}
         {compact ? (
           <>
-            <div className="prow">
-              <span className="lbl">Son 12 saat</span>
-              <span className="pv">
-                <Amt v={r12} u="mm" />
-                {lv && <span className={"badge " + lv[1]}>{lv[0]}</span>}
-              </span>
-            </div>
+            <span className="lbl lb2">
+              <span>Son 12 saat</span>
+              {lv && <span className={"badge " + lv[1]}>{lv[0]}</span>}
+            </span>
+            <Amt v={r12} u="mm" />
           </>
         ) : (
           <>

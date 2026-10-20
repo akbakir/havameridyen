@@ -334,7 +334,7 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 .titles .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3F83BF;vertical-align:0}
 @media (max-width:400px){.thr{padding:1px 4px}.ctl .lw{display:none}}
 /* Sayfa 2 kartı (20 Ekim): satırlar bağımsız (etiket solda, değer sağda), yağış ızgarası iki sütun, MGM etiketi
-   miktarın hemen arkasında (sığmazsa miktarın altında); kart biraz genişledi (yandaki kartın kenarı görünür) */
+   "Son 12 saat" satırında miktarın hemen solunda, miktarlar alt alta; kart biraz genişledi (yandaki kart görünür) */
 .mcard{flex-basis:calc(100% - 44px)}
 .kv2{display:flex;flex-direction:column;gap:3px}
 .kv2 .r{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
@@ -342,7 +342,8 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 .kv2 dd{white-space:nowrap;flex:none}
 .kv2 dd .at{color:var(--s-soft);font-weight:400;font-size:11px}
 .pgrid.c2{grid-template-columns:minmax(0,1fr) auto}
-.pgrid.c2 .prow{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;gap:8px}
-.pgrid.c2 .prow .pv{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:3px 6px}
+.pgrid.c2{column-gap:6px}
+.pgrid.c2 .lbl.lb2{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:3px 6px}
+.pgrid.c2 .lbl.lb2 .badge{margin-left:auto;font-size:10px;padding:3px 6px}
 /* Sayfa 2 kartında saatlerin yanındaki "TSİ" biraz küçük; saat ön planda (Ali Kemal, 20 Ekim) */
 .mcard .tsi{font-size:.8em}
