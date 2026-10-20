@@ -1,5 +1,5 @@
 // Sayfa 3 — grafikler (Prototip 9): Saatlik / 3 / 7 / 16 gün; aralık 1 / 3 / 6 / 12 saat (16 günde 1 saat yok).
-// Paneller: sıcaklık, toplam yağış (+ uzlaşı şeridi), karlı dönemde taze kar ve kar kalınlığı, rüzgar hızı ve yönü,
+// Paneller: hava durumu (her model, dilimdeki en belirgin durumun ikonu — web'deki tablo gibi; 20 Ekim), sıcaklık, toplam yağış (+ uzlaşı şeridi), karlı dönemde taze kar ve kar kalınlığı, rüzgar hızı ve yönü,
 // hamle, nem, CAPE, basınç (+ eğilim), bulutluluk; her birinin altında uyum şeridi. Uyum ve eğilim kuralları web ile
 // aynı dosyadan (lib/agreement.js). Grafiğe dokununca seçili dilim, yanında o dilimdeki model değerleri ve altta
 // "Model verileri detay" tablosu.
@@ -15,12 +15,14 @@ import {
   groupDays,
   median,
   pressureTrend,
+  slotCond,
   spreadAgreement,
   trendKey,
+  weatherAgreement,
   windAgreement,
 } from "@lib/agreement";
 import { MODELS } from "@lib/forecast";
-import { CLS_RNG, CLS_TXT, Mark } from "../icons";
+import { CLS_RNG, CLS_TXT, Mark, SKY_SOLID, condView, iconSvgAt } from "../icons";
 import { MON, dir16, fmt, pad, parseT, speed, tsuf, unitLabel } from "../format";
 import { DIR8, dayGust, gust, val } from "../data";
 import { PageLinks, UnitToggle } from "./common";
@@ -75,6 +77,17 @@ function windInfo(ms, i) {
     rule: "kısmen: yön ≥ 90° veya hız ≥ 10 kt · ayrışıyor: ikisi birden ya da ≥ 135° / 20 kt",
   };
 }
+// Hava durumu uyumu (web ile aynı kural): modellerin en az yarısı yağış veriyorsa yağış verenlerin oranı, değilse
+// ortanca bulut sınıfındaki yağışsız modellerin oranı
+function wxInfo(ms, i) {
+  const r = weatherAgreement(ms, i);
+  if (r.level === "na") return r;
+  return {
+    ...r,
+    txt: `${r.n} modelin ${r.inClass}'${tsuf(r.inClass)} ${r.mode === "yağış" ? "yağış veriyor" : `aynı sınıfta: ${r.mode}`}`,
+    rule: "en az yarısı yağış veriyorsa yağış verenlerin, değilse ortanca bulut sınıfındaki yağışsızların oranı: % 75 ve üstü hemfikir · % 50–75 kısmen",
+  };
+}
 function classInfo(ms, key, i) {
   const r = classAgreement(ms, i, key, key === "cape" ? capeClass : cloudClass);
   if (r.level === "na") return r;
@@ -99,7 +112,10 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
   const hasGust = (m) => m.series.some((s, i) => i < n && s.wind_gust != null);
   const gm = ms.filter(hasGust);
   const snowOn = ms.some((m) => m.series.some((s, i) => i < n && ((s.snowfall ?? 0) >= 0.05 || (s.snow_depth ?? 0) >= 0.05)));
+  const WX_ROW = 22;
   const panels = [
+    { id: "x", h: ms.length * WX_ROW + 4, title: "Hava durumu", unit: `dilimde en belirgin · ${cnt}` },
+    { id: "xs", h: 13 },
     { id: "t", h: 104, title: "Sıcaklık", unit: "°C · " + cnt },
     { id: "ts", h: 13 },
     { id: "r", h: 74, title: "Toplam yağış", unit: `mm/${step} sa`, ctl: "rain" },
@@ -121,7 +137,7 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
     { id: "p", h: 72, title: "Basınç", unit: "hPa · deniz seviyesi · " + cnt },
     { id: "pt", h: 13 },
     { id: "ps", h: 13 },
-    { id: "c", h: ms.length * 12 + 6, title: "Bulutluluk", unit: "toplam kapalılık · " + cnt + " · mavi: yağış" },
+    { id: "c", h: ms.length * 12 + 6, title: "Bulutluluk", unit: "% · " + cnt + " · ", rainDot: true },
     { id: "cs", h: 13 },
   ];
   let y = 4;
@@ -314,7 +330,24 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
   };
 
   for (const p of panels) {
-    if (p.title) titles.push({ y: p.y - 17, title: p.title, unit: p.unit, ctl: p.ctl });
+    if (p.title) titles.push({ y: p.y - 17, title: p.title, unit: p.unit, ctl: p.ctl, rainDot: p.rainDot });
+    if (p.id === "x") {
+      const cw = step * px;
+      const sz = Math.max(9, Math.min(cw - 2, WX_ROW - 4));
+      ms.forEach((m, mi) => {
+        const yy = p.y + 2 + mi * WX_ROW;
+        axes.push(`<text x="33" y="${yy + WX_ROW / 2 + 2}" text-anchor="end" font-size="7.5" font-weight="600" fill="${m.color}">${esc(m.label.slice(0, 4))}</text>`);
+        for (let s = 0; s < n; s += step) {
+          const c = slotCond(m, s, Math.min(step, n - s));
+          if (!c) continue;
+          const v = condView(c, parseT(times[c.i]).h);
+          const w = Math.min(cw, (n - s) * px);
+          svg += `<rect x="${(s * px + 0.5).toFixed(1)}" y="${yy}" width="${Math.max(1, w - 1).toFixed(1)}" height="${WX_ROW - 2}" rx="3" fill="${SKY_SOLID[v.sky]}"/>`;
+          svg += iconSvgAt(v.icon, s * px + w / 2 - sz / 2, yy + (WX_ROW - 2) / 2 - sz / 2, sz);
+        }
+      });
+    }
+    if (p.id === "xs") stripX(p, (i) => wxInfo(ms, i), "Hava durumu");
     if (p.id === "t") {
       const [lo, hi] = range("temp", 1);
       lineSet(p, "temp", lo, hi, ticksOf(lo, hi, hi - lo > 12 ? 4 : 2), true);
@@ -848,11 +881,21 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
               {chart.titles.map((tt) => (
                 <div key={tt.title} className="tt" style={{ top: tt.y }}>
                   <span>
-                    {tt.title} <small>{tt.unit}</small>
+                    {tt.title}{" "}
+                    <small>
+                      {tt.unit}
+                      {tt.rainDot && (
+                        <>
+                          <i className="rdot" /> yağış
+                        </>
+                      )}
+                    </small>
                   </span>
                   {tt.ctl === "rain" && (
                     <span className="ctl">
-                      <span className="lab">eşik ≥</span>
+                      <span className="lab">
+                        <span className="lw">eşik </span>≥
+                      </span>
                       {RAIN_TH.map((v) => (
                         <button key={v} type="button" className="thr" aria-pressed={v === rainTh} onClick={() => setRainTh(v)}>
                           {String(v).replace(".", ",")}

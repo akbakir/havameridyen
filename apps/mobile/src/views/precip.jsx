@@ -27,42 +27,61 @@ export function Amt({ v, u, none = "yağış yok", dec = 1 }) {
 }
 
 // withDay: ızgaranın başında "Günlük toplam yağış" satırı (Sayfa 2 kartı)
-export function PrecipGrid({ m, i, day, times, withDay = false }) {
+// compact (Sayfa 2 kartı, 20 Ekim): iki sütun; "Son 12 saat" satırı kendi başına — MGM şiddet etiketi miktarın hemen
+// arkasında (miktarın şiddetini vurgular; sığmazsa miktarın altında), bu satır diğer satırların etiket genişliğini
+// daraltmaz. Kar kalınlığının saati yazılmaz (kartın üstünde zaten yazıyor).
+export function PrecipGrid({ m, i, day, times, withDay = false, compact = false }) {
   const hh = pad(parseT(times[i]).h);
   const r12 = sum12(m, i);
   const lv = r12 != null && r12 >= 0.05 ? mgm(r12) : null;
   return (
     <>
-      <div className="pgrid">
+      <div className={"pgrid" + (compact ? " c2" : "")}>
         {withDay && (
           <>
             <span className="lbl">Günlük toplam yağış</span>
             <Amt v={dayTotal(m, day)} u="mm" />
-            <span />
+            {!compact && <span />}
           </>
         )}
-        <span className="lbl">Son 12 saat</span>
-        <Amt v={r12} u="mm" />
-        <span className="bd">{lv && <span className={"badge " + lv[1]}>{lv[0]}</span>}</span>
+        {compact ? (
+          <>
+            <div className="prow">
+              <span className="lbl">Son 12 saat</span>
+              <span className="pv">
+                <Amt v={r12} u="mm" />
+                {lv && <span className={"badge " + lv[1]}>{lv[0]}</span>}
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="lbl">Son 12 saat</span>
+            <Amt v={r12} u="mm" />
+            <span className="bd">{lv && <span className={"badge " + lv[1]}>{lv[0]}</span>}</span>
+          </>
+        )}
         <span className="lbl">Saat {hh}:00</span>
         <Amt v={val(m, "precip_amount", i)} u="mm" />
-        <span />
+        {!compact && <span />}
       </div>
       {hasSnowDay(m, day) && (
         <>
           <div className="psep" />
-          <div className="pgrid">
+          <div className={"pgrid" + (compact ? " c2" : "")}>
             <span className="lbl">Günlük taze kar</span>
             <Amt v={daySnow(m, day)} u="cm" none="kar yok" />
-            <span />
+            {!compact && <span />}
             <span className="lbl">Saat {hh}:00</span>
             <Amt v={val(m, "snowfall", i)} u="cm" none="kar yok" />
-            <span />
+            {!compact && <span />}
             <span className="lbl">Toplam kar kalınlığı</span>
             <Amt v={val(m, "snow_depth", i)} u="cm" none="kar yok" />
-            <span className="bd">
-              <span className="lbl">{hh}:00</span>
-            </span>
+            {!compact && (
+              <span className="bd">
+                <span className="lbl">{hh}:00</span>
+              </span>
+            )}
           </div>
         </>
       )}

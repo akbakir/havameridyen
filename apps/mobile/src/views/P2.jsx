@@ -99,38 +99,64 @@ function Card({ m, day, i, times, unit, vrbOpen, onVrb }) {
         <span className="bt">
           {fmt(val(m, "temp", i))} <small>°C</small>
         </span>
-        <span className="tm">{pad(q.h)}:00 TSİ</span>
+        <span className="tm">
+          {pad(q.h)}:00 <span className="tsi">TSİ</span>
+        </span>
       </div>
+      {/* 20 Ekim: her satır kendi genişliğini kullanır (etiket solda, değer sağda); ortak değer sütunu en uzun değere
+          ("45 km/s · 16:00 TSİ") göre daralıp "Hakim rüzgar yönü" gibi kısa değerli satırları da alt satıra itiyordu */}
       <dl className="kv2">
-        <dt>Min</dt>
-        <dd className="tmin">{fmt(dayMin(m, day))} °C</dd>
-        <dt>Maks</dt>
-        <dd className="tmax">{fmt(dayMax(m, day))} °C</dd>
-        <dt>Ort. nem</dt>
-        <dd>{fmt(avg(hs))} %</dd>
-        <dt>Hakim rüzgar yönü</dt>
-        <dd>
-          <MiniRose deg={hk.deg} color={m.color} />
-          {hk.vrb ? (
-            <>
-              <button type="button" className="vrb" aria-expanded={vrbOpen} onClick={onVrb}>
-                VRB
-              </button>
-              {vrbOpen && <span className="lbl"> değişken yön</span>}
-            </>
-          ) : (
-            hk.txt
-          )}
-        </dd>
-        <dt>Ort. rüzgar hızı</dt>
-        <dd>
-          {fmt(speed(avg(ws), unit), 1)} {u}
-        </dd>
-        <dt>Maks. hamle</dt>
-        <dd>{dg.g == null ? "—" : `${fmt(speed(dg.g, unit))} ${u} · ${pad(parseT(times[dg.i]).h)}:00 TSİ`}</dd>
+        <div className="r">
+          <dt>Min</dt>
+          <dd className="tmin">{fmt(dayMin(m, day))} °C</dd>
+        </div>
+        <div className="r">
+          <dt>Maks</dt>
+          <dd className="tmax">{fmt(dayMax(m, day))} °C</dd>
+        </div>
+        <div className="r">
+          <dt>Ort. nem</dt>
+          <dd>{fmt(avg(hs))} %</dd>
+        </div>
+        <div className="r">
+          <dt>Hakim rüzgar yönü</dt>
+          <dd>
+            <MiniRose deg={hk.deg} color={m.color} />
+            {hk.vrb ? (
+              <>
+                <button type="button" className="vrb" aria-expanded={vrbOpen} onClick={onVrb}>
+                  VRB
+                </button>
+                {vrbOpen && <span className="lbl"> değişken yön</span>}
+              </>
+            ) : (
+              hk.txt
+            )}
+          </dd>
+        </div>
+        <div className="r">
+          <dt>Ort. rüzgar hızı</dt>
+          <dd>
+            {fmt(speed(avg(ws), unit), 1)} {u}
+          </dd>
+        </div>
+        <div className="r">
+          <dt>Maks. hamle</dt>
+          <dd>
+            {dg.g == null ? (
+              "—"
+            ) : (
+              <>
+                {fmt(speed(dg.g, unit))} {u} <span className="at">
+                  · {pad(parseT(times[dg.i]).h)}:00 <span className="tsi">TSİ</span>
+                </span>
+              </>
+            )}
+          </dd>
+        </div>
       </dl>
       <div className="psep" style={{ margin: "2px 0 1px" }} />
-      <PrecipGrid m={m} i={i} day={day} times={times} withDay />
+      <PrecipGrid m={m} i={i} day={day} times={times} withDay compact />
     </div>
   );
 }

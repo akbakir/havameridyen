@@ -73,6 +73,25 @@ export function condView(cond, h) {
   return { text: cond.text, icon, sky, wet: false, cls: k };
 }
 
+// Sayfa 3 hava durumu satırı: gökyüzü renginin düz karşılığı (SVG içinde degrade yerine) ve SVG içine yerleştirilen ikon
+export const SKY_SOLID = {
+  "day-clear": "#4E9DB0",
+  "day-cloud": "#7C939A",
+  "dawn-clear": "#B77458",
+  "dawn-cloud": "#8C7068",
+  "dusk-clear": "#A35F5B",
+  "dusk-cloud": "#7A6068",
+  "night-clear": "#1B3040",
+  "night-cloud": "#2B343B",
+  rain: "#4E6170",
+  nodata: "#59625D",
+  snow: "#8395A5",
+  overcast: "#5E6B71",
+};
+export function iconSvgAt(name, x, y, size) {
+  return (ICON[name] || ICON.cloud).replace("<svg ", `<svg x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${size}" height="${size}" `);
+}
+
 export function WxIcon({ name, className, style }) {
   return <span className={className} style={style} aria-hidden="true" dangerouslySetInnerHTML={{ __html: ICON[name] || ICON.cloud }} />;
 }

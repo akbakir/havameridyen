@@ -309,3 +309,40 @@ button.badge::after{content:" ⓘ";opacity:.55}
 .sinfo{margin:3px 12px 0;font:400 10.5px/1.3 var(--f-mono);background:#1F2A24;color:#EEF1EC;border-radius:8px;padding:5px 8px;transition:opacity .5s ease}
 .sinfo.off{opacity:0}
 .sinfo b{color:#fff}
+
+/* Android 15 kenardan kenara (Capacitor 8, WebView ≥ 140): durum çubuğu ve alttaki gezinme çubuğu sayfanın üstüne
+   biner. Kaydırılan içerik çubukların altında görünmesin diye iki sabit örtü; tarayıcıda ve eski WebView'da
+   yükseklikleri 0 olur. Sayfa 3'ün yapışkan başlığı durum çubuğunun altında durur. */
+body::before,body::after{content:"";position:fixed;left:0;right:0;z-index:30;background:var(--s-bg);pointer-events:none}
+body::before{top:0;height:env(safe-area-inset-top,0px)}
+body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
+.sticky{top:env(safe-area-inset-top,0px)}
+.sheet .sh-body{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+
+/* Dar ekran ve büyük yazı boyutu (telefonun yazı ölçeği WebView'a da uygulanır): Sayfa 3 başlıkları tek satırda
+   kalır, sığmayan kısım "…" ile kısalır; eşik düğmeleri başlığın üstüne binmez */
+.sticky .ro{gap:8px}
+.sticky .ro span{white-space:nowrap}
+.sticky .ro span:last-child{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.titles .tt > span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.titles .tt .ctl{flex:none}
+.ctl .lab{white-space:nowrap}
+/* Sayfa 3 hava durumu satırındaki ikonlar hareketsiz (çok sayıda ikon) */
+.scroller .rain .dr,.scroller .rain .fl{animation:none}
+/* Bulutluluk başlığında yağış noktası (grafikteki mavi nokta); dar ekranda eşik düğmeleri sıkışır, "eşik" sözcüğü
+   yalnız "≥" olarak kalır — "Toplam yağış" ve "Bulutluluk" başlıkları 360 dp'de de tek satır (Ali Kemal, 20 Ekim) */
+.titles .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3F83BF;vertical-align:0}
+@media (max-width:400px){.thr{padding:1px 4px}.ctl .lw{display:none}}
+/* Sayfa 2 kartı (20 Ekim): satırlar bağımsız (etiket solda, değer sağda), yağış ızgarası iki sütun, MGM etiketi
+   miktarın hemen arkasında (sığmazsa miktarın altında); kart biraz genişledi (yandaki kartın kenarı görünür) */
+.mcard{flex-basis:calc(100% - 44px)}
+.kv2{display:flex;flex-direction:column;gap:3px}
+.kv2 .r{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.kv2 dt{min-width:0}
+.kv2 dd{white-space:nowrap;flex:none}
+.kv2 dd .at{color:var(--s-soft);font-weight:400;font-size:11px}
+.pgrid.c2{grid-template-columns:minmax(0,1fr) auto}
+.pgrid.c2 .prow{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pgrid.c2 .prow .pv{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:3px 6px}
+/* Sayfa 2 kartında saatlerin yanındaki "TSİ" biraz küçük; saat ön planda (Ali Kemal, 20 Ekim) */
+.mcard .tsi{font-size:.8em}
