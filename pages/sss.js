@@ -212,7 +212,7 @@ export default function SSS() {
 
       <div className="faq-list">
         {FAQS.map((item) => (
-          <details key={item.num} className="faq-item" defaultOpen={!!item.open}>
+          <details key={item.num} className="faq-item" open={!!item.open}>
             <summary className="faq-q">
               <span className="faq-num">{item.num}</span>
               <span className="faq-q-text">{item.q}</span>
