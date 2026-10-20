@@ -51,7 +51,7 @@ export function gust(m, i) {
 export const daysOf = (times) => groupDays(times);
 export const dayIndexOf = (days, i) => Math.max(0, days.findIndex((d) => i >= d.h0 && i < d.h1));
 
-function dayVals(m, key, day) {
+export function dayVals(m, key, day) {
   const a = [];
   for (let i = day.h0; i < day.h1; i++) {
     const v = val(m, key, i);
@@ -112,3 +112,41 @@ export function nowIndex(times, nowHour) {
   if (i >= 0) return i;
   return times.length && nowHour > times[times.length - 1] ? times.length - 1 : 0;
 }
+
+export const avg = (a) => (a.length ? sum(a) / a.length : null);
+
+// Hakim rüzgar yönü (Sayfa 2): 8 yöne sayım, 2 km/s altı sayılmaz; en sık yön saatlerin % 40'ına ulaşmazsa
+// "VRB" (değişken yön)
+export const DIR8 = ["K", "KD", "D", "GD", "G", "GB", "B", "KB"];
+export function hakim(m, day) {
+  const cnt = new Array(8).fill(0);
+  let tot = 0;
+  for (let i = day.h0; i < day.h1; i++) {
+    const w = val(m, "wind_speed", i);
+    const d = val(m, "wind_direction", i);
+    if (w == null || d == null || w < 2) continue;
+    cnt[Math.round(d / 45) % 8]++;
+    tot++;
+  }
+  if (!tot) return { txt: "VRB", vrb: true, deg: null };
+  const mx = Math.max(...cnt);
+  const k = cnt.indexOf(mx);
+  return mx / tot >= 0.4 ? { txt: DIR8[k], vrb: false, deg: k * 45 } : { txt: "VRB", vrb: true, deg: null };
+}
+
+// Günün en yüksek hamlesi ve saati (indeks)
+export function dayGust(m, day) {
+  let g = null;
+  let at = null;
+  for (let i = day.h0; i < day.h1; i++) {
+    const v = gust(m, i);
+    if (v != null && (g == null || v > g)) {
+      g = v;
+      at = i;
+    }
+  }
+  return { g, i: at };
+}
+
+// Günde en az bir saat verisi var mı (Sayfa 2 kartı)
+export const hasDay = (m, day) => dayVals(m, "temp", day).length > 0;

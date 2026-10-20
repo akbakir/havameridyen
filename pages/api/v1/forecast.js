@@ -93,7 +93,8 @@ export default async function handler(req, res) {
   const search = canonicalSearch(c);
   if (!isCanonical(req.query, c)) {
     res.setHeader("Cache-Control", "public, s-maxage=86400");
-    return res.redirect(308, `/api/v1/forecast?${search}`);
+    res.redirect(308, `/api/v1/forecast?${search}`);
+    return; // Next.js: API işleyicisi değer döndürmemeli (res.redirect nesne döndürür)
   }
 
   try {

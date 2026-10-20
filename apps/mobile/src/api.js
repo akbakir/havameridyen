@@ -31,6 +31,9 @@ export function forecastPath(lat, lon, days = FORECAST_DAYS, ids = ALL_MODEL_IDS
 // Bütün modeller bir kerede istenir; model seçimi ve ortanca + uyum uygulamada hesaplanır (lib/consensus.js).
 export const fetchForecast = (lat, lon) => getJson(forecastPath(lat, lon));
 
+// Sayfa 3 "16 gün": yalnız o görünüm açılınca, bütün modeller 16 gün
+export const fetchForecast16 = (lat, lon) => getJson(forecastPath(lat, lon, 16));
+
 // Favori kartı: yalnız ECMWF, bugün
 export const fetchFavorite = (lat, lon) => getJson(forecastPath(lat, lon, 1, ["ecmwf_ifs"]));
 

@@ -2,9 +2,9 @@
 
 Vite + React, Capacitor ile önce Android (sunucu madde 5, Ekim 2026). Ekranlar Prototip 9'a göre.
 
-- **Bu sürümde:** konum sayfası (arama, "Konumumu kullan", hızlı şehirler, ECMWF favori kartları), tek model ekranı, Sayfa 1 (iki ve daha çok model: ortanca + uyum), ⓘ menüsü (Modeller, Terimler, SSS, Hakkında, Yasal).
-- **Sonraki paketlerde:** Sayfa 2 (modeller ayrı ayrı), Sayfa 3 (grafikler), widget.
-- **Veri:** uygulama Open-Meteo'yu doğrudan çağırmaz; yalnız `https://www.havameridyen.com/api/v1/forecast` ve `/api/v1/locations`.
+- **Bu sürümde:** konum sayfası (arama, "Konumumu kullan", hızlı şehirler, ECMWF favori kartları), tek model ekranı, Sayfa 1 (iki ve daha çok model: ortanca + uyum), Sayfa 2 (modeller ayrı ayrı, günlük kartlar), Sayfa 3 (grafikler: saatlik / 3 / 7 / 16 gün), ⓘ menüsü (Modeller, Terimler, SSS, Hakkında, Yasal).
+- **Sonraki paketlerde:** widget, Android'de deneme.
+- **Veri:** uygulama Open-Meteo'yu doğrudan çağırmaz; yalnız `https://www.havameridyen.com/api/v1/forecast` (7 gün; Sayfa 3'te "16 gün" seçilince bir kez 16 gün) ve `/api/v1/locations`.
 - **Kurallar web ile ortak:** kök klasördeki `lib/` (agreement.js, consensus.js, terms.js, forecast.js içindeki model listesi) `@lib` adıyla kullanılır. Bir kural değişince web ve uygulama birlikte değişir.
 
 ## Tarayıcıda deneme (Android Studio gerekmez)

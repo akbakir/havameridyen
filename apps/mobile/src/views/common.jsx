@@ -1,4 +1,4 @@
-// Ortak parçalar: model çipleri, saat şeridi, gün okları, rüzgar birimi, sayfa bağlantıları.
+// Ortak parçalar: model çipleri, saat şeridi, gün okları, rüzgar birimi, sayfa bağlantıları, uyum işareti.
 
 import { useLayoutEffect, useRef } from "react";
 import { HourIcon } from "../icons";
@@ -106,6 +106,12 @@ export function UnitToggle({ unit, onUnit, ghost }) {
 }
 
 const LINK_ICON = {
+  p1: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="#2C5E8C" strokeWidth="1.8" strokeLinecap="round">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  ),
   p2: (
     <svg viewBox="0 0 24 24" fill="none" stroke="#2C5E8C" strokeWidth="1.8" strokeLinejoin="round">
       <rect x="3" y="5" width="7.5" height="14" rx="2" />
@@ -120,11 +126,12 @@ const LINK_ICON = {
   ),
 };
 const LINK_TEXT = {
+  p1: ["Model verilerini saatlik gör", "Karşılaştırmalı · ortanca ve uyum"],
   p2: ["Model verilerini ayrı ayrı gör", "Günlük · her model kendi kartında"],
   p3: ["Model verilerini grafiksel gör", "Saatlik / 3 / 7 / 16 gün · tüm parametreler"],
 };
 
-// Sayfa 2 ve 3 sonraki paketlerde; bağlantılar şimdilik "yakında" der
+// Sayfalar arası bağlantı kartları (Sayfa 1 · 2 · 3)
 export function PageLinks({ pages, onGo }) {
   return (
     <div className="links">

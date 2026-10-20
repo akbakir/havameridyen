@@ -3,20 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
-import { dir16, fmt, fmtS, pad, parseT, speed, unitLabel, whenText } from "../format";
-import { dayIndexOf, dayMax, dayMin, dayTotal, daySnow, gust, hasSnowDay, sourceOf, sum12, val } from "../data";
+import { dir16, fmt, fmtS, parseT, speed, unitLabel, whenText } from "../format";
+import { dayIndexOf, dayMax, dayMin, dayTotal, gust, sourceOf, val } from "../data";
 import { HourStrip, UnitToggle, useDaySwipe } from "./common";
-
-// MGM yağış şiddet sınıfı (son 12 saat)
-function mgm(mm) {
-  if (!(mm > 0)) return null;
-  if (mm <= 5) return ["Hafif yağış", "b-l1"];
-  if (mm <= 20) return ["Orta kuvvette", "b-l2"];
-  if (mm <= 50) return ["Kuvvetli", "b-l3"];
-  if (mm <= 75) return ["Çok kuvvetli", "b-l4"];
-  if (mm <= 100) return ["Şiddetli", "b-l5"];
-  return ["Aşırı", "b-l6"];
-}
+import { PrecipGrid } from "./precip";
 // NOAA SPC kademesi
 function capeL(v) {
   if (!(v > 0)) return ["Kararlı", "b-none", "konvektif (kararsızlık kaynaklı) yağış potansiyeli yok"];
@@ -37,17 +27,6 @@ function cinL(v) {
   if (v < 50) return ["Zayıf engel", "b-l1", "yüzey ısınmasıyla kolayca aşılır"];
   if (v <= 200) return ["Orta engel", "b-l2", "kuvvetli ısınma ya da sistem tetiklemesiyle aşılabilir"];
   return ["Güçlü engel", "b-l3", "fırtına gelişimini çoğunlukla engeller"];
-}
-
-// V04 A4: miktar yoksa "0,0" yerine "yağış yok" / "kar yok"
-function Amt({ v, u, none = "yağış yok", dec = 1 }) {
-  if (v == null) return <span className="am no">—</span>;
-  if (v < 0.05) return <span className="am no">{none}</span>;
-  return (
-    <span className="am">
-      {fmt(v, dec)} {u}
-    </span>
-  );
 }
 
 function arcPath(cx, cy, r, a0, a1) {
@@ -210,9 +189,6 @@ export default function Single({ m, times, days, idx, nowIdx, place, unit, onUni
     hours.push({ i: j, h: parseT(times[j]).h, temp: val(m, "temp", j), view: condView(condAt(m, j), parseT(times[j]).h) });
   }
   const rd = dayTotal(m, day);
-  const r12 = sum12(m, i);
-  const lv = r12 != null && r12 >= 0.05 ? mgm(r12) : null;
-  const hh = pad(parseT(t).h);
   const cape = val(m, "cape", i);
 
   return (
@@ -267,32 +243,7 @@ export default function Single({ m, times, days, idx, nowIdx, place, unit, onUni
             )}
           </div>
           <div className="psep" />
-          <div className="pgrid">
-            <span className="lbl">Son 12 saat</span>
-            <Amt v={r12} u="mm" />
-            <span className="bd">{lv && <span className={"badge " + lv[1]}>{lv[0]}</span>}</span>
-            <span className="lbl">Saat {hh}:00</span>
-            <Amt v={val(m, "precip_amount", i)} u="mm" />
-            <span />
-          </div>
-          {hasSnowDay(m, day) && (
-            <>
-              <div className="psep" />
-              <div className="pgrid">
-                <span className="lbl">Günlük taze kar</span>
-                <Amt v={daySnow(m, day)} u="cm" none="kar yok" />
-                <span />
-                <span className="lbl">Saat {hh}:00</span>
-                <Amt v={val(m, "snowfall", i)} u="cm" none="kar yok" />
-                <span />
-                <span className="lbl">Toplam kar kalınlığı</span>
-                <Amt v={val(m, "snow_depth", i)} u="cm" none="kar yok" />
-                <span className="bd">
-                  <span className="lbl">{hh}:00</span>
-                </span>
-              </div>
-            </>
-          )}
+          <PrecipGrid m={m} i={i} day={day} times={times} />
         </div>
         <div className="sec">
           <span>Kararsızlık</span>

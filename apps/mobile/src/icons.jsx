@@ -73,8 +73,8 @@ export function condView(cond, h) {
   return { text: cond.text, icon, sky, wet: false, cls: k };
 }
 
-export function WxIcon({ name, className }) {
-  return <span className={className} aria-hidden="true" dangerouslySetInnerHTML={{ __html: ICON[name] || ICON.cloud }} />;
+export function WxIcon({ name, className, style }) {
+  return <span className={className} style={style} aria-hidden="true" dangerouslySetInnerHTML={{ __html: ICON[name] || ICON.cloud }} />;
 }
 
 // Saat şeridindeki küçük ikon: gökyüzü renginde kare

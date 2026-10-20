@@ -1,12 +1,12 @@
 // havameridyen mobil uygulaması — iskelet (sunucu madde 5, Ekim 2026; Prototip 9).
-// Akış: Konum sayfası → yalnız bir model seçiliyse tek model ekranı, iki ve daha çok model seçiliyse Sayfa 1.
-// Sayfa 2 (modeller ayrı ayrı) ve Sayfa 3 (grafikler) sonraki paketlerde.
+// Akış: Konum sayfası → yalnız bir model seçiliyse tek model ekranı, iki ve daha çok model seçiliyse Sayfa 1;
+// Sayfa 1 · 2 (modeller ayrı ayrı) · 3 (grafikler) birbirine bağlantı kartlarıyla bağlı. Seçili saat üç sayfada ortak.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { App as CapApp } from "@capacitor/app";
 import { MODELS } from "@lib/forecast";
 import { buildConsensus } from "@lib/consensus";
-import { fetchForecast } from "./api";
+import { fetchForecast, fetchForecast16 } from "./api";
 import { tsiNowHour } from "./format";
 import { daysOf, nowIndex, toModels } from "./data";
 import { loadPrefs, placeKey, placeLabel, savePrefs } from "./store";
@@ -14,6 +14,8 @@ import { ModelChips } from "./views/common";
 import Loc from "./views/Loc";
 import Single from "./views/Single";
 import P1 from "./views/P1";
+import P2 from "./views/P2";
+import P3 from "./views/P3";
 import Sheet from "./views/Sheet";
 
 const ALL = MODELS.map(({ id, label, color }) => ({ id, label, color }));
@@ -24,7 +26,8 @@ export default function App() {
   const [data, setData] = useState({ status: "idle" });
   const [idx, setIdx] = useState(0);
   const [sheet, setSheet] = useState(null);
-  const [soon, setSoon] = useState("");
+  const [page, setPage] = useState("p1"); // p1 · p2 · p3 (iki ve daha çok model)
+  const [long, setLong] = useState({ status: "idle" }); // Sayfa 3 "16 gün" verisi
   const top = useRef(null);
 
   const update = useCallback((patch) => {
@@ -56,10 +59,25 @@ export default function App() {
     if (view === "fc" && data.key !== placeKey(place)) load();
   }, [view, place, data.key, load]);
 
-  // Android geri tuşu: alttaki sayfa → tahmin → konum sayfası → uygulamadan çık
+  // 16 günlük veri yalnız Sayfa 3'te "16 gün" seçilince, konum başına bir kez
+  const load16 = useCallback(() => {
+    const key = placeKey(place);
+    if (long.key === key && long.status !== "error") return;
+    setLong({ status: "loading", key });
+    fetchForecast16(place.lat, place.lon)
+      .then((resp) => {
+        const times = resp.time || [];
+        setLong((d) => (d.key === key ? { status: "ok", key, models: toModels(resp), times } : d));
+      })
+      .catch(() => setLong((d) => (d.key === key ? { status: "error", key } : d)));
+  }, [place, long.key, long.status]);
+
+  const multi = selected.length > 1;
+  // Android geri tuşu: alttaki sayfa → Sayfa 2 / 3'ten Sayfa 1 → konum sayfası → uygulamadan çık
   const back = useRef(null);
   back.current = () => {
     if (sheet) setSheet(sheet.page === "menu" ? null : { page: "menu" });
+    else if (view === "fc" && multi && page !== "p1") setPage("p1");
     else if (view === "fc") setView("loc");
     else CapApp.exitApp();
   };
@@ -71,11 +89,13 @@ export default function App() {
   }, []);
 
   const selModels = useMemo(() => (data.models || []).filter((m) => selected.includes(m.id)), [data.models, selected]);
+  const selLong = useMemo(() => (long.models || []).filter((m) => selected.includes(m.id)), [long.models, selected]);
   const cons = useMemo(() => (selModels.length > 1 ? buildConsensus(selModels) : null), [selModels]);
 
   const pick = (p) => {
     update({ place: { name: p.name, admin1: p.admin1 || null, lat: p.lat, lon: p.lon } });
     setView("fc");
+    setPage("p1");
     window.scrollTo(0, 0);
   };
   const toggle = (id) => {
@@ -84,8 +104,8 @@ export default function App() {
     update({ selected: on ? selected.filter((x) => x !== id) : ALL.map((m) => m.id).filter((x) => x === id || selected.includes(x)) });
   };
   const goPage = (p) => {
-    setSoon(p === "p2" ? "Sayfa 2 (modeller ayrı ayrı) bir sonraki pakette gelecek." : "Sayfa 3 (grafikler) bir sonraki pakette gelecek.");
-    setTimeout(() => setSoon(""), 3000);
+    setPage(p);
+    window.scrollTo(0, 0);
   };
 
   return (
@@ -135,22 +155,47 @@ export default function App() {
               onTerm={(term) => setSheet({ page: "terimler", term })}
             />
           )}
-          {data.status === "ok" && selModels.length > 1 && cons && (
-            <>
-              <P1
-                models={selModels}
-                cons={cons}
-                times={data.times}
-                days={data.days}
-                idx={idx}
-                nowIdx={data.nowIdx}
-                unit={unit}
-                onUnit={(u) => update({ unit: u })}
-                onIdx={setIdx}
-                onGo={goPage}
-              />
-              {soon && <div className="soon">{soon}</div>}
-            </>
+          {data.status === "ok" && selModels.length > 1 && cons && page === "p1" && (
+            <P1
+              models={selModels}
+              cons={cons}
+              times={data.times}
+              days={data.days}
+              idx={idx}
+              nowIdx={data.nowIdx}
+              unit={unit}
+              onUnit={(u) => update({ unit: u })}
+              onIdx={setIdx}
+              onGo={goPage}
+            />
+          )}
+          {data.status === "ok" && selModels.length > 1 && cons && page === "p2" && (
+            <P2
+              models={selModels}
+              cons={cons}
+              times={data.times}
+              days={data.days}
+              idx={idx}
+              nowIdx={data.nowIdx}
+              unit={unit}
+              onUnit={(u) => update({ unit: u })}
+              onIdx={setIdx}
+              onGo={goPage}
+            />
+          )}
+          {data.status === "ok" && selModels.length > 1 && page === "p3" && (
+            <P3
+              models={selModels}
+              times={data.times}
+              long={{ status: long.key === placeKey(place) ? long.status : "idle", models: selLong, times: long.times }}
+              onNeed16={load16}
+              idx={idx}
+              nowIdx={data.nowIdx}
+              unit={unit}
+              onUnit={(u) => update({ unit: u })}
+              onIdx={setIdx}
+              onGo={goPage}
+            />
           )}
         </>
       )}
