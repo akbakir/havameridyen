@@ -61,6 +61,7 @@ public final class HmWidgets {
     private static final int[] D_MAX = {R.id.w_d0_max, R.id.w_d1_max, R.id.w_d2_max, R.id.w_d3_max};
     private static final int[] D_MIN = {R.id.w_d0_min, R.id.w_d1_min, R.id.w_d2_min, R.id.w_d3_min};
     private static final int[] D_BAR = {R.id.w_d0_bar, R.id.w_d1_bar, R.id.w_d2_bar, R.id.w_d3_bar};
+    private static final int[] D_BARC = {R.id.w_d0_barc, R.id.w_d1_barc, R.id.w_d2_barc, R.id.w_d3_barc};
     private static final String[] WEEKDAY = {"Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"};
 
     // Uyum renkleri: uygulamadaki Sayfa 1 çubuğu (views/P1.jsx AG_COL)
@@ -302,7 +303,7 @@ public final class HmWidgets {
                 v.setTextViewText(D_MIN[k], deg(x, "min"));
                 int col = levelColor(x.optString("level", "na"));
                 v.setViewVisibility(D_BAR[k], col == 0 ? View.INVISIBLE : View.VISIBLE);
-                if (col != 0) v.setInt(D_BAR[k], "setColorFilter", col);
+                if (col != 0) v.setInt(D_BARC[k], "setColorFilter", col); // çubuk koyu yatağın (D_BAR) içinde
             }
         }
         return v;

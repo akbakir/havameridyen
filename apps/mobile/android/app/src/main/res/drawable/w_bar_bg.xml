@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget günlük uyum çubuğunun koyu yatağı: açık gökyüzü zemininde de (gündüz alt kısmı bej) çubuk seçilsin -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="3.5dp" />
+    <solid android:color="#59000000" />
+</shape>

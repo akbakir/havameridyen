@@ -122,14 +122,22 @@
                     android:textSize="12dp" />
             </LinearLayout>
 
-            <ImageView
+            <FrameLayout
                 android:id="@+id/w_d0_bar"
-                android:layout_width="28dp"
-                android:layout_height="3dp"
+                android:layout_width="32dp"
+                android:layout_height="7dp"
                 android:layout_marginTop="4dp"
-                android:importantForAccessibility="no"
-                android:src="@drawable/w_bar"
-                android:visibility="invisible" />
+                android:background="@drawable/w_bar_bg"
+                android:visibility="invisible">
+
+                <ImageView
+                    android:id="@+id/w_d0_barc"
+                    android:layout_width="28dp"
+                    android:layout_height="3dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/w_bar" />
+            </FrameLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -181,14 +189,22 @@
                     android:textSize="12dp" />
             </LinearLayout>
 
-            <ImageView
+            <FrameLayout
                 android:id="@+id/w_d1_bar"
-                android:layout_width="28dp"
-                android:layout_height="3dp"
+                android:layout_width="32dp"
+                android:layout_height="7dp"
                 android:layout_marginTop="4dp"
-                android:importantForAccessibility="no"
-                android:src="@drawable/w_bar"
-                android:visibility="invisible" />
+                android:background="@drawable/w_bar_bg"
+                android:visibility="invisible">
+
+                <ImageView
+                    android:id="@+id/w_d1_barc"
+                    android:layout_width="28dp"
+                    android:layout_height="3dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/w_bar" />
+            </FrameLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -240,14 +256,22 @@
                     android:textSize="12dp" />
             </LinearLayout>
 
-            <ImageView
+            <FrameLayout
                 android:id="@+id/w_d2_bar"
-                android:layout_width="28dp"
-                android:layout_height="3dp"
+                android:layout_width="32dp"
+                android:layout_height="7dp"
                 android:layout_marginTop="4dp"
-                android:importantForAccessibility="no"
-                android:src="@drawable/w_bar"
-                android:visibility="invisible" />
+                android:background="@drawable/w_bar_bg"
+                android:visibility="invisible">
+
+                <ImageView
+                    android:id="@+id/w_d2_barc"
+                    android:layout_width="28dp"
+                    android:layout_height="3dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/w_bar" />
+            </FrameLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -299,14 +323,22 @@
                     android:textSize="12dp" />
             </LinearLayout>
 
-            <ImageView
+            <FrameLayout
                 android:id="@+id/w_d3_bar"
-                android:layout_width="28dp"
-                android:layout_height="3dp"
+                android:layout_width="32dp"
+                android:layout_height="7dp"
                 android:layout_marginTop="4dp"
-                android:importantForAccessibility="no"
-                android:src="@drawable/w_bar"
-                android:visibility="invisible" />
+                android:background="@drawable/w_bar_bg"
+                android:visibility="invisible">
+
+                <ImageView
+                    android:id="@+id/w_d3_barc"
+                    android:layout_width="28dp"
+                    android:layout_height="3dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/w_bar" />
+            </FrameLayout>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
