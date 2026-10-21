@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- havameridyen: üretildi (scripts/gen_widget_res.py, widget1). Elle düzenlemeyin. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="@dimen/hm_widget_radius" />
+    <gradient
+        android:angle="270"
+        android:startColor="#3E4A50"
+        android:centerColor="#5E6B71"
+        android:endColor="#8E989B"
+        android:type="linear" />
+</shape>

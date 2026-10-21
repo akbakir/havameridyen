@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- havameridyen: üretildi (scripts/gen_widget_res.py, widget1). Elle düzenlemeyin. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+    <group
+        android:translateX="0"
+        android:translateY="0">
+        <path
+            android:fillColor="#FFD27A"
+            android:fillAlpha="0.28"
+            android:pathData="M4,20 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0 Z" />
+        <path
+            android:fillColor="#FFC857"
+            android:pathData="M10,20 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 Z" />
+    </group>
+</vector>

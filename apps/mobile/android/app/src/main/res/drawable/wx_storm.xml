@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- havameridyen: üretildi (scripts/gen_widget_res.py, widget1). Elle düzenlemeyin. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="36dp"
+    android:height="38dp"
+    android:viewportWidth="36"
+    android:viewportHeight="38">
+    <group
+        android:translateX="-4"
+        android:translateY="-2">
+        <path
+            android:fillColor="#B7C2CC"
+            android:pathData="M6.5,19 a8.5,6.5 0 1,0 17,0 a8.5,6.5 0 1,0 -17,0 Z" />
+        <path
+            android:fillColor="#EEF2F5"
+            android:pathData="M18.5,16 h11 a4.5,4.5 0 0,1 4.5,4.5 v0 a4.5,4.5 0 0,1 -4.5,4.5 h-11 a4.5,4.5 0 0,1 -4.5,-4.5 v0 a4.5,4.5 0 0,1 4.5,-4.5 Z" />
+        <path
+            android:fillColor="#F3F6F8"
+            android:pathData="M13,14 a11,8.5 0 1,0 22,0 a11,8.5 0 1,0 -22,0 Z" />
+        <path
+            android:fillColor="#DCE3E8"
+            android:pathData="M24.5,18.5 a7.5,6 0 1,0 15,0 a7.5,6 0 1,0 -15,0 Z" />
+        <path
+            android:strokeColor="#CFE4FA"
+            android:strokeWidth="2.3"
+            android:strokeLineCap="round"
+            android:pathData="M14,26 L11,34" />
+        <path
+            android:strokeColor="#CFE4FA"
+            android:strokeWidth="2.3"
+            android:strokeLineCap="round"
+            android:pathData="M30,26 L27,34" />
+        <path
+            android:fillColor="#FFC857"
+            android:pathData="M24,24 l-6,9 h5 l-3.5,8 l9,-11 h-5.5 Z" />
+    </group>
+</vector>

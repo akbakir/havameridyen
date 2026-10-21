@@ -10,6 +10,7 @@ import { fetchForecast, fetchForecast16 } from "./api";
 import { tsiNowHour } from "./format";
 import { daysOf, nowIndex, toModels } from "./data";
 import { loadPrefs, placeKey, placeLabel, savePrefs } from "./store";
+import { syncWidgetPlace } from "./widget";
 import { ModelChips } from "./views/common";
 import Loc from "./views/Loc";
 import Single from "./views/Single";
@@ -39,6 +40,9 @@ export default function App() {
   }, []);
 
   const { place, selected, unit, favorites } = prefs;
+
+  // Ana ekran widget'ı son bakılan konumu gösterir
+  useEffect(() => syncWidgetPlace(place), [place]);
 
   // Konum değişince tahmin (7 model, 7 gün) bir kerede alınır
   const load = useCallback(() => {

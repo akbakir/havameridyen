@@ -24,6 +24,55 @@
 
         </activity>
 
+        <!-- Ana ekran widget'ları (widget1): java/com/havameridyen/app/widget -->
+        <receiver
+            android:name=".widget.KucukWidget"
+            android:exported="false"
+            android:label="@string/hm_widget_k">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/hm_widget_kucuk_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.SaatWidget"
+            android:exported="false"
+            android:label="@string/hm_widget_g1">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/hm_widget_saat_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.GunWidget"
+            android:exported="false"
+            android:label="@string/hm_widget_g2">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/hm_widget_gun_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.InceWidget"
+            android:exported="false"
+            android:label="@string/hm_widget_i">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/hm_widget_ince_info" />
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

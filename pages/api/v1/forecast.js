@@ -13,6 +13,7 @@
 //     calculated: modelin kendi yayınlamadığı, bizim hesapladığımız alanlar (ör. ["lifted_index"]) —
 //     uygulamada yanında "hesaplanan" yazar.
 //     consensus: { hourly: [...], daily: [...] } }   ← ortanca + uyum (lib/consensus.js)
+//     daily[].cond: günün ortak durumu (07–21 TSİ saatlerinin en belirgini; widget "günler" görünümü)
 // Uyum seviyeleri: ok (hemfikir) · partial (kısmen) · split (ayrışıyor) · na (karşılaştıracak model yok) ·
 // none (yağış / kar: hiçbir model eşiği aşmıyor — satır gösterilmez).
 
