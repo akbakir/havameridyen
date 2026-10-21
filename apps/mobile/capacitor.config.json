@@ -2,6 +2,7 @@
   "appId": "com.havameridyen.app",
   "appName": "havameridyen",
   "webDir": "dist",
+  "backgroundColor": "#EEF1EC",
   "android": {
     "allowMixedContent": false
   },

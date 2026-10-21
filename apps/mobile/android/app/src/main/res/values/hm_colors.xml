@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- havameridyen: uygulamanın zemini ve marka yeşili (web: bg ve teal) -->
+    <color name="hm_bg">#EEF1EC</color>
+    <color name="hm_teal">#1E7A6B</color>
+</resources>
