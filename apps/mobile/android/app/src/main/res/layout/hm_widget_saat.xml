@@ -12,7 +12,7 @@
     android:paddingBottom="12dp">
 
     <LinearLayout
-        android:layout_width="112dp"
+        android:layout_width="96dp"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
@@ -35,8 +35,8 @@
 
             <ImageView
                 android:id="@+id/w_icon"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"
                 android:src="@drawable/wx_cloud" />
@@ -51,7 +51,7 @@
                 android:maxLines="1"
                 android:text="—"
                 android:textColor="@color/hm_w_text"
-                android:textSize="34dp" />
+                android:textSize="30dp" />
         </LinearLayout>
 
         <TextView
@@ -93,8 +93,8 @@
     <ImageView
         android:layout_width="1dp"
         android:layout_height="match_parent"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="6dp"
         android:importantForAccessibility="no"
         android:src="@color/hm_w_line" />
 
@@ -122,8 +122,8 @@
 
             <ImageView
                 android:id="@+id/w_h0_i"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="6dp"
                 android:importantForAccessibility="no"
@@ -136,7 +136,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:textColor="@color/hm_w_text"
-                android:textSize="15dp" />
+                android:textSize="13dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -156,8 +156,8 @@
 
             <ImageView
                 android:id="@+id/w_h1_i"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="6dp"
                 android:importantForAccessibility="no"
@@ -170,7 +170,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:textColor="@color/hm_w_text"
-                android:textSize="15dp" />
+                android:textSize="13dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -190,8 +190,8 @@
 
             <ImageView
                 android:id="@+id/w_h2_i"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="6dp"
                 android:importantForAccessibility="no"
@@ -204,7 +204,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:textColor="@color/hm_w_text"
-                android:textSize="15dp" />
+                android:textSize="13dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -224,8 +224,8 @@
 
             <ImageView
                 android:id="@+id/w_h3_i"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="6dp"
                 android:importantForAccessibility="no"
@@ -238,7 +238,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:textColor="@color/hm_w_text"
-                android:textSize="15dp" />
+                android:textSize="13dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -258,8 +258,8 @@
 
             <ImageView
                 android:id="@+id/w_h4_i"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="6dp"
                 android:importantForAccessibility="no"
@@ -272,7 +272,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:textColor="@color/hm_w_text"
-                android:textSize="15dp" />
+                android:textSize="13dp" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

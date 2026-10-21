@@ -256,7 +256,7 @@ public final class HmWidgets {
         JSONObject today = dayOf(days, now.optString("t"));
         String mm = today == null ? "" : deg(today, "max") + " / " + deg(today, "min");
         if (kind == KIND_K || kind == KIND_G1) v.setTextViewText(R.id.w_minmax, mm);
-        if (kind == KIND_I) v.setTextViewText(R.id.w_minmax, mm.isEmpty() ? place : place + " · " + mm);
+        if (kind == KIND_I) v.setTextViewText(R.id.w_minmax, mm.isEmpty() ? place : mm + " · " + place); // dar ekranda konum kısalır, sıcaklık kalır
 
         String level = now.optString("level", "na");
         if (kind != KIND_G2) {
