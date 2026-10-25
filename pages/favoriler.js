@@ -3,6 +3,51 @@ import Link from "next/link";
 import Layout from "../components/Layout";
 import { getFavorites, removeFavorite } from "../lib/favorites";
 import { cityHref } from "../lib/slugify";
+import { WxIcon } from "../components/WeatherCond";
+import AgreeMark from "../components/AgreeMark";
+
+// Kartlar küçük widget (K) gibi: beş modelin ortak tahmini (/api/v1, ortanca + uyum). Widget'la aynı istek,
+// aynı önbellek: şimdiki saatin ortak durumu, ikonu ve sıcaklığı; bugünün en yüksek / en düşüğü; gün kuralıyla
+// yağışlıysa bugünün toplam yağışı (modellerin ortancası); şimdiki saatin uyumu.
+const FAV_MODELS = "ecmwf_ifs,gfs_seamless,icon_seamless,ukmo_seamless,meteofrance_seamless";
+const FAV_DAYS = 5;
+// Uyum etiketleri: Hava durumu matrisindeki şeritle aynı renkler (components/LineChartPanel.js)
+const AGREE = {
+  ok: { bg: "#DDE0DB", ink: "#1F2A24", text: "hemfikir" },
+  partial: { bg: "#F0C98A", ink: "#1F2A24", text: "kısmen" },
+  split: { bg: "#D98E2B", ink: "#FFFFFF", text: "ayrışıyor" },
+};
+
+const v = (p) => (p && p.v != null ? p.v : null);
+const deg = (x) => (x == null ? "—" : `${Math.round(x)}°`);
+
+// Widget'taki gibi: 10 mm altı tek ondalık (virgüllü), üstü tam sayı; 0,05 altı yazılmaz
+function mmText(x) {
+  if (x == null || x < 0.05) return null;
+  return `${x < 9.95 ? x.toFixed(1).replace(".", ",") : Math.round(x)} mm`;
+}
+
+function summarize(data) {
+  const time = data.time || [];
+  const cons = data.consensus || {};
+  // Seri TSİ duvar saatiyle gelir; "şimdi"yi de TSİ'ye göre bul (tarayıcı saat diliminden bağımsız).
+  const nowKey = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+  const i = time.findIndex((t) => typeof t === "string" && t.startsWith(nowKey));
+  const h = i >= 0 ? cons.hourly?.[i] : null;
+  if (!h || v(h.temp) == null) return null;
+  const today = (cons.daily || []).find((d) => d.date === nowKey.slice(0, 10));
+  const c = h.cond || {};
+  return {
+    time: time[i].slice(11, 16),
+    temp: v(h.temp),
+    ic: c.ic || "cloud",
+    text: c.text || "",
+    level: c.level || "na",
+    max: today ? v(today.temp_max) : null,
+    min: today ? v(today.temp_min) : null,
+    mm: today && today.cond?.wet ? mmText(v(today.precip_total)) : null,
+  };
+}
 
 export default function Favoriler() {
   const [favs, setFavs] = useState(null);
@@ -17,28 +62,15 @@ export default function Favoriler() {
     let cancelled = false;
     favs.forEach(async (f) => {
       try {
-        const res = await fetch(
-          `/api/forecast?lat=${f.lat}&lon=${f.lon}&period=hourly&name=${encodeURIComponent(f.name)}`
-        );
+        // Kanonik adres (iki ondalık, modeller site sırasıyla): yönlendirmesiz, widget ve uygulamayla ortak önbellek
+        const lat = (Math.round(Number(f.lat) * 100) / 100).toFixed(2);
+        const lon = (Math.round(Number(f.lon) * 100) / 100).toFixed(2);
+        const res = await fetch(`/api/v1/forecast?lat=${lat}&lon=${lon}&days=${FAV_DAYS}&models=${FAV_MODELS}`);
         if (!res.ok) throw new Error();
-        const data = await res.json();
-        const series = data.models[0]?.series || [];
-        const day = series.slice(0, 24);
-        const vals = day.map((s) => s.temp).filter((v) => v != null);
-        if (!vals.length) throw new Error();
-        // Seri TSİ duvar saatiyle gelir; "şimdi"yi de TSİ'ye göre bul (tarayıcı saat diliminden bağımsız).
-        const nowTsiKey = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
-        const nowIdx = series.findIndex((s) => typeof s.time === "string" && s.time.startsWith(nowTsiKey));
-        const now = (nowIdx >= 0 ? series[nowIdx]?.temp : null) ?? vals[0];
+        const sum = summarize(await res.json());
+        if (!sum) throw new Error();
         if (cancelled) return;
-        setTemps((prev) => ({
-          ...prev,
-          [f.name]: {
-            now: Math.round(now),
-            min: Math.round(Math.min(...vals)),
-            max: Math.round(Math.max(...vals)),
-          },
-        }));
+        setTemps((prev) => ({ ...prev, [f.name]: sum }));
       } catch {
         if (!cancelled) setTemps((prev) => ({ ...prev, [f.name]: { error: true } }));
       }
@@ -69,7 +101,7 @@ export default function Favoriler() {
           {!loaded
             ? "—"
             : favs.length
-            ? `${favs.length} konum kayıtlı · sıcaklıklar ECMWF saatlik tahmininden`
+            ? `${favs.length} konum kayıtlı · beş modelin ortak tahmini`
             : "Henüz kayıtlı konumun yok."}
         </p>
       </div>
@@ -114,18 +146,35 @@ export default function Favoriler() {
                     </svg>
                   </button>
                 </div>
-                <div className="fav-card-temp">
-                  {!t && <span className="fav-card-loading">Yükleniyor…</span>}
-                  {t?.error && <span className="fav-card-err">Veri alınamadı</span>}
-                  {t && !t.error && (
-                    <>
-                      <span className="fav-temp-value">{t.now}°</span>
+                {!t && <span className="fav-card-loading">Yükleniyor…</span>}
+                {t?.error && <span className="fav-card-err">Veri alınamadı</span>}
+                {t && !t.error && (
+                  <>
+                    <div className="fav-card-now">
+                      <WxIcon ic={t.ic} size={40} />
+                      <span className="fav-temp-value">{deg(t.temp)}</span>
+                      <span className="fav-card-time">{t.time}</span>
+                    </div>
+                    <div className="fav-card-cond">
+                      <span>{t.text}</span>
+                      {t.mm && <span className="fav-card-mm">bugün {t.mm}</span>}
+                    </div>
+                    <div className="fav-card-bottom">
                       <span className="fav-temp-range">
-                        {t.min}° / {t.max}°
+                        <span className="fav-max">{deg(t.max)}</span> / <span className="fav-min">{deg(t.min)}</span>
                       </span>
-                    </>
-                  )}
-                </div>
+                      {AGREE[t.level] && (
+                        <span
+                          className="fav-agree"
+                          style={{ background: AGREE[t.level].bg, color: AGREE[t.level].ink }}
+                        >
+                          <AgreeMark level={t.level} size={10} />
+                          {AGREE[t.level].text}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
               </Link>
             );
           })}
@@ -137,8 +186,10 @@ export default function Favoriler() {
           className="panel-sub"
           style={{ marginTop: 16, fontSize: 12, lineHeight: 1.5, maxWidth: 640 }}
         >
-          ⓘ Kartlardaki değerler <strong>ECMWF modelinin saatlik tahmin verisidir</strong> (ölçüm değildir). Büyük
-          sayı şu anki saatin (TSİ) tahmini, küçük sayılar bugünün en düşük / en yüksek tahminidir. Diğer modellerle
+          ⓘ Kartlardaki değerler <strong>beş modelin (ECMWF, GFS, ICON, UKMO, ARPEGE) ortak tahminidir</strong>:
+          her değer modellerin ortancası, ölçüm değildir. Büyük sayı ve durum şu anki saatin (TSİ) tahmini; altta
+          bugünün en yüksek / en düşük sıcaklığı ve modellerin şimdiki saatte ne kadar hemfikir olduğu. Bugün
+          yağışlıysa (modellerin en az yarısı yağış veriyorsa) bugünün toplam yağışı da yazar. Modelleri tek tek
           karşılaştırmak için karta dokunup şehir sayfasını aç.
         </p>
       )}

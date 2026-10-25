@@ -504,9 +504,17 @@ td.station { font-family: "IBM Plex Sans", sans-serif; font-weight: 500; }
   flex-shrink: 0;
 }
 .remove-btn:hover { border-color: var(--coral); color: var(--coral); }
-.fav-card-temp { display: flex; align-items: baseline; gap: 10px; }
+/* kart içeriği küçük widget (K) gibi: ikon + şimdi, durum (+ bugünün yağışı), en yüksek / en düşük + uyum */
+.fav-card-now { display: flex; align-items: center; gap: 8px; }
 .fav-temp-value { font-family: "IBM Plex Mono", monospace; font-size: 28px; font-weight: 500; }
-.fav-temp-range { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-soft); }
+.fav-card-time { margin-left: auto; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-faint); }
+.fav-card-cond { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; font-size: 14px; font-weight: 500; }
+.fav-card-mm { font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 400; color: #2F6FB0; }
+.fav-card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.fav-temp-range { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--ink-soft); }
+.fav-max { color: #C0392B; font-weight: 500; }
+.fav-min { color: #2F6FB0; font-weight: 500; }
+.fav-agree { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; white-space: nowrap; }
 .fav-card-loading { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-faint); }
 .fav-card-err { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--coral); }
 

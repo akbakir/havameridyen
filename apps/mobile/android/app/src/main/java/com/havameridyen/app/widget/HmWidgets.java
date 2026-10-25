@@ -269,12 +269,12 @@ public final class HmWidgets {
     }
 
     // Hangi düzende hangi görünüm var (yanlış kimlik widget'ı "yüklenemedi" yapar):
-    //   K: yer, saat, en/en düşük, nokta, uyum yazısı · G1: yer, saat, nokta, saat dilimleri · G2: yer, saat, günler
+    //   K: yer, saat, en/en düşük, nokta, uyum yazısı · G1: yer, saat, saat dilimleri (uyum noktası yok, G2 gibi; widget7) · G2: yer, saat, günler
     //   İ: en/en düşük, sağda yer, saat, uyum çubuğu · GS: yer, saat, günler, saat dilimleri (widget6)
     private static boolean hasPlace(int k) { return true; }
     private static boolean hasTime(int k) { return true; }
     private static boolean hasMinmax(int k) { return k == KIND_K || k == KIND_I; }
-    private static boolean hasDot(int k) { return k == KIND_K || k == KIND_G1; }
+    private static boolean hasDot(int k) { return k == KIND_K; }
     private static boolean hasAgree(int k) { return k == KIND_K; }
     private static boolean hasNowBar(int k) { return k == KIND_I; }
     private static boolean hasHours(int k) { return k == KIND_G1 || k == KIND_GS; }
