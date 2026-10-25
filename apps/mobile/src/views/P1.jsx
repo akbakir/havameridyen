@@ -140,7 +140,10 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
     : view.cls == null
     ? ["Hava durumu", "uyumlu"]
     : [`Hava durumu · ${CLS_TXT[view.cls]} (${CLS_RNG[view.cls]})`, "aynı sınıfta"];
-  const rainAny = D.precip_total.in > 0;
+  // Günlük toplam yağış satırı yalnız modellerin en az yarısı yağış veriyorsa (≥ 0,2 mm; gün kuralıyla aynı,
+  // beraberlikte yağış). Yarıdan azı veriyorsa ortanca 0 çıkıp "yağış yok" ile "% 43 yağış veriyor" çelişiyordu
+  // (Ali Kemal, 25 Ekim: satır gizlensin; model bazında yağış Sayfa 2'de).
+  const rainAny = D.precip_total.n > 0 && D.precip_total.in * 2 >= D.precip_total.n;
   const snowAny = D.snowfall_total.in > 0;
   const sdAny = models.some((m) => (val(m, "snow_depth", i) ?? 0) >= 0.05);
   const gb = GustBar({ models, i, unit });
