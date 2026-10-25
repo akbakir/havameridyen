@@ -2,17 +2,10 @@
 <!-- havameridyen açılış ekranı, Android 7–11 (Android 12+ values-v31/styles.xml'deki sistem açılışını kullanır) -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/hm_bg" />
+    <!-- turkuaz yuvarlatılmış kare ve çizim splash_icon'un içinde (Android 12+ ile aynı görünüm) -->
     <item
-        android:width="160dp"
-        android:height="160dp"
-        android:gravity="center">
-        <shape android:shape="oval">
-            <solid android:color="@color/hm_teal" />
-        </shape>
-    </item>
-    <item
-        android:width="240dp"
-        android:height="240dp"
+        android:width="288dp"
+        android:height="288dp"
         android:drawable="@drawable/splash_icon"
         android:gravity="center" />
     <item

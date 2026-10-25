@@ -84,8 +84,25 @@ def glyph(rays):
     am = U(amber_back, front)
     return cr, am
 
-ic_cream, ic_amber = glyph(False)   # A6: ikon
-sp_cream, sp_amber = glyph(True)    # A5: açılış
+# Ölçek (25 Ekim, Ali Kemal): ikon çizimi tuvalin ortasına (54, 54) göre % 90 — vivo'nun ikon maskesinde güneş kenara
+# değiyordu. Açılışta çizim, ikon gibi köşeleri yuvarlatılmış turkuaz kare içinde (sistemin daire zemini yok).
+ICON_SCALE = 0.90
+TILE, TILE_R = 58, 13          # açılış karesi (108 birimlik tuvalde): köşeleri sistemin 72 birimlik dairesine sığar
+SPLASH_SCALE = ICON_SCALE * TILE / 72   # karede çizim ikondakiyle aynı oranda
+
+def scaled(p, k):
+    return p.transform(k, 0, 0, k, 54 - 54 * k, 54 - 54 * k)
+
+def rrect(x, y, w, h, r):
+    p = Path()
+    p.moveTo(x + r, y); p.lineTo(x + w - r, y); p.arcTo(r, r, 0, ArcSize.SMALL, Direction.CW, x + w, y + r)
+    p.lineTo(x + w, y + h - r); p.arcTo(r, r, 0, ArcSize.SMALL, Direction.CW, x + w - r, y + h)
+    p.lineTo(x + r, y + h); p.arcTo(r, r, 0, ArcSize.SMALL, Direction.CW, x, y + h - r)
+    p.lineTo(x, y + r); p.arcTo(r, r, 0, ArcSize.SMALL, Direction.CW, x + r, y); p.close()
+    return p
+
+ic_cream, ic_amber = [scaled(p, ICON_SCALE) for p in glyph(False)]   # A6: ikon
+sp_cream, sp_amber = [scaled(p, SPLASH_SCALE) for p in glyph(True)]  # A5: açılış
 
 HDR = '<?xml version="1.0" encoding="utf-8"?>\n<!-- havameridyen: üretildi (Claude, ikon1). Elle düzenlemeyin; kaynak: tasarım tuvali ve gen_icons.py. -->\n'
 
@@ -119,15 +136,13 @@ def legacy(shape):
          f'    <group android:translateX="-18" android:translateY="-18">\n'
          + pth(ic_cream, CREAM, "        ") + pth(ic_amber, AMBER, "        ") + '    </group>\n')
     return vector(48, 48, 72, 72, g)
-rr = Path(); r = 14
-rr.moveTo(r, 0); rr.lineTo(72 - r, 0); rr.arcTo(r, r, 0, ArcSize.SMALL, Direction.CW, 72, r); rr.lineTo(72, 72 - r)
-rr.arcTo(r, r, 0, ArcSize.SMALL, Direction.CW, 72 - r, 72); rr.lineTo(r, 72); rr.arcTo(r, r, 0, ArcSize.SMALL, Direction.CW, 0, 72 - r)
-rr.lineTo(0, r); rr.arcTo(r, r, 0, ArcSize.SMALL, Direction.CW, r, 0); rr.close()
-write("mipmap/ic_launcher.xml", legacy(d(rr)))
+write("mipmap/ic_launcher.xml", legacy(d(rrect(0, 0, 72, 72, 14))))
 write("mipmap/ic_launcher_round.xml", legacy(d(circle(36, 36, 36))))
 
-# Açılış ikonu (A5 glif; zemin dairesini sistem çizer: windowSplashScreenIconBackgroundColor)
-write("drawable/splash_icon.xml", vector(240, 240, 108, 108, pth(sp_cream, CREAM) + pth(sp_amber, AMBER)))
+# Açılış ikonu (A5 glif) turkuaz yuvarlatılmış kare içinde. Android 12+ zeminsiz ikon: 288 dp tuval, sistem ortadaki
+# 192 dp daireyi gösterir (108 birimde 72) → kare (58 birim ≈ 155 dp, köşe 13) bu dairenin içinde kalır.
+tile = rrect(54 - TILE / 2, 54 - TILE / 2, TILE, TILE, TILE_R)
+write("drawable/splash_icon.xml", vector(288, 288, 108, 108, pth(tile, TEAL) + pth(sp_cream, CREAM) + pth(sp_amber, AMBER)))
 
 # Marka yazısı (Android 12+ açılışın altı, 200×80 dp): Space Grotesk 700, "hava" koyu + "meridyen" yeşil
 from fontTools.ttLib import TTFont
