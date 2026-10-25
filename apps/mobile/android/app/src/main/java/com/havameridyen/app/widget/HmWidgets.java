@@ -7,6 +7,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -266,13 +269,14 @@ public final class HmWidgets {
     }
 
     // Hangi düzende hangi görünüm var (yanlış kimlik widget'ı "yüklenemedi" yapar):
-    //   K: yer, saat, en/en düşük, nokta, uyum yazısı · G1: yer, nokta, saat dilimleri · G2: yer, saat, günler
-    //   İ: en/en düşük (yerle birlikte), nokta, uyum yazısı · GS: yer, saat, günler, saat dilimleri
-    private static boolean hasPlace(int k) { return k != KIND_I; }
-    private static boolean hasTime(int k) { return k == KIND_K || k == KIND_G2 || k == KIND_GS; }
+    //   K: yer, saat, en/en düşük, nokta, uyum yazısı · G1: yer, saat, nokta, saat dilimleri · G2: yer, saat, günler
+    //   İ: en/en düşük, sağda yer, saat, uyum çubuğu · GS: yer, saat, günler, saat dilimleri (widget6)
+    private static boolean hasPlace(int k) { return true; }
+    private static boolean hasTime(int k) { return true; }
     private static boolean hasMinmax(int k) { return k == KIND_K || k == KIND_I; }
-    private static boolean hasDot(int k) { return k == KIND_K || k == KIND_G1 || k == KIND_I; }
-    private static boolean hasAgree(int k) { return k == KIND_K || k == KIND_I; }
+    private static boolean hasDot(int k) { return k == KIND_K || k == KIND_G1; }
+    private static boolean hasAgree(int k) { return k == KIND_K; }
+    private static boolean hasNowBar(int k) { return k == KIND_I; }
     private static boolean hasHours(int k) { return k == KIND_G1 || k == KIND_GS; }
     private static boolean hasDays(int k) { return k == KIND_G2 || k == KIND_GS; }
     private static boolean hasNowRain(int k) { return k == KIND_K || k == KIND_I; } // K: bugünün toplamı · İ: içinde bulunulan 3 saatlik dilim
@@ -295,8 +299,9 @@ public final class HmWidgets {
             v.setTextViewText(R.id.w_temp, "—");
             v.setTextViewText(R.id.w_cond, d == null ? "Veri bekleniyor" : "Veri eski");
             if (hasTime(kind)) v.setTextViewText(R.id.w_time, "");
-            if (hasMinmax(kind)) v.setTextViewText(R.id.w_minmax, kind == KIND_I ? place : "");
+            if (hasMinmax(kind)) v.setTextViewText(R.id.w_minmax, "");
             if (hasDot(kind)) v.setViewVisibility(R.id.w_dot, View.GONE);
+            if (hasNowBar(kind)) v.setViewVisibility(R.id.w_bar, View.INVISIBLE);
             if (hasAgree(kind)) v.setTextViewText(R.id.w_agree, "");
             if (hasNowRain(kind)) v.setTextViewText(R.id.w_p, "");
             if (hasHours(kind)) for (int k = 0; k < 5; k++) hideSlot(v, k);
@@ -316,9 +321,8 @@ public final class HmWidgets {
 
         JSONArray days = d.optJSONArray("d");
         JSONObject today = dayOf(days, now.optString("t"));
-        String minmax = today == null ? "" : deg(today, "max") + " / " + deg(today, "min");
-        if (kind == KIND_K) v.setTextViewText(R.id.w_minmax, minmax);
-        if (kind == KIND_I) v.setTextViewText(R.id.w_minmax, minmax.isEmpty() ? place : minmax + " · " + place); // dar ekranda konum kısalır, sıcaklık kalır
+        // maks kırmızı, min mavi, arkalarında koyu hale (Ali Kemal, 25 Ekim; düzende shadow*)
+        if (hasMinmax(kind)) v.setTextViewText(R.id.w_minmax, minmaxText(today, null));
 
         String level = now.optString("level", "na");
         if (hasDot(kind)) {
@@ -327,6 +331,12 @@ public final class HmWidgets {
             if (col != 0) v.setInt(R.id.w_dot, "setColorFilter", col);
         }
         if (hasAgree(kind)) v.setTextViewText(R.id.w_agree, levelText(level));
+        if (hasNowBar(kind)) {
+            // İ: şimdiki saatin uyumu, günlerdeki gibi koyu yatağın içinde renkli çubuk
+            int col = levelColor(level);
+            v.setViewVisibility(R.id.w_bar, col == 0 ? View.INVISIBLE : View.VISIBLE);
+            if (col != 0) v.setInt(R.id.w_barc, "setColorFilter", col);
+        }
 
         JSONArray slots = d.optJSONArray("s");
         int s0 = slots == null ? -1 : slotIndex(slots, now.optString("t"));
@@ -408,6 +418,23 @@ public final class HmWidgets {
         v.setViewVisibility(D_MIN[k], View.INVISIBLE);
         v.setViewVisibility(D_BAR[k], View.INVISIBLE);
         v.setViewVisibility(D_P[k], View.INVISIBLE);
+    }
+
+    private static final int COL_MAX = 0xFFFF8A75, COL_MIN = 0xFF8CC4FF; // values/hm_widget.xml hm_w_max / hm_w_min
+
+    private static CharSequence minmaxText(JSONObject day, String suffix) {
+        SpannableStringBuilder b = new SpannableStringBuilder();
+        if (day != null) {
+            int a = b.length();
+            b.append(deg(day, "max"));
+            b.setSpan(new ForegroundColorSpan(COL_MAX), a, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            b.append(" / ");
+            a = b.length();
+            b.append(deg(day, "min"));
+            b.setSpan(new ForegroundColorSpan(COL_MIN), a, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        if (suffix != null) b.append(b.length() > 0 ? " · " : "").append(suffix);
+        return b;
     }
 
     // İçinde bulunulan 3 saatlik dilim: başlangıcı "şimdi"den küçük ya da eşit son dilim

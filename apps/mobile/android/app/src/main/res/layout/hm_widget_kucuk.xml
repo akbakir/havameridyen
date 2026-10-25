@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- havameridyen widget K · küçük 2×1: şimdiki saat (widget5, 25 Ekim). Metin boyları dp: telefonun yazı büyüklüğü taşırmasın. -->
+<!-- havameridyen widget K · küçük 2×1: şimdiki saat (widget6, 25 Ekim). Metin boyları dp: telefonun yazı büyüklüğü taşırmasın. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_root"
     android:layout_width="match_parent"
@@ -112,6 +112,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:shadowColor="@color/hm_w_halo"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="7"
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"

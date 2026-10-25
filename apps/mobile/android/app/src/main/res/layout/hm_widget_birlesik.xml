@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- havameridyen widget GS · 4×2: üstte şimdi + 4 gün, altta sonraki 12 saat (widget5, 25 Ekim). Metin boyları dp: telefonun yazı büyüklüğü taşırmasın. -->
+<!-- havameridyen widget GS · 4×2: üstte şimdi + 4 gün, altta sonraki 12 saat (widget6, 25 Ekim). Metin boyları dp: telefonun yazı büyüklüğü taşırmasın. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_root"
     android:layout_width="match_parent"
@@ -18,23 +18,10 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/w_place"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:fontFamily="sans-serif-medium"
-            android:includeFontPadding="false"
-            android:maxLines="1"
-            android:text="@string/app_name"
-            android:textColor="@color/hm_w_text"
-            android:textSize="13dp" />
-
         <ImageView
             android:id="@+id/w_icon"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_marginStart="8dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:importantForAccessibility="no"
             android:scaleType="fitCenter"
             android:src="@drawable/wx_cloud" />
@@ -43,13 +30,13 @@
             android:id="@+id/w_temp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"
+            android:layout_marginStart="4dp"
             android:fontFamily="sans-serif-medium"
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="—"
             android:textColor="@color/hm_w_text"
-            android:textSize="20dp" />
+            android:textSize="22dp" />
 
         <TextView
             android:id="@+id/w_cond"
@@ -63,15 +50,36 @@
             android:textColor="@color/hm_w_soft"
             android:textSize="11dp" />
 
-        <TextView
-            android:id="@+id/w_time"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
-            android:includeFontPadding="false"
-            android:maxLines="1"
-            android:textColor="@color/hm_w_faint"
-            android:textSize="10dp" />
+            android:gravity="end"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/w_place"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="120dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:text="@string/app_name"
+                android:textColor="@color/hm_w_text"
+                android:textSize="13dp" />
+
+            <TextView
+                android:id="@+id/w_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/hm_w_faint"
+                android:textSize="10dp" />
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -126,10 +134,14 @@
                     android:id="@+id/w_d0_max"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
                     android:fontFamily="sans-serif-medium"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="@color/hm_w_text"
+                    android:textColor="@color/hm_w_max"
                     android:textSize="11dp" />
 
                 <TextView
@@ -137,9 +149,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="3dp"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="@color/hm_w_faint"
+                    android:textColor="@color/hm_w_min"
                     android:textSize="11dp" />
             </LinearLayout>
 
@@ -206,10 +222,14 @@
                     android:id="@+id/w_d1_max"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
                     android:fontFamily="sans-serif-medium"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="@color/hm_w_text"
+                    android:textColor="@color/hm_w_max"
                     android:textSize="11dp" />
 
                 <TextView
@@ -217,9 +237,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="3dp"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="@color/hm_w_faint"
+                    android:textColor="@color/hm_w_min"
                     android:textSize="11dp" />
             </LinearLayout>
 
@@ -286,10 +310,14 @@
                     android:id="@+id/w_d2_max"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
                     android:fontFamily="sans-serif-medium"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="@color/hm_w_text"
+                    android:textColor="@color/hm_w_max"
                     android:textSize="11dp" />
 
                 <TextView
@@ -297,9 +325,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="3dp"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="@color/hm_w_faint"
+                    android:textColor="@color/hm_w_min"
                     android:textSize="11dp" />
             </LinearLayout>
 
@@ -366,10 +398,14 @@
                     android:id="@+id/w_d3_max"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
                     android:fontFamily="sans-serif-medium"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="@color/hm_w_text"
+                    android:textColor="@color/hm_w_max"
                     android:textSize="11dp" />
 
                 <TextView
@@ -377,9 +413,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="3dp"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="@color/hm_w_faint"
+                    android:textColor="@color/hm_w_min"
                     android:textSize="11dp" />
             </LinearLayout>
 
