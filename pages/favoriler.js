@@ -187,10 +187,10 @@ export default function Favoriler() {
           style={{ marginTop: 16, fontSize: 12, lineHeight: 1.5, maxWidth: 640 }}
         >
           ⓘ Kartlardaki değerler <strong>beş modelin (ECMWF, GFS, ICON, UKMO, ARPEGE) ortak tahminidir</strong>:
-          her değer modellerin ortancası, ölçüm değildir. Büyük sayı ve durum şu anki saatin (TSİ) tahmini; altta
-          bugünün en yüksek / en düşük sıcaklığı ve modellerin şimdiki saatte ne kadar hemfikir olduğu. Bugün
-          yağışlıysa (modellerin en az yarısı yağış veriyorsa) bugünün toplam yağışı da yazar. Modelleri tek tek
-          karşılaştırmak için karta dokunup şehir sayfasını aç.
+          her değer modellerin ortancası olup ölçüm değildir. Sıcaklık ve hava durumu ikonu şu anki saatin (TSİ)
+          tahminidir. Altta bugünün en yüksek / en düşük sıcaklığı ile modellerin şimdiki saatte ne kadar hemfikir
+          olduğu yazmaktadır. Bugün yağışlıysa (modellerin en az yarısı yağış veriyorsa) bugünün toplam yağışı da
+          karta işlenir. Modelleri tek tek karşılaştırmak için karta dokunup şehir sayfasını açabilirsiniz.
         </p>
       )}
     </Layout>
