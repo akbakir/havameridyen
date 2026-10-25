@@ -6,6 +6,7 @@
     <color name="hm_w_soft">#D9FFFFFF</color>
     <color name="hm_w_faint">#B3FFFFFF</color>
     <color name="hm_w_line">#38FFFFFF</color>
+    <color name="hm_w_rain">#FFE0EEFF</color> <!-- yağış miktarı (gün ve dilim) -->
     <string name="hm_widget_k">havameridyen · Küçük</string>
     <string name="hm_widget_g1">havameridyen · Sonraki saatler</string>
     <string name="hm_widget_g2">havameridyen · Günler</string>

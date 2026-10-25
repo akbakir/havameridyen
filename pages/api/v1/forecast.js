@@ -13,7 +13,10 @@
 //     calculated: modelin kendi yayınlamadığı, bizim hesapladığımız alanlar (ör. ["lifted_index"]) —
 //     uygulamada yanında "hesaplanan" yazar.
 //     consensus: { hourly: [...], daily: [...] } }   ← ortanca + uyum (lib/consensus.js)
-//     daily[].cond: günün ortak durumu (07–21 TSİ saatlerinin en belirgini; widget "günler" görünümü)
+//     daily[].cond: günün ortak durumu (önce her modelin günü — 00–24 yağış, yoksa 07–21 bulut —, sonra modeller;
+//     yağış tek aile, ikon en etkili tür; widget "günler" görünümü, lib/consensus.js dayCond)
+//     slots3[]: 3 saatlik dilimler (00, 03 … 21 TSİ) — { start, cond (gün kuralıyla aynı), precip (modellerin 3 saatlik
+//     toplamlarının ortancası) }; widget saat dilimleri
 // Uyum seviyeleri: ok (hemfikir) · partial (kısmen) · split (ayrışıyor) · na (karşılaştıracak model yok) ·
 // none (yağış / kar: hiçbir model eşiği aşmıyor — satır gösterilmez).
 

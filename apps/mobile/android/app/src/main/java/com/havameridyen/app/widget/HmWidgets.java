@@ -58,12 +58,14 @@ public final class HmWidgets {
     private static final int[] H_T = {R.id.w_h0_t, R.id.w_h1_t, R.id.w_h2_t, R.id.w_h3_t, R.id.w_h4_t};
     private static final int[] H_I = {R.id.w_h0_i, R.id.w_h1_i, R.id.w_h2_i, R.id.w_h3_i, R.id.w_h4_i};
     private static final int[] H_V = {R.id.w_h0_v, R.id.w_h1_v, R.id.w_h2_v, R.id.w_h3_v, R.id.w_h4_v};
+    private static final int[] H_P = {R.id.w_h0_p, R.id.w_h1_p, R.id.w_h2_p, R.id.w_h3_p, R.id.w_h4_p};
     private static final int[] D_N = {R.id.w_d0_n, R.id.w_d1_n, R.id.w_d2_n, R.id.w_d3_n};
     private static final int[] D_I = {R.id.w_d0_i, R.id.w_d1_i, R.id.w_d2_i, R.id.w_d3_i};
     private static final int[] D_MAX = {R.id.w_d0_max, R.id.w_d1_max, R.id.w_d2_max, R.id.w_d3_max};
     private static final int[] D_MIN = {R.id.w_d0_min, R.id.w_d1_min, R.id.w_d2_min, R.id.w_d3_min};
     private static final int[] D_BAR = {R.id.w_d0_bar, R.id.w_d1_bar, R.id.w_d2_bar, R.id.w_d3_bar};
     private static final int[] D_BARC = {R.id.w_d0_barc, R.id.w_d1_barc, R.id.w_d2_barc, R.id.w_d3_barc};
+    private static final int[] D_P = {R.id.w_d0_p, R.id.w_d1_p, R.id.w_d2_p, R.id.w_d3_p};
     private static final String[] WEEKDAY = {"Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"};
 
     // Uyum renkleri: uygulamadaki Sayfa 1 çubuğu (views/P1.jsx AG_COL)
@@ -162,14 +164,27 @@ public final class HmWidgets {
             o.put("date", x.getString("date"));
             o.put("max", val(x.optJSONObject("temp_max")));
             o.put("min", val(x.optJSONObject("temp_min")));
+            o.put("mm", val(x.optJSONObject("precip_total")));
             putCond(o, x.optJSONObject("cond"));
             d.put(o);
+        }
+        // 3 saatlik dilimler (widget5; sunucu consensus.slots3 — sunucu eskiyse yok, o zaman saatlik dilimlere dönülür)
+        JSONArray sl = cons.optJSONArray("slots3");
+        JSONArray sd = new JSONArray();
+        for (int i = 0; sl != null && i < sl.length() && i < KEEP_HOURS / 3; i++) {
+            JSONObject x = sl.getJSONObject(i);
+            JSONObject o = new JSONObject();
+            o.put("t", x.optString("start"));
+            o.put("mm", val(x.optJSONObject("precip")));
+            putCond(o, x.optJSONObject("cond"));
+            sd.put(o);
         }
         JSONObject s = new JSONObject();
         s.put("tz", r.optString("timezone", "Europe/Istanbul"));
         s.put("fetched", System.currentTimeMillis());
         s.put("h", h);
         s.put("d", d);
+        if (sd.length() > 0) s.put("s", sd);
         return s;
     }
 
@@ -260,6 +275,7 @@ public final class HmWidgets {
     private static boolean hasAgree(int k) { return k == KIND_K || k == KIND_I; }
     private static boolean hasHours(int k) { return k == KIND_G1 || k == KIND_GS; }
     private static boolean hasDays(int k) { return k == KIND_G2 || k == KIND_GS; }
+    private static boolean hasNowRain(int k) { return k == KIND_K || k == KIND_I; } // K: bugünün toplamı · İ: içinde bulunulan 3 saatlik dilim
 
     private static RemoteViews build(Context ctx, int kind, JSONObject d) {
         RemoteViews v = new RemoteViews(ctx.getPackageName(), LAYOUT[kind]);
@@ -282,6 +298,7 @@ public final class HmWidgets {
             if (hasMinmax(kind)) v.setTextViewText(R.id.w_minmax, kind == KIND_I ? place : "");
             if (hasDot(kind)) v.setViewVisibility(R.id.w_dot, View.GONE);
             if (hasAgree(kind)) v.setTextViewText(R.id.w_agree, "");
+            if (hasNowRain(kind)) v.setTextViewText(R.id.w_p, "");
             if (hasHours(kind)) for (int k = 0; k < 5; k++) hideSlot(v, k);
             if (hasDays(kind)) for (int k = 0; k < 4; k++) hideDay(v, k);
             return v;
@@ -299,9 +316,9 @@ public final class HmWidgets {
 
         JSONArray days = d.optJSONArray("d");
         JSONObject today = dayOf(days, now.optString("t"));
-        String mm = today == null ? "" : deg(today, "max") + " / " + deg(today, "min");
-        if (kind == KIND_K) v.setTextViewText(R.id.w_minmax, mm);
-        if (kind == KIND_I) v.setTextViewText(R.id.w_minmax, mm.isEmpty() ? place : mm + " · " + place); // dar ekranda konum kısalır, sıcaklık kalır
+        String minmax = today == null ? "" : deg(today, "max") + " / " + deg(today, "min");
+        if (kind == KIND_K) v.setTextViewText(R.id.w_minmax, minmax);
+        if (kind == KIND_I) v.setTextViewText(R.id.w_minmax, minmax.isEmpty() ? place : minmax + " · " + place); // dar ekranda konum kısalır, sıcaklık kalır
 
         String level = now.optString("level", "na");
         if (hasDot(kind)) {
@@ -311,21 +328,43 @@ public final class HmWidgets {
         }
         if (hasAgree(kind)) v.setTextViewText(R.id.w_agree, levelText(level));
 
+        JSONArray slots = d.optJSONArray("s");
+        int s0 = slots == null ? -1 : slotIndex(slots, now.optString("t"));
+        if (hasNowRain(kind)) {
+            String p = "";
+            if (kind == KIND_K && today != null && today.optBoolean("wet", false)) p = mm(today, "bugün ");
+            if (kind == KIND_I && s0 >= 0) {
+                JSONObject cur = slots.optJSONObject(s0);
+                if (cur != null && cur.optBoolean("wet", false)) p = mm(cur, "3 sa ");
+            }
+            v.setTextViewText(R.id.w_p, p);
+        }
+
         if (hasHours(kind)) {
             for (int k = 0; k < 5; k++) {
-                int j = i + 1 + 3 * k;
-                JSONObject s = j < h.length() ? h.optJSONObject(j) : null;
+                JSONObject s;
+                if (s0 >= 0) {
+                    // 3 saatlik dilim (00, 03 … 21): ikon dilimin ortak durumu, sıcaklık dilim başının ortancası,
+                    // yağışlıysa altında modellerin 3 saatlik toplamlarının ortancası
+                    s = s0 + k < slots.length() ? slots.optJSONObject(s0 + k) : null;
+                } else {
+                    int j = i + 1 + 3 * k; // eski sunucu yanıtı: saatlik dilimler
+                    s = j < h.length() ? h.optJSONObject(j) : null;
+                }
                 if (s == null) {
                     hideSlot(v, k);
                     continue;
                 }
                 int sh = hourOf(s.optString("t"));
+                JSONObject hs = s0 >= 0 ? hourAt(h, s.optString("t")) : s;
                 v.setViewVisibility(H_T[k], View.VISIBLE);
                 v.setViewVisibility(H_I[k], View.VISIBLE);
                 v.setViewVisibility(H_V[k], View.VISIBLE);
+                v.setViewVisibility(H_P[k], View.VISIBLE);
                 v.setTextViewText(H_T[k], String.format(Locale.US, "%02d", sh));
-                v.setImageViewResource(H_I[k], look(s, sh).icon);
-                v.setTextViewText(H_V[k], deg(s));
+                v.setImageViewResource(H_I[k], look(s, s0 >= 0 ? sh + 1 : sh).icon);
+                v.setTextViewText(H_V[k], hs == null ? "—" : deg(hs));
+                v.setTextViewText(H_P[k], s0 >= 0 && s.optBoolean("wet", false) ? mm(s, "") : "");
             }
         }
 
@@ -345,6 +384,8 @@ public final class HmWidgets {
                 v.setImageViewResource(D_I[k], x.has("ic") ? look(x, 12).icon : R.drawable.wx_cloud);
                 v.setTextViewText(D_MAX[k], deg(x, "max"));
                 v.setTextViewText(D_MIN[k], deg(x, "min"));
+                v.setViewVisibility(D_P[k], View.VISIBLE);
+                v.setTextViewText(D_P[k], x.optBoolean("wet", false) ? mm(x, "") : "");
                 int col = levelColor(x.optString("level", "na"));
                 v.setViewVisibility(D_BAR[k], col == 0 ? View.INVISIBLE : View.VISIBLE);
                 if (col != 0) v.setInt(D_BARC[k], "setColorFilter", col); // çubuk koyu yatağın (D_BAR) içinde
@@ -357,6 +398,7 @@ public final class HmWidgets {
         v.setViewVisibility(H_T[k], View.INVISIBLE);
         v.setViewVisibility(H_I[k], View.INVISIBLE);
         v.setViewVisibility(H_V[k], View.INVISIBLE);
+        v.setViewVisibility(H_P[k], View.INVISIBLE);
     }
 
     private static void hideDay(RemoteViews v, int k) {
@@ -365,6 +407,31 @@ public final class HmWidgets {
         v.setViewVisibility(D_MAX[k], View.INVISIBLE);
         v.setViewVisibility(D_MIN[k], View.INVISIBLE);
         v.setViewVisibility(D_BAR[k], View.INVISIBLE);
+        v.setViewVisibility(D_P[k], View.INVISIBLE);
+    }
+
+    // İçinde bulunulan 3 saatlik dilim: başlangıcı "şimdi"den küçük ya da eşit son dilim
+    private static int slotIndex(JSONArray sl, String now) {
+        int best = -1;
+        for (int i = 0; i < sl.length(); i++) {
+            if (sl.optJSONObject(i).optString("t").compareTo(now) <= 0) best = i;
+            else break;
+        }
+        return best;
+    }
+
+    private static JSONObject hourAt(JSONArray h, String t) {
+        for (int i = 0; i < h.length(); i++) if (t.equals(h.optJSONObject(i).optString("t"))) return h.optJSONObject(i);
+        return null;
+    }
+
+    // Yağış miktarı: 10 mm altı tek ondalık ("0,7 mm"), üstü tam sayı ("28 mm"); 0,05 altı yazılmaz
+    private static String mm(JSONObject o, String prefix) {
+        if (o == null || o.isNull("mm") || !o.has("mm")) return "";
+        double x = o.optDouble("mm");
+        if (Double.isNaN(x) || x < 0.05) return "";
+        String n = x < 9.95 ? String.format(Locale.US, "%.1f", x).replace('.', ',') : String.valueOf(Math.round(x));
+        return prefix + n + " mm";
     }
 
     // Şimdiki saatin sırası (yanıtın saat dilimiyle, "YYYY-MM-DDTHH:00"); veri bitmişse -1

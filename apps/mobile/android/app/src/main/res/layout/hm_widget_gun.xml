@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- havameridyen widget G2 · 4×1: şimdi + 4 gün (widget4, 25 Ekim). Metin boyları dp: telefonun yazı büyüklüğü taşırmasın. -->
+<!-- havameridyen widget G2 · 4×1: şimdi + 4 gün (widget5, 25 Ekim). Metin boyları dp: telefonun yazı büyüklüğü taşırmasın. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_root"
     android:layout_width="match_parent"
@@ -113,12 +113,22 @@
 
             <ImageView
                 android:id="@+id/w_d0_i"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginTop="1dp"
                 android:layout_marginBottom="1dp"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter" />
+
+            <TextView
+                android:id="@+id/w_d0_p"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/hm_w_rain"
+                android:textSize="            dp" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -183,12 +193,22 @@
 
             <ImageView
                 android:id="@+id/w_d1_i"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginTop="1dp"
                 android:layout_marginBottom="1dp"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter" />
+
+            <TextView
+                android:id="@+id/w_d1_p"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/hm_w_rain"
+                android:textSize="            dp" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -253,12 +273,22 @@
 
             <ImageView
                 android:id="@+id/w_d2_i"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginTop="1dp"
                 android:layout_marginBottom="1dp"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter" />
+
+            <TextView
+                android:id="@+id/w_d2_p"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/hm_w_rain"
+                android:textSize="            dp" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -323,12 +353,22 @@
 
             <ImageView
                 android:id="@+id/w_d3_i"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginTop="1dp"
                 android:layout_marginBottom="1dp"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter" />
+
+            <TextView
+                android:id="@+id/w_d3_p"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/hm_w_rain"
+                android:textSize="            dp" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
