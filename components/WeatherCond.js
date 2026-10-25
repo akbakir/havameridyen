@@ -196,8 +196,8 @@ export const WX_KEY = [
   ["cloud", "Çok Bulutlu"],
   ["over", "Kapalı"],
   ["rain", "Yağmurlu"],
-  ["shower", "Sağanak Yağışlı"],
-  ["storm", "Gök Gürültülü Sağanak"],
+  ["shower", "Sağanak Yağış"],
+  ["storm", "Gök Gürültülü Sağanak Yağış"],
 ];
 
 // Kar ikonları açıklamada yalnız gösterilen dönemde en az bir modelde kar ifadesi varsa görünür

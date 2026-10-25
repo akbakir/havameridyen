@@ -83,7 +83,7 @@ const FAQS = [
         </p>
         <p style={{ margin: "0 0 12px" }}>
           <strong style={{ color: "var(--ink)", fontWeight: 600 }}>CAPE'de</strong> de sınıfa bakılır: 500 J/kg altı,
-          500–1000 J/kg (sağanak) ve 1000 J/kg üstü (gök gürültülü). Ortanca sınıftaki modellerin oranı %75 ve üstüyse
+          500–1000 J/kg (sağanak yağış) ve 1000 J/kg üstü (gök gürültülü sağanak yağış). Ortanca sınıftaki modellerin oranı %75 ve üstüyse
           hemfikir, %50–75 kısmen, altındaysa ayrışıyor.
         </p>
         <p style={{ margin: 0 }}>
@@ -140,8 +140,8 @@ const FAQS = [
         </p>
         <p style={{ margin: 0 }}>
           Sıcaklıkta 30 °C çizgisi koyu çizilir. Nemde %85 üstü "doygunluğa yakın" (sis, çiy) ve %30 altı "kuru"
-          bantlarla, basınçta 1013.25 hPa standart atmosfer çizgisiyle, CAPE'de 500 J/kg (sağanak) ve 1000 J/kg (gök
-          gürültülü) çizgileriyle işaretlenir. Modellerin tahmin süreleri farklıdır; süresi biten modelin çizgisi bir
+          bantlarla, basınçta 1013.25 hPa standart atmosfer çizgisiyle, CAPE'de 500 J/kg (sağanak yağış) ve 1000 J/kg
+          (gök gürültülü sağanak yağış) çizgileriyle işaretlenir. Modellerin tahmin süreleri farklıdır; süresi biten modelin çizgisi bir
           noktayla biter. 16 günlük görünümde grafikler ve tablolar yatay kaydırılır ve saat üzerinden birlikte kayar.
         </p>
         <p style={{ margin: "12px 0 0" }}>
@@ -165,7 +165,7 @@ const FAQS = [
         <p style={{ margin: "0 0 12px" }}>
           Her model için saat saat bakılır. Modelin o günkü toplam yağışı en az 0.2 mm ve o saatteki yağışı en az 0.1
           mm ise yağış ifadesi kullanılır. Ayrımı o saatin CAPE değeri yapar: 500 J/kg ve altı &quot;Yağmurlu&quot;, 500
-          üstü &quot;Sağanak Yağışlı&quot;, 1000 üstü &quot;Gök Gürültülü Sağanak Yağışlı&quot;. JMA CAPE vermediği için
+          üstü &quot;Sağanak Yağış&quot;, 1000 üstü &quot;Gök Gürültülü Sağanak Yağış&quot;. JMA CAPE vermediği için
           JMA&apos;da yağış hep &quot;Yağmurlu&quot; görünür. O saatteki yağışın en az yarısı kar ise aynı ayrımla
           &quot;Kar Yağışlı&quot;, &quot;Kar Sağanağı&quot; ya da &quot;Gök Gürültülü Kar Sağanağı&quot; yazılır.
         </p>

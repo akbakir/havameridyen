@@ -10,8 +10,8 @@ import { PrecipGrid } from "./precip";
 // NOAA SPC kademesi
 function capeL(v) {
   if (!(v > 0)) return ["Kararlı", "b-none", "konvektif (kararsızlık kaynaklı) yağış potansiyeli yok"];
-  if (v < 1000) return ["Zayıf kararsızlık", "b-weak", "hafif kümülüs, hafif sağanak ihtimali"];
-  if (v < 2500) return ["Orta kararsızlık", "b-mod", "kümülonimbüs, kuvvetli sağanak, gök gürültülü sağanak"];
+  if (v < 1000) return ["Zayıf kararsızlık", "b-weak", "hafif kümülüs, hafif sağanak yağış ihtimali"];
+  if (v < 2500) return ["Orta kararsızlık", "b-mod", "kümülonimbüs, kuvvetli sağanak yağış, gök gürültülü sağanak yağış"];
   if (v < 4000) return ["Kuvvetli kararsızlık", "b-strong", "şiddetli fırtına, dolu ihtimali"];
   return ["Aşırı kararsızlık", "b-ext", "çok şiddetli fırtına, hortum riski"];
 }

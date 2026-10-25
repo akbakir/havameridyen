@@ -130,8 +130,8 @@ export const LINE_CHARTS = {
     floorZero: true,
     minTop: 600,
     refs: [
-      { v: 500, label: "500 J/kg — sağanak" },
-      { v: 1000, label: "1000 J/kg — gök gürültülü" },
+      { v: 500, label: "500 J/kg — sağanak yağış" },
+      { v: 1000, label: "1000 J/kg — gök gürültülü sağanak yağış" },
     ],
     agree: { type: "class" },
     fmt: (v) => `${Math.round(v)} J/kg`,
