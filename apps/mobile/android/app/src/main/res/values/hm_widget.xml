@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- havameridyen ana ekran widget'ları (widget1) -->
+    <!-- havameridyen ana ekran widget'ları (widget1; widget4: tek satır düzenler + Günler ve saatler) -->
     <dimen name="hm_widget_radius">24dp</dimen>
     <color name="hm_w_text">#FFFFFFFF</color>
     <color name="hm_w_soft">#D9FFFFFF</color>
@@ -10,8 +10,10 @@
     <string name="hm_widget_g1">havameridyen · Sonraki saatler</string>
     <string name="hm_widget_g2">havameridyen · Günler</string>
     <string name="hm_widget_i">havameridyen · İnce</string>
+    <string name="hm_widget_gs">havameridyen · Günler ve saatler</string>
     <string name="hm_widget_k_desc">Şimdiki saat: 5 modelin ortancası ve uyumu</string>
     <string name="hm_widget_g1_desc">Şimdi ve sonraki 12 saat</string>
     <string name="hm_widget_g2_desc">Şimdi ve 4 gün</string>
     <string name="hm_widget_i_desc">Tek satır: şimdiki saat</string>
+    <string name="hm_widget_gs_desc">Şimdi, 4 gün ve sonraki 12 saat</string>
 </resources>

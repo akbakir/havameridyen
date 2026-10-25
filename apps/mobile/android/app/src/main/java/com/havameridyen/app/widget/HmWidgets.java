@@ -48,11 +48,12 @@ public final class HmWidgets {
     private static final long STALE_MS = 30L * 60L * 1000L; // 30 dk'dan yeni veri varsa yeniden çekilmez
     private static final int KEEP_HOURS = 96;
 
-    static final int KIND_K = 0, KIND_G1 = 1, KIND_G2 = 2, KIND_I = 3;
+    static final int KIND_K = 0, KIND_G1 = 1, KIND_G2 = 2, KIND_I = 3, KIND_GS = 4;
     private static final int[] LAYOUT = {
-        R.layout.hm_widget_kucuk, R.layout.hm_widget_saat, R.layout.hm_widget_gun, R.layout.hm_widget_ince
+        R.layout.hm_widget_kucuk, R.layout.hm_widget_saat, R.layout.hm_widget_gun, R.layout.hm_widget_ince,
+        R.layout.hm_widget_birlesik
     };
-    private static final Class<?>[] PROVIDER = {KucukWidget.class, SaatWidget.class, GunWidget.class, InceWidget.class};
+    private static final Class<?>[] PROVIDER = {KucukWidget.class, SaatWidget.class, GunWidget.class, InceWidget.class, BirlesikWidget.class};
 
     private static final int[] H_T = {R.id.w_h0_t, R.id.w_h1_t, R.id.w_h2_t, R.id.w_h3_t, R.id.w_h4_t};
     private static final int[] H_I = {R.id.w_h0_i, R.id.w_h1_i, R.id.w_h2_i, R.id.w_h3_i, R.id.w_h4_i};
@@ -249,6 +250,17 @@ public final class HmWidgets {
         }, "hm-widget").start();
     }
 
+    // Hangi düzende hangi görünüm var (yanlış kimlik widget'ı "yüklenemedi" yapar):
+    //   K: yer, saat, en/en düşük, nokta, uyum yazısı · G1: yer, nokta, saat dilimleri · G2: yer, saat, günler
+    //   İ: en/en düşük (yerle birlikte), nokta, uyum yazısı · GS: yer, saat, günler, saat dilimleri
+    private static boolean hasPlace(int k) { return k != KIND_I; }
+    private static boolean hasTime(int k) { return k == KIND_K || k == KIND_G2 || k == KIND_GS; }
+    private static boolean hasMinmax(int k) { return k == KIND_K || k == KIND_I; }
+    private static boolean hasDot(int k) { return k == KIND_K || k == KIND_G1 || k == KIND_I; }
+    private static boolean hasAgree(int k) { return k == KIND_K || k == KIND_I; }
+    private static boolean hasHours(int k) { return k == KIND_G1 || k == KIND_GS; }
+    private static boolean hasDays(int k) { return k == KIND_G2 || k == KIND_GS; }
+
     private static RemoteViews build(Context ctx, int kind, JSONObject d) {
         RemoteViews v = new RemoteViews(ctx.getPackageName(), LAYOUT[kind]);
         Intent open = new Intent(ctx, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -256,7 +268,7 @@ public final class HmWidgets {
             PendingIntent.getActivity(ctx, 0, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
 
         String place = placeName(ctx);
-        if (kind != KIND_I) v.setTextViewText(R.id.w_place, place);
+        if (hasPlace(kind)) v.setTextViewText(R.id.w_place, place);
 
         JSONArray h = d == null ? null : d.optJSONArray("h");
         int i = h == null ? -1 : nowIndex(h, d.optString("tz", "Europe/Istanbul"));
@@ -266,13 +278,12 @@ public final class HmWidgets {
             v.setImageViewResource(R.id.w_icon, R.drawable.wx_cloud);
             v.setTextViewText(R.id.w_temp, "—");
             v.setTextViewText(R.id.w_cond, d == null ? "Veri bekleniyor" : "Veri eski");
-            if (kind == KIND_K || kind == KIND_G2) v.setTextViewText(R.id.w_time, "");
-            if (kind == KIND_K || kind == KIND_G1) v.setTextViewText(R.id.w_minmax, "");
-            if (kind == KIND_I) v.setTextViewText(R.id.w_minmax, place);
-            if (kind != KIND_G2) v.setViewVisibility(R.id.w_dot, View.GONE);
-            if (kind == KIND_K || kind == KIND_I) v.setTextViewText(R.id.w_agree, "");
-            if (kind == KIND_G1) for (int k = 0; k < 5; k++) hideSlot(v, k);
-            if (kind == KIND_G2) for (int k = 0; k < 4; k++) hideDay(v, k);
+            if (hasTime(kind)) v.setTextViewText(R.id.w_time, "");
+            if (hasMinmax(kind)) v.setTextViewText(R.id.w_minmax, kind == KIND_I ? place : "");
+            if (hasDot(kind)) v.setViewVisibility(R.id.w_dot, View.GONE);
+            if (hasAgree(kind)) v.setTextViewText(R.id.w_agree, "");
+            if (hasHours(kind)) for (int k = 0; k < 5; k++) hideSlot(v, k);
+            if (hasDays(kind)) for (int k = 0; k < 4; k++) hideDay(v, k);
             return v;
         }
 
@@ -284,23 +295,23 @@ public final class HmWidgets {
         v.setTextViewText(R.id.w_temp, deg(now));
         v.setTextViewText(R.id.w_cond, now.optString("text", ""));
         String hh = now.optString("t").length() >= 16 ? now.optString("t").substring(11, 16) : "";
-        if (kind == KIND_K || kind == KIND_G2) v.setTextViewText(R.id.w_time, hh);
+        if (hasTime(kind)) v.setTextViewText(R.id.w_time, hh);
 
         JSONArray days = d.optJSONArray("d");
         JSONObject today = dayOf(days, now.optString("t"));
         String mm = today == null ? "" : deg(today, "max") + " / " + deg(today, "min");
-        if (kind == KIND_K || kind == KIND_G1) v.setTextViewText(R.id.w_minmax, mm);
+        if (kind == KIND_K) v.setTextViewText(R.id.w_minmax, mm);
         if (kind == KIND_I) v.setTextViewText(R.id.w_minmax, mm.isEmpty() ? place : mm + " · " + place); // dar ekranda konum kısalır, sıcaklık kalır
 
         String level = now.optString("level", "na");
-        if (kind != KIND_G2) {
+        if (hasDot(kind)) {
             int col = levelColor(level);
             v.setViewVisibility(R.id.w_dot, col == 0 ? View.GONE : View.VISIBLE);
             if (col != 0) v.setInt(R.id.w_dot, "setColorFilter", col);
         }
-        if (kind == KIND_K || kind == KIND_I) v.setTextViewText(R.id.w_agree, levelText(level));
+        if (hasAgree(kind)) v.setTextViewText(R.id.w_agree, levelText(level));
 
-        if (kind == KIND_G1) {
+        if (hasHours(kind)) {
             for (int k = 0; k < 5; k++) {
                 int j = i + 1 + 3 * k;
                 JSONObject s = j < h.length() ? h.optJSONObject(j) : null;
@@ -318,7 +329,7 @@ public final class HmWidgets {
             }
         }
 
-        if (kind == KIND_G2) {
+        if (hasDays(kind)) {
             int d0 = dayIndex(days, now.optString("t"));
             for (int k = 0; k < 4; k++) {
                 JSONObject x = days == null || d0 < 0 || d0 + k >= days.length() ? null : days.optJSONObject(d0 + k);

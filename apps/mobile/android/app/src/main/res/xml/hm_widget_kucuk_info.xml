@@ -3,10 +3,10 @@
     android:description="@string/hm_widget_k_desc"
     android:initialLayout="@layout/hm_widget_kucuk"
     android:minWidth="110dp"
-    android:minHeight="110dp"
+    android:minHeight="40dp"
     android:previewLayout="@layout/hm_widget_kucuk"
     android:resizeMode="horizontal|vertical"
     android:targetCellWidth="2"
-    android:targetCellHeight="2"
+    android:targetCellHeight="1"
     android:updatePeriodMillis="3600000"
     android:widgetCategory="home_screen" />
