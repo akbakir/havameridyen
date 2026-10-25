@@ -1,5 +1,6 @@
 package com.havameridyen.app.widget;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -200,11 +201,43 @@ public final class HmWidgets {
     public static void renderAll(Context ctx) {
         AppWidgetManager m = AppWidgetManager.getInstance(ctx);
         JSONObject d = cached(ctx);
+        boolean any = false;
         for (int k = 0; k < PROVIDER.length; k++) {
             int[] ids = m.getAppWidgetIds(new ComponentName(ctx, PROVIDER[k]));
             if (ids == null || ids.length == 0) continue;
+            any = true;
             m.updateAppWidget(ids, build(ctx, k, d));
         }
+        if (any) scheduleTick(ctx);
+        else cancelTick(ctx);
+    }
+
+    // ---- saat başı yeniden çizim (widget3 sonrası, 25 Ekim) -----------------------------------------------------
+    // Android'in saatlik widget güncellemesi (updatePeriodMillis) pil için gecikebiliyor; "şimdi" saati bir saate
+    // kadar geride kalıyordu (21 Ekim 17:37'de 16:00). Her çizimden sonra bir sonraki saat başına (+30 sn) alarm
+    // kurulur; tam zamanlı alarm izni gerekmesin diye 5 dakikalık pencereli (setWindow). Widget kalmayınca iptal.
+
+    static final String ACTION_TICK = "com.havameridyen.app.widget.TICK";
+
+    private static PendingIntent tickIntent(Context ctx) {
+        Intent i = new Intent(ctx, KucukWidget.class).setAction(ACTION_TICK);
+        return PendingIntent.getBroadcast(ctx, 1, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    private static void scheduleTick(Context ctx) {
+        AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+        if (am == null) return;
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.HOUR_OF_DAY, 1);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 30);
+        c.set(Calendar.MILLISECOND, 0);
+        am.setWindow(AlarmManager.RTC, c.getTimeInMillis(), 5L * 60L * 1000L, tickIntent(ctx));
+    }
+
+    private static void cancelTick(Context ctx) {
+        AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+        if (am != null) am.cancel(tickIntent(ctx));
     }
 
     /** Ağdan yeni veri çekip (gerekirse) yeniden çizer; arka planda çalışır. */

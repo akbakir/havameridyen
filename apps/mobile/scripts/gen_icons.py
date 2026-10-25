@@ -12,7 +12,8 @@ from pathops import Path, PathOp, LineCap, LineJoin, ArcSize, Direction
 from fontTools.pens.svgPathPen import SVGPathPen
 
 OUT = sys.argv[1]  # .../android/app/src/main/res
-TEAL, CREAM, AMBER, INK, BG = "#1E7A6B", "#F7F9F5", "#D98E2B", "#1F2A24", "#EEF1EC"
+# Renk R2 (25 Ekim, Ali Kemal): turkuaz gökyüzü zemini + sarı-turuncu güneş ve halka (ilk sürüm: #1E7A6B + #D98E2B)
+TEAL, CREAM, AMBER, INK, BG = "#168BA0", "#F7F9F5", "#F5B83D", "#1F2A24", "#EEF1EC"
 
 def circle(cx, cy, r):
     p = Path(); p.moveTo(cx - r, cy)
