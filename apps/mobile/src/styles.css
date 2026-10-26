@@ -235,7 +235,7 @@ button.badge::after{content:" ⓘ";opacity:.55}
 @keyframes wxsh{0%{transform:translate(0,-3px);opacity:0}20%{opacity:1}100%{transform:translate(-2px,5px);opacity:0}}
 @keyframes wxfl{0%{transform:translate(0,-2px);opacity:0}20%{opacity:1}50%{transform:translate(.8px,1.2px)}100%{transform:translate(-.6px,4px);opacity:0}}
 .wx-dr{animation:wxdr 1.1s linear infinite}.wx-sh{animation:wxsh .7s linear infinite}.wx-fl{animation:wxfl 2.4s ease-in-out infinite}
-.wx .k1{animation-delay:.3s}.wx .k2{animation-delay:.6s}.wx .k3{animation-delay:.15s}.wx .wx-fl.k1{animation-delay:.8s}.wx .wx-fl.k2{animation-delay:1.6s}.wx .wx-fl.k3{animation-delay:.4s}
+.wx .k1{animation-delay:.3s}.wx .k2{animation-delay:.6s}.wx .k3{animation-delay:.15s}.wx .k4{animation-delay:.45s}.wx .wx-fl.k1{animation-delay:.8s}.wx .wx-fl.k2{animation-delay:1.6s}.wx .wx-fl.k3{animation-delay:.4s}
 .sheet .sh-body{position:relative}
 
 /* Sayfa 2 (Prototip 9) */

@@ -22,13 +22,16 @@ export function WxIcon({ ic, size = 22, x, y }) {
   );
 }
 
+// Anahtar: 26 Ekim akşamı hafif yağışlar eklendi (Ali Kemal); hafif ikonları günlük ifadede (≤ 0,5 mm) kullanılır
 export const WX_KEY = [
   ["clear", "Açık"],
   ["few", "Az Bulutlu"],
   ["part", "Parçalı Bulutlu"],
   ["cloud", "Çok Bulutlu"],
   ["over", "Kapalı"],
+  ["rainL", "Hafif Yağmurlu"],
   ["rain", "Yağmurlu"],
+  ["showerL", "Hafif Sağanak Yağış"],
   ["shower", "Sağanak Yağış"],
   ["storm", "Gök Gürültülü Sağanak Yağış"],
 ];

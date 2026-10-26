@@ -41,23 +41,23 @@
             android:pathData="M21.5,19.5a6.5,5.2 0 1,0 13,0a6.5,5.2 0 1,0 -13,0Z" />
     </group>
         <path
-            android:strokeColor="#1F4E8C"
-            android:strokeWidth="3"
+            android:strokeColor="#163A6B"
+            android:strokeWidth="3.8000000000000003"
             android:strokeLineCap="round"
             android:pathData="M15 26.5L12.5 33.5" />
         <path
-            android:strokeColor="#8EC5FF"
-            android:strokeWidth="1.8"
+            android:strokeColor="#C4E2FF"
+            android:strokeWidth="2.2"
             android:strokeLineCap="round"
             android:pathData="M15 26.5L12.5 33.5" />
         <path
-            android:strokeColor="#1F4E8C"
-            android:strokeWidth="3"
+            android:strokeColor="#163A6B"
+            android:strokeWidth="3.8000000000000003"
             android:strokeLineCap="round"
             android:pathData="M23 26.5L20.5 33.5" />
         <path
-            android:strokeColor="#8EC5FF"
-            android:strokeWidth="1.8"
+            android:strokeColor="#C4E2FF"
+            android:strokeWidth="2.2"
             android:strokeLineCap="round"
             android:pathData="M23 26.5L20.5 33.5" />
 </vector>

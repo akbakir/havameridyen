@@ -20,36 +20,36 @@
         android:translateX="1"
         android:translateY="4">
         <path
-            android:fillColor="#7D8A96"
-            android:strokeColor="#7D8A96"
+            android:fillColor="#72808D"
+            android:strokeColor="#72808D"
             android:strokeWidth="1.8"
             android:pathData="M5.5,20a7.5,5.8 0 1,0 15,0a7.5,5.8 0 1,0 -15,0Z" />
         <path
-            android:fillColor="#7D8A96"
-            android:strokeColor="#7D8A96"
+            android:fillColor="#72808D"
+            android:strokeColor="#72808D"
             android:strokeWidth="1.8"
             android:pathData="M16,17h10a4,4 0 0,1 4,4v0a4,4 0 0,1 -4,4h-10a4,4 0 0,1 -4,-4v0a4,4 0 0,1 4,-4Z" />
         <path
-            android:fillColor="#7D8A96"
-            android:strokeColor="#7D8A96"
+            android:fillColor="#72808D"
+            android:strokeColor="#72808D"
             android:strokeWidth="1.8"
             android:pathData="M11.5,15a9.5,7.5 0 1,0 19,0a9.5,7.5 0 1,0 -19,0Z" />
         <path
-            android:fillColor="#7D8A96"
-            android:strokeColor="#7D8A96"
+            android:fillColor="#72808D"
+            android:strokeColor="#72808D"
             android:strokeWidth="1.8"
             android:pathData="M21.5,19.5a6.5,5.2 0 1,0 13,0a6.5,5.2 0 1,0 -13,0Z" />
         <path
-            android:fillColor="#B7C2CC"
+            android:fillColor="#A2B0BD"
             android:pathData="M5.5,20a7.5,5.8 0 1,0 15,0a7.5,5.8 0 1,0 -15,0Z" />
         <path
-            android:fillColor="#E6EBEF"
+            android:fillColor="#D0DAE1"
             android:pathData="M16,17h10a4,4 0 0,1 4,4v0a4,4 0 0,1 -4,4h-10a4,4 0 0,1 -4,-4v0a4,4 0 0,1 4,-4Z" />
         <path
-            android:fillColor="#EEF2F5"
+            android:fillColor="#D8E1E8"
             android:pathData="M11.5,15a9.5,7.5 0 1,0 19,0a9.5,7.5 0 1,0 -19,0Z" />
         <path
-            android:fillColor="#D3DBE1"
+            android:fillColor="#BECAD3"
             android:pathData="M21.5,19.5a6.5,5.2 0 1,0 13,0a6.5,5.2 0 1,0 -13,0Z" />
     </group>
 </vector>
