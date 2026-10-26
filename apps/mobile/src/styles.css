@@ -98,7 +98,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--s-teal);outline
 /* Hero (tek model + sayfa 1) */
 .hero{position:relative;color:#fff;padding:12px 14px 14px;margin:0 10px;border-radius:22px;transition:background .5s ease;touch-action:pan-y}
 .hnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.hnav button{width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:18px;line-height:1;cursor:pointer}
+.hnav button{width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:20px;font-weight:700;-webkit-text-stroke:.5px currentColor;line-height:1;cursor:pointer} /* gün okları biraz daha kalın (Ali Kemal, 26 Ekim) */
 .hnav button[disabled]{opacity:.25;cursor:default}
 .hnav .mid{text-align:center}
 .hnav .pl{font-family:var(--f-display);font-weight:600;font-size:15px}
