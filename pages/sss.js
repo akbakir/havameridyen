@@ -87,13 +87,13 @@ const FAQS = [
           hemfikir, %50–75 kısmen, altındaysa ayrışıyor.
         </p>
         <p style={{ margin: 0 }}>
-          Grafiklerin altındaki uyum şeridi saat saat değil dilim dilim çizilir ve her dilim o dilimdeki{" "}
-          <em>en büyük</em> farka göre renklenir; böylece ayrışma ortalama alınarak yumuşatılmaz. Şerit, grafikte
-          seçtiğin 1s / 3s / 6s aralığından bağımsız olarak saatlik veriden hesaplanır. Aynı seviyedeki komşu dilimler
-          tek blokta birleşir; blok yeterince genişse içinde seviye ve "en çok 3.2°" gibi o bloktaki en büyük fark
-          yazar. Şeridin üzerine gelince hangi iki modelin ayrıştığı görünür. Rüzgar ve bulutluluk tablolarındaki uyum
-          satırı da aynı yolla, her sütunun en ayrışık saatine göre çizilir; yağışta ise şerit günlüktür. Tek model
-          seçiliyken şerit gösterilmez — karşılaştıracak model yoktur.
+          Grafiklerin altındaki uyum şeridi, grafikte gösterilen değerin uyumunu verir. 1 saatlik aralıkta her saatin
+          uyumu; 3 / 6 / 12 saatlik aralıkta dilime taşınanın uyumu: çizgi grafiklerde ve rüzgar tablosunda dilimin
+          ilk saati (çizilen nokta), bulutluluk tablosunda dilim ortalaması, hava durumu tablosunda sütundaki ikonlar
+          (her modelin dilim durumu). Dar ekranda bir blok birkaç dilimi kapsarsa en ayrışık olanı gösterir. Aynı
+          seviyedeki komşu dilimler tek blokta birleşir; blok yeterince genişse içinde seviye ve "en çok 3.2°" gibi o
+          bloktaki en büyük fark yazar. Şeridin üzerine gelince hangi iki modelin ayrıştığı görünür. Yağışta şerit
+          günlüktür. Tek model seçiliyken şerit gösterilmez — karşılaştıracak model yoktur.
         </p>
         <p style={{ margin: "12px 0 0" }}>
           CAPE, ortanca, hamle gibi kavramların açıklaması{" "}
@@ -177,7 +177,8 @@ const FAQS = [
         </p>
         <p style={{ margin: 0 }}>
           Hava durumu tablosunun uyum satırında, o saatte modellerin en az yarısı yağış veriyorsa yağış verenlerin
-          oranına, vermiyorsa ortanca bulut sınıfındaki yağışsız modellerin oranına bakılır: %75 ve üstü hemfikir,
+          oranına, vermiyorsa ortanca bulut sınıfındaki modellerin oranına bakılır (o saatte verisi olan bütün modeller
+          bulut sınıfıyla sayılır, yağış veren azınlık da; verisi olmayan model sayılmaz): %75 ve üstü hemfikir,
           %50–75 kısmen, altı ayrışıyor.
         </p>
       </>

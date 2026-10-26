@@ -2,7 +2,8 @@
 // Çizgi grafiklerle aynı düzen: sabit sol sütun (model adları), 1s / 3s / 6s, gün çizgileri, 06–18 gündüz
 // şeridi, saat etiketleri, "şimdi" sütunu koyu turkuaz çerçeve, 16 günde yatay kaydırma ve diğer grafiklerle
 // saat üzerinden birlikte kayma, altta yalnız anahtar (açıklamalar SSS'te).
-// - Uyum satırı dilimin en ayrışık saatinden; komşu aynı seviyeler tek blokta birleşir, etiket sığarsa
+// - Uyum satırı hücrede gösterilenin uyumu (26 Ekim): hava durumunda dilim ikonları, bulutlulukta dilim ortalaması,
+//   rüzgarda dilimin ilk saati; komşu aynı seviyeler tek blokta birleşir, etiket sığarsa
 //   yazılır, üzerine gelince açıklama çıkar. Tek model seçiliyse uyum satırı yok.
 // - Bulutlulukta hücre genişliği çizgi grafiklerle aynı ölçektedir; rüzgarda okun ve sayıların sığması
 //   için hücre en az 30 px'tir, hava durumunda ikon için en az 28 px (16 günde matris daha uzun kayar, saat
@@ -26,7 +27,9 @@ import {
   classAgreement,
   cloudClass,
   condAt,
+  slotClassAgreement,
   slotCond,
+  slotWeatherAgreement,
   weatherAgreement,
   windAgreement,
 } from "../lib/agreement";
@@ -70,6 +73,13 @@ function slotText(times, s0, step) {
 function hourText(times, i) {
   const p = parseTime(times[i]);
   return p ? `${pad2(p.hour)}:00` : "";
+}
+
+// Uyum ipucunun yeri: dilim uyumunda (3/6/12 saat) "dilim 06:00–08:59", saatlikte "saat 06:00"
+function whereText(times, pk) {
+  if (!pk.slot || pk.slot < 2) return `En ayrışık saat ${hourText(times, pk.i)}`;
+  const e = parseTime(times[Math.min(times.length - 1, pk.i + pk.slot - 1)]);
+  return `En ayrışık dilim ${hourText(times, pk.i)}–${e ? `${pad2(e.hour)}:59` : ""}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -264,6 +274,8 @@ const CLOUD = {
     };
   },
   agree: cloudAgreeAt,
+  // 3/6/12 saat: hücredeki dilim ortalamasının uyumu (26 Ekim)
+  slotAgree: (models, s0, step) => slotClassAgreement(models, s0, step, "cloud_cover", cloudClass),
   agreeLabels: (b) => {
     const t = AGREE_STYLE_LC[b.level].text;
     return b.peak ? [`${t} · ${b.peak.inClass}/${b.peak.n} ${CLOUD_SCALE[b.peak.mode].label}`, t] : [t];
@@ -271,11 +283,12 @@ const CLOUD = {
   agreeTip: (pk, times) => (
     <>
       <div>
-        En ayrışık saat {hourText(times, pk.i)} · {pk.n} modelin {pk.inClass}&apos;{trPossessive(pk.inClass)} aynı sınıfta:{" "}
+        {whereText(times, pk)} · {pk.n} modelin {pk.inClass}&apos;{trPossessive(pk.inClass)} aynı sınıfta:{" "}
         {CLOUD_SCALE[pk.mode].label} ({CLOUD_SCALE[pk.mode].range})
       </div>
       <div className="lc-mono lc-rule">
-        Ortanca bulut sınıfındaki modellerin oranı: % 75 ve üstü hemfikir, % 50–75 kısmen, altı ayrışıyor.
+        Ortanca bulut sınıfındaki modellerin oranı: % 75 ve üstü hemfikir, % 50–75 kısmen, altı ayrışıyor. 3 / 6 / 12 saatlik
+        görünümde hücredeki dilim ortalaması karşılaştırılır.
       </div>
     </>
   ),
@@ -330,6 +343,8 @@ const WX = {
     };
   },
   agree: weatherAgreement,
+  // 3/6/12 saat: sütundaki ikonların uyumu (her modelin dilim durumu; 26 Ekim)
+  slotAgree: slotWeatherAgreement,
   agreeLabels: (b) => {
     const t = AGREE_STYLE_LC[b.level].text;
     return b.peak ? [`${t} · ${b.peak.inClass}/${b.peak.n} ${b.peak.mode}`, t] : [t];
@@ -337,12 +352,13 @@ const WX = {
   agreeTip: (pk, times) => (
     <>
       <div>
-        En ayrışık saat {hourText(times, pk.i)} · {pk.n} modelin {pk.inClass}&apos;{trPossessive(pk.inClass)}{" "}
+        {whereText(times, pk)} · {pk.n} modelin {pk.inClass}&apos;{trPossessive(pk.inClass)}{" "}
         {pk.mode === "yağış" ? "yağış veriyor" : `aynı sınıfta: ${pk.mode}`}
       </div>
       <div className="lc-mono lc-rule">
-        Modellerin en az yarısı yağış veriyorsa yağış verenlerin oranı, değilse ortanca bulut sınıfındaki yağışsız
-        modellerin oranı: % 75 ve üstü hemfikir, % 50–75 kısmen, altı ayrışıyor.
+        Modellerin en az yarısı yağış veriyorsa yağış verenlerin oranı, değilse ortanca bulut sınıfındaki modellerin
+        oranı (yağış veren azınlık da bulut sınıfıyla sayılır): % 75 ve üstü hemfikir, % 50–75 kısmen, altı ayrışıyor. 3 / 6 /
+        12 saatlik görünümde sütundaki ikonlar, yani her modelin dilim durumu karşılaştırılır.
       </div>
     </>
   ),
@@ -390,17 +406,15 @@ export default function MatrixPanel({ cfg, models, period, status, selection, on
     return { pxh, x, W, cols, cw, RH, BOT, AY, H };
   }, [hasAny, width, n, step, models, multi, cfg]);
 
-  // uyum: dilimin en ayrışık saati; komşu aynı seviyeler tek blok
+  // uyum: hücrede gösterilenin uyumu (Ali Kemal, 26 Ekim) — saatlikte o saat; 3/6/12 saatte hava durumunda sütundaki
+  // ikonlar (dilim durumu), bulutlulukta dilim ortalaması, rüzgarda hücredeki dilimin ilk saati. Komşu aynı seviyeler tek blok.
   const blocks = useMemo(() => {
     if (!geo || !multi) return [];
     const out = [];
     for (let c = 0; c < geo.cols; c++) {
-      let w = null;
-      for (let i = c * step; i < c * step + step && i < n; i++) {
-        const r = cfg.agree(models, i);
-        if (r.level === "na") continue;
-        if (!w || LEVEL_ORDER[r.level] > LEVEL_ORDER[w.level] || (r.level === w.level && r.rank > w.rank)) w = r;
-      }
+      const s0 = c * step;
+      const r = step > 1 && cfg.slotAgree ? cfg.slotAgree(models, s0, Math.min(step, n - s0)) : cfg.agree(models, s0);
+      const w = r.level === "na" ? null : r;
       const L = w ? w.level : "na";
       const last = out[out.length - 1];
       if (last && last.level === L) {

@@ -6,7 +6,6 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
-  LEVEL_ORDER,
   SPREAD_RULES,
   STORM_KMH,
   capeClass,
@@ -19,6 +18,8 @@ import {
   spreadAgreement,
   trendKey,
   weatherAgreement,
+  slotWeatherAgreement,
+  slotClassAgreement,
   windAgreement,
 } from "@lib/agreement";
 import { MODELS } from "@lib/forecast";
@@ -78,14 +79,34 @@ function windInfo(ms, i) {
   };
 }
 // Hava durumu uyumu (web ile aynı kural): modellerin en az yarısı yağış veriyorsa yağış verenlerin oranı, değilse
-// ortanca bulut sınıfındaki yağışsız modellerin oranı
+// ortanca bulut sınıfındaki modellerin oranı (yağış veren azınlık da bulut sınıfıyla sayılır, 26 Ekim)
 function wxInfo(ms, i) {
   const r = weatherAgreement(ms, i);
   if (r.level === "na") return r;
   return {
     ...r,
     txt: `${r.n} modelin ${r.inClass}'${tsuf(r.inClass)} ${r.mode === "yağış" ? "yağış veriyor" : `aynı sınıfta: ${r.mode}`}`,
-    rule: "en az yarısı yağış veriyorsa yağış verenlerin, değilse ortanca bulut sınıfındaki yağışsızların oranı: % 75 ve üstü hemfikir · % 50–75 kısmen",
+    rule: "en az yarısı yağış veriyorsa yağış verenlerin, değilse ortanca bulut sınıfındaki modellerin oranı (yağış veren azınlık da sayılır): % 75 ve üstü hemfikir · % 50–75 kısmen",
+  };
+}
+// 3/6/12 saat: sütundaki ikonların (her modelin dilim durumu) uyumu — Ali Kemal, 26 Ekim
+function wxSlotInfo(ms, s0, st) {
+  const r = slotWeatherAgreement(ms, s0, st);
+  if (r.level === "na") return r;
+  return {
+    ...r,
+    txt: `${r.n} modelin ${r.inClass}'${tsuf(r.inClass)} ${r.mode === "yağış" ? "dilimi yağışlı" : `dilim ikonu aynı sınıfta: ${r.mode}`}`,
+    rule: "dilim ikonları: en az yarısı yağışlıysa yağışlıların, değilse ortanca bulut sınıfındaki modellerin oranı: % 75 ve üstü hemfikir · % 50–75 kısmen",
+  };
+}
+// 3/6/12 saat bulutluluk: satırdaki dilim ortalamasının uyumu
+function cloudSlotInfo(ms, s0, st) {
+  const r = slotClassAgreement(ms, s0, st, "cloud_cover", cloudClass);
+  if (r.level === "na") return r;
+  return {
+    ...r,
+    txt: `${r.n} modelin ${r.inClass}'${tsuf(r.inClass)} dilim ortalaması aynı sınıfta: ${CLS_TXT[r.mode]} (${CLS_RNG[r.mode]})`,
+    rule: "dilim ortalamalarının ortanca sınıfındaki modellerin oranı: % 75 ve üstü hemfikir · % 50–75 kısmen",
   };
 }
 function classInfo(ms, key, i) {
@@ -207,23 +228,20 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
       svg += `<path d="${d}" fill="none" stroke="#111" stroke-width="1.6"/><path d="${d}" fill="none" stroke="#fff" stroke-width=".8" stroke-dasharray="3 3"/>`;
     }
   };
-  // V07 C4: şerit dilimleri (aralık kadar), dilimi en kötü saat temsil eder; komşu aynı seviyeler birleşir
+  // Şerit dilimleri (aralık kadar), komşu aynı seviyeler birleşir. Dilimin uyumu dilime taşınanın uyumu (Ali Kemal,
+  // 26 Ekim): slotInfo varsa onunla (hava durumu: dilim ikonları, bulutluluk: dilim ortalaması), yoksa dilimin ilk
+  // saati (grafiklerde ve Model verileri tablosunda dilimin "anlık" değeri). 1 saatte her saat.
   const block = (x0, w, yb, h, fill, op, txt, ink, seg) => {
     let g = `<g data-seg="${seg}" style="cursor:pointer"><rect x="${x0.toFixed(1)}" y="${yb}" width="${w.toFixed(1)}" height="${h}" rx="2" fill="${fill}" opacity="${op}"/>`;
     if (txt && w >= txt.length * 4.6 + 8)
       g += `<text x="${(x0 + w / 2).toFixed(1)}" y="${yb + h / 2 + 2.7}" font-size="7.5" text-anchor="middle" fill="${ink}" pointer-events="none">${txt}</text>`;
     return g + "</g>";
   };
-  const stripX = (p, info, name) => {
+  const stripX = (p, info, name, slotInfo) => {
     const sl = [];
     for (let s0 = 0; s0 < n; s0 += step) {
-      let w = null;
-      for (let i = s0; i < s0 + step && i < n; i++) {
-        const a = info(i);
-        if (!a || a.level === "na") continue;
-        if (!w || LEVEL_ORDER[a.level] > LEVEL_ORDER[w.level] || (LEVEL_ORDER[a.level] === LEVEL_ORDER[w.level] && a.rank > w.rank)) w = { ...a, i };
-      }
-      sl.push(w);
+      const a = step > 1 && slotInfo ? slotInfo(s0, Math.min(step, n - s0)) : info(s0);
+      sl.push(!a || a.level === "na" ? null : { ...a, i: s0, slot: step > 1 && slotInfo ? step : 0 });
     }
     const bl = [];
     sl.forEach((w, c) => {
@@ -347,7 +365,7 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
         }
       });
     }
-    if (p.id === "xs") stripX(p, (i) => wxInfo(ms, i), "Hava durumu");
+    if (p.id === "xs") stripX(p, (i) => wxInfo(ms, i), "Hava durumu", (s0, st) => wxSlotInfo(ms, s0, st));
     if (p.id === "t") {
       const [lo, hi] = range("temp", 1);
       lineSet(p, "temp", lo, hi, ticksOf(lo, hi, hi - lo > 12 ? 4 : 2), true);
@@ -510,7 +528,7 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
         }
       });
     }
-    if (p.id === "cs") stripX(p, (i) => classInfo(ms, "cloud_cover", i), "Bulutluluk");
+    if (p.id === "cs") stripX(p, (i) => classInfo(ms, "cloud_cover", i), "Bulutluluk", (s0, st) => cloudSlotInfo(ms, s0, st));
   }
   const nowX = nowIdx < n ? x(nowIdx) : null;
   svg += `<rect data-cur="1" x="0" y="0" width="${px}" height="${H}" fill="rgba(30,122,107,.10)" stroke="#1E7A6B" stroke-width="1.2" pointer-events="none"/>`;
@@ -560,17 +578,10 @@ function rangeTx(times, a, b) {
   return a === b ? `${da} ${pad(A.h)}:00` : `${da} ${pad(A.h)}:00–${A.key === B.key ? "" : `${B.d} ${MON[B.m].slice(0, 3)} `}${pad(B.h)}:59`;
 }
 
-// V07 C4: tablo seçili aralığı gösterir — mm dilim toplamı, diğer değerler dilimin ilk saati, uyum satırı dilimdeki en
-// kötü saat
+// V07 C4: tablo seçili aralığı gösterir — mm dilim toplamı, diğer değerler dilimin ilk saati. Uyum satırı tablodaki
+// değerlerin uyumu, yani dilimin ilk saati (Ali Kemal, 26 Ekim: "dilime taşınanın uyumu"; eskiden dilimin en kötü saati)
 function Table({ ms, times, a, z, slot, unit }) {
-  const worst = (fn) => {
-    let w = "na";
-    for (let i = a; i <= z; i++) {
-      const l = fn(i).level;
-      if (LEVEL_ORDER[l] > LEVEL_ORDER[w]) w = l;
-    }
-    return w;
-  };
+  const worst = (fn) => fn(a).level;
   const ag = [
     worst((i) => spreadAgreement(ms, i, "temp")),
     "",
@@ -765,7 +776,7 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
           </b>{" "}
           · {rangeTx(times, s0, s1)}
           <br />
-          {pad(parseT(times[pk.i]).h)}:00 {pk.txt}
+          {pk.slot ? "dilim:" : `${pad(parseT(times[pk.i]).h)}:00`} {pk.txt}
           <br />
           <span style={{ opacity: 0.75 }}>{pk.rule}</span>
         </>

@@ -9,8 +9,8 @@
 // - 06–18 arası gündüz bandı, 06 / 12 / 18 dikmeleri, "şimdi" çizgisi.
 // - Saatte en az 4 px: 16 günde grafik yatay kaydırılır; sol eksen sabit kalır. Kaydırılan grafikler
 //   saat üzerinden birlikte kayar.
-// - Uyum şeridi saatlik veriden hesaplanır (seçilen aralıktan bağımsız); dilim uzunluğu aralıktan kısa
-//   olmaz ve en az 24 px'tir; dilimi en ayrışık saat temsil eder; komşu aynı seviyeler birleşir.
+// - Uyum şeridi çizilen noktaların uyumundan (26 Ekim; 3/6/12 saatte dilimlerin ilk saati); dilim uzunluğu aralıktan
+//   kısa olmaz ve en az 24 px'tir; birden çok nokta kapsarsa en ayrışığı temsil eder; komşu aynı seviyeler birleşir.
 //   Etiket bloğa sığarsa yazılır; üzerine gelince açıklama çıkar. Tek model seçiliyse şerit yok.
 // - Grafik altında yalnız anahtar kalır; açıklama metinleri SSS'te. CAPE ve Basınç'ta anahtarın sonunda
 //   Terimler sayfasına bağlantı var (Paket 5).
@@ -161,14 +161,16 @@ function agreeAt(cfg, models, i) {
 const trendAt = pressureTrend;
 
 // Dilimler: uzunluk STRIP_STEPS'ten (aralıktan kısa değil, en az STRIP_MIN_BLOCK px); dilimi en belirgin
-// saat temsil eder; aynı gruptaki komşu dilimler tek blokta birleşir.
-function buildSegments(n, pxh, step, at, rank, group) {
+// saat temsil eder; aynı gruptaki komşu dilimler tek blokta birleşir. stride: yalnız bu aralıktaki saatlere bakılır —
+// uyumda grafikte çizilen noktalar, yani 3/6/12 saatte dilimlerin ilk saati (Ali Kemal, 26 Ekim: "dilime taşınanın
+// uyumu"); eğilimde her saat.
+function buildSegments(n, pxh, step, at, rank, group, stride = 1) {
   const k = STRIP_STEPS.find((s) => s >= step && s * pxh >= STRIP_MIN_BLOCK) ?? 24;
   const out = [];
   for (let i = 0; i < n; i += k) {
     const to = Math.min(n - 1, i + k - 1);
     let pk = null;
-    for (let j = i; j <= to; j++) {
+    for (let j = i; j <= to; j += stride) {
       const a = at(j);
       if (pk == null || rank(a) > rank(pk)) pk = a;
     }
@@ -373,7 +375,7 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
 
   const segs = useMemo(() => {
     if (!geo || !geo.multi) return [];
-    return buildSegments(n, geo.pxh, step, (i) => agreeAt(cfg, models, i), (a) => a.rank, (a) => a.level);
+    return buildSegments(n, geo.pxh, step, (i) => agreeAt(cfg, models, i), (a) => a.rank, (a) => a.level, step);
   }, [geo, n, step, models, cfg]);
 
   const trendSegs = useMemo(() => {
