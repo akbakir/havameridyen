@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- havameridyen: üretildi (scripts/gen_widget_icons.mjs, lib/wxicons.js). Elle düzenlemeyin. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="36dp"
+    android:height="36dp"
+    android:viewportWidth="36"
+    android:viewportHeight="36">
+    <group
+        android:translateX="-2.6"
+        android:translateY="-2.6"
+        android:scaleX="0.8"
+        android:scaleY="0.8">
+        <path
+            android:fillColor="#DCE4F0"
+            android:strokeColor="#7F93AE"
+            android:strokeWidth="1"
+            android:pathData="M22 6a11 11 0 1 0 8 18 9.5 9.5 0 0 1-8-18z" />
+    </group>
+    <group
+        android:translateX="6"
+        android:translateY="8"
+        android:scaleX="0.75"
+        android:scaleY="0.75">
+        <path
+            android:fillColor="#7D8A96"
+            android:strokeColor="#7D8A96"
+            android:strokeWidth="2.2"
+            android:pathData="M5.5,20a7.5,5.8 0 1,0 15,0a7.5,5.8 0 1,0 -15,0Z" />
+        <path
+            android:fillColor="#7D8A96"
+            android:strokeColor="#7D8A96"
+            android:strokeWidth="2.2"
+            android:pathData="M16,17h10a4,4 0 0,1 4,4v0a4,4 0 0,1 -4,4h-10a4,4 0 0,1 -4,-4v0a4,4 0 0,1 4,-4Z" />
+        <path
+            android:fillColor="#7D8A96"
+            android:strokeColor="#7D8A96"
+            android:strokeWidth="2.2"
+            android:pathData="M11.5,15a9.5,7.5 0 1,0 19,0a9.5,7.5 0 1,0 -19,0Z" />
+        <path
+            android:fillColor="#7D8A96"
+            android:strokeColor="#7D8A96"
+            android:strokeWidth="2.2"
+            android:pathData="M21.5,19.5a6.5,5.2 0 1,0 13,0a6.5,5.2 0 1,0 -13,0Z" />
+        <path
+            android:fillColor="#B7C2CC"
+            android:pathData="M5.5,20a7.5,5.8 0 1,0 15,0a7.5,5.8 0 1,0 -15,0Z" />
+        <path
+            android:fillColor="#E6EBEF"
+            android:pathData="M16,17h10a4,4 0 0,1 4,4v0a4,4 0 0,1 -4,4h-10a4,4 0 0,1 -4,-4v0a4,4 0 0,1 4,-4Z" />
+        <path
+            android:fillColor="#EEF2F5"
+            android:pathData="M11.5,15a9.5,7.5 0 1,0 19,0a9.5,7.5 0 1,0 -19,0Z" />
+        <path
+            android:fillColor="#D3DBE1"
+            android:pathData="M21.5,19.5a6.5,5.2 0 1,0 13,0a6.5,5.2 0 1,0 -13,0Z" />
+    </group>
+</vector>

@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- havameridyen: üretildi (scripts/gen_widget_res.py, widget1). Elle düzenlemeyin. -->
+<!-- havameridyen: üretildi (scripts/gen_widget_icons.mjs, lib/wxicons.js). Elle düzenlemeyin. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="40dp"
-    android:height="40dp"
-    android:viewportWidth="40"
-    android:viewportHeight="40">
-    <group
-        android:translateX="0"
-        android:translateY="0">
-        <path
-            android:fillColor="#EEF1F6"
-            android:pathData="M25,7 a13,13 0 1,0 9,22 a11,11 0 0,1 -9,-22 Z" />
-    </group>
+    android:width="36dp"
+    android:height="36dp"
+    android:viewportWidth="36"
+    android:viewportHeight="36">
+    <path
+        android:fillColor="#DCE4F0"
+        android:strokeColor="#7F93AE"
+        android:strokeWidth="1"
+        android:pathData="M22 6a11 11 0 1 0 8 18 9.5 9.5 0 0 1-8-18z" />
 </vector>

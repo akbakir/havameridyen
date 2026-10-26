@@ -553,6 +553,8 @@ public final class HmWidgets {
         if (c.optBoolean("wet", false)) {
             int icon;
             switch (ic) {
+                case "rainL": icon = R.drawable.wx_rain_light; break; // Hafif Yağmurlu (yalnız gün, ≤ 0,5 mm)
+                case "showerL": icon = R.drawable.wx_shower_light; break; // Hafif Sağanak Yağış (yalnız gün)
                 case "shower": icon = R.drawable.wx_rain_heavy; break;
                 case "storm": icon = R.drawable.wx_storm; break;
                 case "snow": icon = R.drawable.wx_snow; break;
@@ -573,8 +575,10 @@ public final class HmWidgets {
         }
         String ph = h >= 8 && h <= 17 ? "day" : (h == 6 || h == 7) ? "dawn" : (h == 18 || h == 19) ? "dusk" : "night";
         boolean night = ph.equals("night");
+        // İkonlar lib/wxicons.js'ten (site ve uygulamayla ortak 16 ikon; Az ve Parçalı Bulutlu ayrı, 26 Ekim)
         int icon = k == 0 ? (night ? R.drawable.wx_moon : R.drawable.wx_sun)
-            : k <= 2 ? (night ? R.drawable.wx_moon_cloud : R.drawable.wx_sun_cloud)
+            : k == 1 ? (night ? R.drawable.wx_moon_few : R.drawable.wx_sun_few)
+            : k == 2 ? (night ? R.drawable.wx_moon_cloud : R.drawable.wx_sun_cloud)
             : k == 3 ? R.drawable.wx_cloud : R.drawable.wx_overcast;
         int sky;
         if (k == 4) sky = R.drawable.wsky_overcast;

@@ -1,5 +1,5 @@
-# havameridyen widget kaynakları: hava ikonları (src/icons.jsx'teki SVG'lerin vektör karşılığı) ve gökyüzü zeminleri
-# (src/icons.jsx SKY). Uygulamadaki ikon ya da renkler değişirse yeniden çalıştırılır (apps/mobile klasöründen):
+# havameridyen widget kaynakları: gökyüzü zeminleri (src/icons.jsx SKY). Hava ikonları ayrı: scripts/gen_widget_icons.mjs
+# (lib/wxicons.js). Uygulamadaki ikon ya da renkler değişirse yeniden çalıştırılır (apps/mobile klasöründen):
 #   python scripts/gen_widget_res.py android/app/src/main/res
 import os, sys
 
@@ -51,30 +51,18 @@ BOLT = fill("M24,24 l-6,9 h5 l-3.5,8 l9,-11 h-5.5 Z", "#FFC857")
 SUN = fill(ell(20, 20, 16, 16), "#FFD27A", 0.28) + fill(ell(20, 20, 10, 10), "#FFC857")
 MOON = fill("M25,7 a13,13 0 1,0 9,22 a11,11 0 0,1 -9,-22 Z", "#EEF1F6")
 
-# ad: (viewBox x, y, w, h, gövde) — src/icons.jsx ICON ile aynı çizimler
-ICONS = {
-    "wx_sun": (0, 0, 40, 40, SUN),
-    "wx_moon": (0, 0, 40, 40, MOON),
-    "wx_sun_cloud": (0, 0, 40, 40, fill(ell(14, 13, 8, 8), "#FFC857") + cloud(3, 6)),
-    "wx_moon_cloud": (0, 0, 40, 40, fill("M16,4 a9,9 0 1,0 7,15 a8,8 0 0,1 -7,-15 Z", "#EEF1F6") + cloud(3, 7)),
-    "wx_cloud": (4, 2, 36, 30, cloud(0, 0)),
-    "wx_overcast": (2, 0, 38, 32, cloud(-3, -3, True, 0.85) + cloud(2, 3, True)),
-    "wx_rain": (4, 2, 36, 36, cloud(0, 0) + drops([(16, 27, 13, 34), (23, 27, 20, 34), (30, 27, 27, 34)])),
-    "wx_rain_heavy": (4, 2, 36, 36, cloud(0, 0) + drops([(13, 26, 10, 35), (19, 26, 16, 35), (25, 26, 22, 35), (31, 26, 28, 35)])),
-    "wx_storm": (4, 2, 36, 38, cloud(0, 0) + drops([(14, 26, 11, 34), (30, 26, 27, 34)]) + BOLT),
-    "wx_snow": (4, 2, 36, 36, cloud(0, 0) + flakes([(15, 30), (23, 31), (31, 30)])),
-    "wx_snow_heavy": (4, 2, 36, 36, cloud(0, 0) + flakes([(12, 29), (19, 32), (26, 29), (33, 32)])),
-    "wx_snow_storm": (4, 2, 36, 38, cloud(0, 0) + flakes([(13, 30), (31, 30)]) + BOLT),
-}
+# Hava ikonları 26 Ekim'den beri lib/wxicons.js'ten (site, uygulama, widget ortak): scripts/gen_widget_icons.mjs
+ICONS = {}
 
 # src/icons.jsx SKY: üstten alta renkler
+# Şafak ve akşam kızıllığı 26 Ekim'de bir-iki ton azaltıldı (Ali Kemal): orta ve alt renklerde doygunluk % 35 düşük
 SKY = {
     "day_clear": ("#1E6F8C", "#4E9DB0", "#E3C58E"),
     "day_cloud": ("#4F6A75", "#7C939A", "#BDB8A2"),
-    "dawn_clear": ("#34466E", "#B77458", "#EAB56C"),
-    "dawn_cloud": ("#3B4760", "#8C7068", "#C7A27E"),
-    "dusk_clear": ("#2C3560", "#A35F5B", "#E39B5E"),
-    "dusk_cloud": ("#343B55", "#7A6068", "#B08C78"),
+    "dawn_clear": ("#34466E", "#A67B69", "#D4B282"),
+    "dawn_cloud": ("#3B4760", "#86736E", "#BAA28B"),
+    "dusk_clear": ("#2C3560", "#966A68", "#CC9D75"),
+    "dusk_cloud": ("#343B55", "#75656A", "#A68F82"),
     "night_clear": ("#0E1A24", "#1B3040", "#34495A"),
     "night_cloud": ("#171D22", "#2B343B", "#454E55"),
     "rain": ("#2F3F4C", "#4E6170", "#7F919B"),
