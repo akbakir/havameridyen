@@ -12,7 +12,7 @@ import { parseT, tsiNowHour } from "./format";
 import { daysOf, nowIndex, toModels } from "./data";
 import { loadPrefs, placeKey, placeLabel, savePrefs } from "./store";
 import { syncWidgetPlace } from "./widget";
-import { ModelChips } from "./views/common";
+import { ModelChips, TabBar } from "./views/common";
 import Loc from "./views/Loc";
 import Gunluk, { SrcSheet } from "./views/Gunluk";
 import Single from "./views/Single";
@@ -184,7 +184,7 @@ export default function App() {
   };
 
   return (
-    <div ref={top}>
+    <div ref={top} className={view === "fc" ? "has-tabs" : ""}>
       <div className="appbar">
         <div className="ab-l">
           <button type="button" className="infobtn" aria-label="Bilgi menüsü: Modeller, Terimler, SSS, Hakkında, Yasal" onClick={() => setSheet({ page: "menu" })}>
@@ -232,10 +232,8 @@ export default function App() {
               dayKey={selDay}
               onDay={setDayKey}
               onHourly={(key) => openAt(key, "p1")}
-              onGo={(p) => openAt(selDay, p)}
               unit={unit}
               onUnit={(u) => update({ unit: u })}
-              multi={multi}
               onPicker={() => setSrcOpen(true)}
               loading16={long.key === placeKey(place) && long.status === "loading"}
               beyond={beyond}
@@ -300,6 +298,19 @@ export default function App() {
         </>
       )}
 
+      {/* Alt sekme çubuğu: Günlük · Saatlik · Modeller · Grafikler (tek model seçiliyken Modeller / Grafikler soluk) */}
+      {view === "fc" && data.status === "ok" && (
+        <TabBar
+          current={page}
+          off={multi ? [] : ["p2", "p3"]}
+          onGo={(p) => {
+            if (!multi && (p === "p2" || p === "p3")) return notify("Modeller ve Grafikler birden çok modelle çalışır: Günlük'te üstten Ortak tahmin'i seç.");
+            if (p === "day") return goPage("day");
+            if (page === "day" && p !== "p3") return openAt(selDay, p);
+            goPage(p);
+          }}
+        />
+      )}
       {srcOpen && <SrcSheet all={ALL} selected={selected} ortak={multi ? ALL.filter((m) => selected.includes(m.id)) : ALL.filter((m) => FAV_MODEL_IDS.includes(m.id))} onChoose={chooseSrc} onClose={() => setSrcOpen(false)} />}
       {snack && (
         <div className="snack" role="status">

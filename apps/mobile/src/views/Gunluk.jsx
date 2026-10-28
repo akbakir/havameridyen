@@ -1,13 +1,13 @@
 // Günlük sayfa (28 Ekim 2026, Ali Kemal; tasarım tuvalinde "B kompakt"): konum seçilince ilk açılan tahmin sayfası.
 // Üstte tahmin kaynağı (ortak tahmin ya da tek model), 16 günlük kayan gün şeridi (‹ › bir gün kaydırır; seçili güne
 // ikinci dokunuş Saatlik'i açar), seçili günün kartı (durum, en yüksek / en düşük, toplam yağış, rüzgar gülü + aralık
-// + hamle, 3 saatlik dilimler) ve Saatlik · Modeller · Grafikler düğmeleri. Değerler lib/consensus.js'ten (günlük
+// + hamle, 3 saatlik dilimler). Sayfalar arası geçiş alttaki sekme çubuğuyla (App). Değerler lib/consensus.js'ten (günlük
 // ortak durum, ortanca ve uyum; rüzgar 28 Ekim'de eklendi).
 
 import { useLayoutEffect, useRef } from "react";
 import { Mark, SKY, WxIcon, condView } from "../icons";
 import { DAYN, MON, dir16, fmt, parseT, speed, unitLabel } from "../format";
-import { PageNav, UnitToggle } from "./common";
+import { UnitToggle } from "./common";
 
 const GUN = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
 const pv = (p) => (p && p.v != null ? p.v : null);
@@ -71,7 +71,7 @@ const Arrow = ({ dir, onClick, disabled }) => (
   </button>
 );
 
-export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHourly, onGo, unit, onUnit, multi, onPicker, loading16, beyond }) {
+export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHourly, unit, onUnit, onPicker, loading16, beyond }) {
   const daily = (cons.daily || []).filter((d) => pv(d.temp_max) != null || d.cond);
   const k = Math.max(0, daily.findIndex((d) => d.date === dayKey));
   const D = daily[k];
@@ -97,7 +97,9 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
   const W = D.wind || {};
   const slots = (cons.slots3 || []).filter((s) => s.start.startsWith(D.date));
   const tIndex = (t) => times.indexOf(t);
-  const rain = mmTxt(pv(D.precip_total));
+  // Yağış miktarı yalnız yağışlı günde (gün kuralı: model günü ≥ 0,2 mm, modellerin yarısı; 28 Ekim, Ali Kemal:
+  // "yağışsız bir günün altında 0.1mm yazılmasın")
+  const rain = D.cond?.wet ? mmTxt(pv(D.precip_total)) : null;
   const nModels = D.cond?.n ?? W.n ?? models.length;
 
   return (
@@ -125,7 +127,7 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
           {daily.map((d, i) => {
             const p = parseT(d.date + "T12:00");
             const on = i === k;
-            const mm = mmTxt(pv(d.precip_total));
+            const mm = d.cond?.wet ? mmTxt(pv(d.precip_total)) : null;
             return (
               <button
                 key={d.date}
@@ -219,7 +221,6 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
         )}
       </div>
 
-      <PageNav pages={multi ? ["p1", "p2", "p3"] : ["p1"]} onGo={onGo} />
       {beyond && <div className="gnote">Saatlik ve model sayfaları ilk 7 günü gösterir.</div>}
     </div>
   );

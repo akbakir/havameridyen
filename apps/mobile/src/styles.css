@@ -340,15 +340,6 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 /* Sayfa 2 kartında saatlerin yanındaki "TSİ" biraz küçük; saat ön planda (Ali Kemal, 20 Ekim) */
 .mcard .tsi{font-size:.8em}
 
-/* Sayfa düğmeleri: Saatlik · Modeller · Grafikler (28 Ekim; günlük sayfa ve Sayfa 1–3). Koyu lacivert, alt gölge
-   şeridi; basınca düğme şeridin üstüne iner. Bulunulan sayfa açık renkte, basılamaz. */
-.pnav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:18px 12px 8px}
-.pbtn{display:flex;align-items:center;gap:5px;height:48px;padding:0 8px;border:0;border-radius:14px;background:#2C4A6E;color:#fff;font:600 13px var(--f-body);cursor:pointer;box-shadow:0 3px 0 #1B3048,0 6px 12px rgba(28,48,72,.18);transition:transform .08s ease,box-shadow .08s ease;min-width:0}
-.pbtn:active:not(:disabled){transform:translateY(3px);box-shadow:0 0 0 #1B3048,0 2px 6px rgba(28,48,72,.18)}
-.pbtn .pi{display:flex;flex:none}.pbtn .pi svg{width:17px;height:17px}
-.pbtn b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pbtn .pch{width:12px;height:12px;margin-left:auto;flex:none}
-.pbtn:disabled{background:#DCE5EE;color:#2C4A6E;box-shadow:none;cursor:default}
 
 /* Üst çubuk: konum + favori yıldızı (28 Ekim) */
 .ab-r{display:flex;align-items:center;gap:6px;min-width:0}
@@ -363,7 +354,6 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 
 /* Günlük sayfa (28 Ekim; tasarım tuvalinde "B kompakt") */
 .gunluk{padding:2px 12px 8px;display:flex;flex-direction:column;gap:10px}
-.gunluk .pnav{padding:8px 0 0}
 .gsrc{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:7px 12px;border:1px solid var(--s-line);border-radius:14px;background:var(--s-card);color:var(--s-ink);text-align:left;cursor:pointer}
 .dots{display:flex;align-items:center;flex:none}
 .dots i{width:12px;height:12px;border-radius:50%;border:2px solid var(--s-card);margin-left:-4px}
@@ -425,3 +415,13 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 .srow .dots i{border-color:transparent}
 .sh-sec{font:600 10.5px var(--f-mono);letter-spacing:.08em;color:var(--s-soft);padding:12px 8px 2px}
 .sh-note{margin:10px 8px 0!important;font-size:12px;color:var(--s-soft)}
+
+/* Alt sekme çubuğu (28 Ekim, B3): ekranın altına sabit, açık zemin, bulunulan sekmenin üstünde lacivert çizgi */
+.has-tabs{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.has-tabs .snack{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:18;max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);padding:0 6px calc(8px + env(safe-area-inset-bottom,0px));background:var(--s-card);border-top:1px solid var(--s-line)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:59px;border:0;border-top:3px solid transparent;border-radius:0;background:none;color:var(--s-faint);font:500 11.5px var(--f-body);cursor:pointer;padding:0}
+.tab svg{width:22px;height:22px}
+.tab[aria-current="page"]{color:#2C4A6E;border-top-color:#2C4A6E}
+.tab[aria-current="page"] span{font-weight:700}
+.tab.off{opacity:.38}

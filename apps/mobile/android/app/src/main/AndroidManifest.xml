@@ -99,7 +99,7 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- "Konumumu kullan" (@capacitor/geolocation); yalnız düğmeye basınca sorulur -->
+    <!-- "Konumumu kullan" (@capacitor/geolocation); yalnız düğmeye basınca, yalnız yaklaşık konum ve yalnız uygulama
+         kullanılırken sorulur (28 Ekim: hassas konum ve arka plan konumu istenmez) -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 </manifest>

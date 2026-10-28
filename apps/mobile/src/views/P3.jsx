@@ -26,7 +26,7 @@ import { MODELS } from "@lib/forecast";
 import { CLS_RNG, CLS_TXT, Mark, SKY_SOLID, condView, iconSvgAt } from "../icons";
 import { MON, dir16, fmt, pad, parseT, speed, tsuf, unitLabel } from "../format";
 import { DIR8, dayGust, gust, val } from "../data";
-import { PageNav, UnitToggle } from "./common";
+import { UnitToggle } from "./common";
 
 const PER = {
   hourly: { n: 48, px: 13, def: 1, lbl: "Saatlik" },
@@ -949,7 +949,6 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
           </div>
         </>
       )}
-      <PageNav current="p3" onGo={onGo} />
       <div className="foot">
         Değerler model tahminidir, ölçüm değildir.
         <br />

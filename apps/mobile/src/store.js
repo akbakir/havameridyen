@@ -8,7 +8,9 @@ export const DEFAULT_PLACE = { name: "İzmit", admin1: "Kocaeli", lat: 40.77, lo
 const DEFAULTS = {
   place: DEFAULT_PLACE,
   favorites: [DEFAULT_PLACE],
-  selected: ["ecmwf_ifs"], // yalnız ECMWF seçili açılır → tek model ekranı
+  // Yeni kurulum "Ortak tahmin" ile açılır: varsayılan 5 model (Ali Kemal 28 Ekim: "EVET AÇILSIN"; önceden yalnız
+  // ECMWF, 23 Eylül). Kayıtlı seçimi olan kurulumlar etkilenmez.
+  selected: ["ecmwf_ifs", "gfs_seamless", "icon_seamless", "ukmo_seamless", "meteofrance_seamless"],
   unit: "kmh",
 };
 

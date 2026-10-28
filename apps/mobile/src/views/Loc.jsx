@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Geolocation } from "@capacitor/geolocation";
 import { HOME_CITIES } from "@lib/slugify";
-import { fetchFavorite, searchLocations } from "../api";
+import { fetchFavorite, reverseName, searchLocations } from "../api";
 import { fmt, parseT, tsiNowHour } from "../format";
 import { WxIcon, condView } from "../icons";
 import { nowIndex } from "../data";
@@ -90,18 +90,19 @@ export default function Loc({ place, favorites, onPick, onRemove, onSheet }) {
     }
   };
 
-  // "Konumumu kullan" (28 Ekim: telefonda "Konum alınamadı" — izin önce açıkça istenir, zaman aşımı uzatıldı,
-  // ağ konumu yetmezse GPS ile bir kez daha denenir; hata kodu mesajın sonunda görünür)
+  // "Konumumu kullan" (28 Ekim): yalnız yaklaşık konum istenir ve yalnız uygulama kullanılırken (Ali Kemal: "tam konum
+  // şeklinde bir daha sorulmasın"); hassas konum izni manifestte de yok. Bekleme 20 sn, gelmezse 30 sn ile bir kez
+  // daha. Bulunan noktanın ilçe adı sunucudan alınır: "Konumum · İzmit" (bulunamazsa "Konumum").
   const [locating, setLocating] = useState(false);
   const gps = async () => {
     setToast("");
     setLocating(true);
     try {
       let perm = await Geolocation.checkPermissions().catch(() => null);
-      if (perm && perm.location !== "granted" && perm.coarseLocation !== "granted") {
-        perm = await Geolocation.requestPermissions({ permissions: ["location", "coarseLocation"] });
+      if (perm && perm.coarseLocation !== "granted") {
+        perm = await Geolocation.requestPermissions({ permissions: ["coarseLocation"] });
       }
-      if (perm && perm.location !== "granted" && perm.coarseLocation !== "granted") {
+      if (perm && perm.coarseLocation !== "granted") {
         setToast("Konum izni verilmedi. Ayarlar › Uygulamalar › havameridyen › İzinler › Konum'dan açabilir ya da şehir arayarak devam edebilirsin.");
         return;
       }
@@ -110,12 +111,13 @@ export default function Loc({ place, favorites, onPick, onRemove, onSheet }) {
         pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 20000, maximumAge: 600000 });
       } catch (e) {
         if (String(e?.code || e?.message || "").includes("0010")) {
-          pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
+          pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 30000, maximumAge: 1800000 });
         } else throw e;
       }
       const lat = Math.round(pos.coords.latitude * 100) / 100;
       const lon = Math.round(pos.coords.longitude * 100) / 100;
-      onPick({ name: "Konumum", admin1: null, lat, lon });
+      const nm = await reverseName(lat, lon);
+      onPick({ name: nm ? `Konumum · ${nm.name}` : "Konumum", admin1: nm ? nm.admin1 : null, lat, lon });
     } catch (e) {
       const code = String(e?.code || "");
       const msg = String(e?.message || "");
@@ -195,7 +197,7 @@ export default function Loc({ place, favorites, onPick, onRemove, onSheet }) {
         </div>
       </div>
       <div className="foot">
-        Veri: Open-Meteo (CC BY 4.0)
+        Veri: Open-Meteo (CC BY 4.0) · Konum adları © OpenStreetMap katkıcıları
         <div className="infolinks">
           {MENU.map(([k, t]) => (
             <button key={k} type="button" onClick={() => onSheet(k)}>

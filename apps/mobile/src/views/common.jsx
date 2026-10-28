@@ -105,9 +105,15 @@ export function UnitToggle({ unit, onUnit, ghost }) {
   );
 }
 
-// Sayfa düğmeleri (28 Ekim, günlük sayfayla aynı stil): Saatlik · Modeller · Grafikler. Koyu lacivert, alt gölge
-// şeridi (basınca iner), beyaz ikon, sağda ok. Bulunulan sayfanın düğmesi açık renkte ve basılamaz.
-const NAV_ICON = {
+// Alt sekme çubuğu (28 Ekim, Ali Kemal: "B", görünüm "B3"): Günlük · Saatlik · Modeller · Grafikler; ekranın altına
+// sabit, açık zemin; bulunulan sekmenin üstünde lacivert çizgi.
+const TAB_ICON = {
+  day: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <rect x="4" y="5.5" width="16" height="14" rx="2.5" />
+      <path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" />
+    </svg>
+  ),
   p1: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <circle cx="12" cy="12" r="8.5" />
@@ -127,25 +133,22 @@ const NAV_ICON = {
     </svg>
   ),
 };
-const NAV_TEXT = { p1: "Saatlik", p2: "Modeller", p3: "Grafikler" };
-
-export function PageNav({ current, pages = ["p1", "p2", "p3"], onGo }) {
+const TAB_TEXT = { day: "Günlük", p1: "Saatlik", p2: "Modeller", p3: "Grafikler" };
+export function TabBar({ current, onGo, off = [] }) {
   return (
-    <nav className="pnav" aria-label="Sayfalar">
-      {pages.map((p) => {
-        const here = p === current;
-        return (
-          <button key={p} type="button" className="pbtn" aria-current={here ? "page" : undefined} disabled={here} onClick={() => onGo(p)}>
-            <span className="pi">{NAV_ICON[p]}</span>
-            <b>{NAV_TEXT[p]}</b>
-            {!here && (
-              <svg className="pch" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 6l6 6-6 6" />
-              </svg>
-            )}
-          </button>
-        );
-      })}
+    <nav className="tabbar" aria-label="Sayfalar">
+      {["day", "p1", "p2", "p3"].map((p) => (
+        <button
+          key={p}
+          type="button"
+          className={"tab" + (off.includes(p) ? " off" : "")}
+          aria-current={p === current ? "page" : undefined}
+          onClick={() => p !== current && onGo(p)}
+        >
+          {TAB_ICON[p]}
+          <span>{TAB_TEXT[p]}</span>
+        </button>
+      ))}
     </nav>
   );
 }
