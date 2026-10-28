@@ -34,8 +34,9 @@ export const fetchForecast = (lat, lon) => getJson(forecastPath(lat, lon));
 // Sayfa 3 "16 gün": yalnız o görünüm açılınca, bütün modeller 16 gün
 export const fetchForecast16 = (lat, lon) => getJson(forecastPath(lat, lon, 16));
 
-// Favori kartı: yalnız ECMWF, bugün
-export const fetchFavorite = (lat, lon) => getJson(forecastPath(lat, lon, 1, ["ecmwf_ifs"]));
+// Favori kartı: beş modelin ortak tahmini (site favorileri ve widget'la aynı adres: 5 gün, varsayılan 5 model)
+export const FAV_MODEL_IDS = ["ecmwf_ifs", "gfs_seamless", "icon_seamless", "ukmo_seamless", "meteofrance_seamless"];
+export const fetchFavorite = (lat, lon) => getJson(forecastPath(lat, lon, 5, FAV_MODEL_IDS));
 
 export async function searchLocations(q) {
   const d = await getJson(`/api/v1/locations?q=${encodeURIComponent(q.trim())}`);

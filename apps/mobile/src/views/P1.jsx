@@ -6,7 +6,7 @@ import { median } from "@lib/agreement";
 import { CLS_RNG, CLS_TXT, SKY, WxIcon, condView } from "../icons";
 import { dir16, fmt, pad, parseT, speed, tsuf, unitLabel, whenText } from "../format";
 import { dayIndexOf, gust, val } from "../data";
-import { HourStrip, PageLinks, UnitToggle, useDaySwipe } from "./common";
+import { HourStrip, PageNav, UnitToggle, useDaySwipe } from "./common";
 
 const AG_COL = { ok: "#DDE0DB", partial: "#F0C98A", split: "#D98E2B" };
 const STORM_KMH = 62;
@@ -269,7 +269,7 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
         </div>
       </div>
       <HourStrip hours={hours} idx={i} nowIdx={nowIdx} onPick={onIdx} stripKey={`p1|${d}`} />
-      <PageLinks pages={["p2", "p3"]} onGo={onGo} />
+      <PageNav current="p1" onGo={onGo} />
       <div className="foot">
         Değerler seçili modellerin ortancasıdır, tahmindir, ölçüm değildir.
         <br />

@@ -1,16 +1,24 @@
-// Konum sayfası (Prototip 9; web ana sayfasına sadık): arama, "Konumumu kullan", hızlı şehirler, favoriler (ECMWF kartı).
+// Konum sayfası (Prototip 9; web ana sayfasına sadık): arama, "Konumumu kullan", hızlı şehirler, favoriler (beş modelin ortak tahmini).
 
 import { useEffect, useState } from "react";
 import { Geolocation } from "@capacitor/geolocation";
-import { condAt } from "@lib/agreement";
 import { HOME_CITIES } from "@lib/slugify";
 import { fetchFavorite, searchLocations } from "../api";
-import { fmt, tsiNowHour } from "../format";
-import { dayMax, dayMin, nowIndex, toModels, val } from "../data";
+import { fmt, parseT, tsiNowHour } from "../format";
+import { WxIcon, condView } from "../icons";
+import { nowIndex } from "../data";
 import { placeKey, placeLabel } from "../store";
 import { MENU } from "./Sheet";
 
-// Favori kartı: yalnız ECMWF, şimdiki saat (23 Eylül kararı: favoriler kartı ECMWF kalır)
+// Favori kartı (28 Ekim, Ali Kemal: "uygulamadaki kartları da 5 modelin ortak tahminine geçirip sitedeki ve
+// widget'taki tahminle aynı hale getirelim"): beş modelin ortak tahmini (/api/v1 consensus; site favorileri ve widget'la
+// aynı istek, aynı önbellek). Şimdiki saatin ortak durumu, ikonu ve ortanca sıcaklığı; bugünün en düşük / en yüksek
+// ortancası; gün yağışlıysa bugünün toplam yağışı.
+const pv = (p) => (p && p.v != null ? p.v : null);
+function mmText(x) {
+  if (x == null || x < 0.05) return null;
+  return `${x < 9.95 ? x.toFixed(1).replace(".", ",") : Math.round(x)} mm`;
+}
 function FavCard({ place, onOpen }) {
   const [st, setSt] = useState({ status: "loading" });
   useEffect(() => {
@@ -18,12 +26,21 @@ function FavCard({ place, onOpen }) {
     fetchFavorite(place.lat, place.lon)
       .then((r) => {
         if (!live) return;
-        const [m] = toModels(r);
-        if (!m) return setSt({ status: "error" });
-        const times = m.series.map((s) => s.time);
+        const times = r.time || [];
+        const cons = r.consensus || {};
         const i = nowIndex(times, tsiNowHour());
-        const day = { h0: 0, h1: times.length };
-        setSt({ status: "ok", t: val(m, "temp", i), mn: dayMin(m, day), mx: dayMax(m, day), cond: condAt(m, i) });
+        const h = i >= 0 ? cons.hourly?.[i] : null;
+        if (!h || pv(h.temp) == null) return setSt({ status: "error" });
+        const today = (cons.daily || []).find((d) => d.date === String(times[i]).slice(0, 10));
+        setSt({
+          status: "ok",
+          t: pv(h.temp),
+          mn: today ? pv(today.temp_min) : null,
+          mx: today ? pv(today.temp_max) : null,
+          mm: today && today.cond?.wet ? mmText(pv(today.precip_total)) : null,
+          cond: h.cond || null,
+          h: parseT(times[i]).h,
+        });
       })
       .catch(() => live && setSt({ status: "error" }));
     return () => {
@@ -32,8 +49,13 @@ function FavCard({ place, onOpen }) {
   }, [place.lat, place.lon]);
   return (
     <button type="button" className="favcard" onClick={onOpen}>
+      {/* hava ikonu (28 Ekim, Ali Kemal: "Favorilerde hava durumu ikonu sayfayı renklendirdi güzel") */}
+      <WxIcon name={st.status === "ok" ? condView(st.cond, st.h).icon : "cloud"} className={"ic" + (st.status === "ok" ? "" : " off")} />
       <span className="n">{placeLabel(place)}</span>
-      <span className="t">{st.status === "ok" ? `${fmt(st.t)}°` : "—"}</span>
+      <span className="t">
+        {st.status === "ok" ? `${fmt(st.t)}°` : "—"}
+        {st.mm && <small className="mm">{st.mm}</small>}
+      </span>
       <span className="s">
         {st.status === "ok" ? (
           <>
@@ -50,11 +72,10 @@ function FavCard({ place, onOpen }) {
   );
 }
 
-export default function Loc({ place, favorites, onPick, onFavorites, onSheet }) {
+export default function Loc({ place, favorites, onPick, onRemove, onSheet }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState(null);
   const [toast, setToast] = useState("");
-  const isFav = favorites.some((f) => placeKey(f) === placeKey(place));
 
   const search = async (e) => {
     e.preventDefault();
@@ -142,28 +163,22 @@ export default function Loc({ place, favorites, onPick, onFavorites, onSheet }) 
       {toast && <div className="toast">{toast}</div>}
       <div className="sec">
         <span>Favoriler</span>
-        <span>ECMWF · şimdi</span>
+        <span>{favorites.length ? "5 model · şimdi" : ""}</span>
       </div>
+      {/* Favori ekleme tahmin sayfasının üst çubuğundaki ☆ ile (28 Ekim, Ali Kemal); çıkarma × ile (altta "Geri al") */}
+      {!favorites.length && (
+        <div className="favempty">
+          Henüz favori yok. Bir konumu açıp üstteki <b>☆</b>'a dokun; burada şimdiki durumuyla görünür.
+        </div>
+      )}
       {favorites.map((f) => (
         <div className="favrow" key={placeKey(f)}>
           <FavCard place={f} onOpen={() => onPick(f)} />
-          <button type="button" className="favdel" aria-label={`${placeLabel(f)} favorilerden çıkar`} onClick={() => onFavorites(favorites.filter((x) => placeKey(x) !== placeKey(f)))}>
+          <button type="button" className="favdel" aria-label={`${placeLabel(f)} favorilerden çıkar`} onClick={() => onRemove(f)}>
             ×
           </button>
         </div>
       ))}
-      {!isFav && (
-        <button type="button" className="favadd" onClick={() => onFavorites([...favorites, place])}>
-          ☆ {placeLabel(place)} favorilere ekle
-        </button>
-      )}
-      <button type="button" className="mlink" style={{ marginTop: 16 }} onClick={() => onSheet("modeller")}>
-        <span>
-          <b>Modeller hakkında</b>
-          <small>kurum, çözünürlük, güncelleme, kararsızlık verisi</small>
-        </span>
-        <span className="ch">›</span>
-      </button>
       <div className="sec" style={{ marginTop: 16 }}>
         <span>Üç adımda karşılaştır</span>
         <span />

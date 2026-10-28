@@ -8,7 +8,7 @@ import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
 import { DAYN, MON, fmt, pad, parseT, speed, unitLabel } from "../format";
 import { avg, dayGust, dayIndexOf, dayMax, dayMin, dayVals, hakim, hasDay, val } from "../data";
-import { HourStrip, PageLinks, UnitToggle } from "./common";
+import { HourStrip, PageNav, UnitToggle } from "./common";
 import { PrecipGrid } from "./precip";
 
 function MiniRose({ deg, color }) {
@@ -209,7 +209,7 @@ export default function P2({ models, cons, times, days, idx, nowIdx, unit, onUni
           />
         ))}
       </div>
-      <PageLinks pages={["p1", "p3"]} onGo={onGo} />
+      <PageNav current="p2" onGo={onGo} />
       <div className="foot">
         Değerler model tahminidir, ölçüm değildir.
         <br />

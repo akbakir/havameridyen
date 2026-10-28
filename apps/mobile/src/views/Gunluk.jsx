@@ -1,0 +1,287 @@
+// Günlük sayfa (28 Ekim 2026, Ali Kemal; tasarım tuvalinde "B kompakt"): konum seçilince ilk açılan tahmin sayfası.
+// Üstte tahmin kaynağı (ortak tahmin ya da tek model), 16 günlük kayan gün şeridi (‹ › bir gün kaydırır; seçili güne
+// ikinci dokunuş Saatlik'i açar), seçili günün kartı (durum, en yüksek / en düşük, toplam yağış, rüzgar gülü + aralık
+// + hamle, 3 saatlik dilimler) ve Saatlik · Modeller · Grafikler düğmeleri. Değerler lib/consensus.js'ten (günlük
+// ortak durum, ortanca ve uyum; rüzgar 28 Ekim'de eklendi).
+
+import { useLayoutEffect, useRef } from "react";
+import { Mark, SKY, WxIcon, condView } from "../icons";
+import { DAYN, MON, dir16, fmt, parseT, speed, unitLabel } from "../format";
+import { PageNav, UnitToggle } from "./common";
+
+const GUN = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+const pv = (p) => (p && p.v != null ? p.v : null);
+
+// Yağış: 10 mm altı tek ondalık, üstü tam sayı; 0,05 altı yazılmaz
+function mmTxt(v) {
+  if (v == null || v < 0.05) return null;
+  return v < 9.95 ? fmt(v, 1) : fmt(v, 0);
+}
+
+// Uyum dairesi (gün kartında): hemfikir ✓ · kısmen ~ · ayrışıyor ≠; karşılaştıracak model yoksa kesik çizgili boş daire
+function AgreeDot({ cond, single }) {
+  if (single || !cond) return <span className="gdot none" />;
+  if (!["ok", "partial", "split"].includes(cond.level)) return <span className="gdot na" title="tek model · uyum yok" />;
+  return (
+    <span className={`gdot p-${cond.level}`} title={`${cond.in}/${cond.n} model`}>
+      <Mark level={cond.level} />
+    </span>
+  );
+}
+
+// Rüzgar gülü (Sayfa 1'deki gibi): her model kendi renginde ±20° dilim; dilim = modelin günlük hakim yönü
+function Rose({ dirs, colors }) {
+  const p = (a, r) => `${(32 + r * Math.sin((a * Math.PI) / 180)).toFixed(1)},${(32 - r * Math.cos((a * Math.PI) / 180)).toFixed(1)}`;
+  return (
+    <svg className="gico" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="28" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.35)" />
+      {[
+        [0, "K"],
+        [90, "D"],
+        [180, "G"],
+        [270, "B"],
+      ].map(([a, l]) => (
+        <text key={l} x={(32 + 24 * Math.sin((a * Math.PI) / 180)).toFixed(1)} y={(32 - 24 * Math.cos((a * Math.PI) / 180) + 3).toFixed(1)} fontSize="7" textAnchor="middle" fill="rgba(255,255,255,.7)" fontFamily="IBM Plex Mono">
+          {l}
+        </text>
+      ))}
+      {dirs.map((d) => (
+        <path key={d.id} d={`M32,32 L${p(d.dir - 20, 27)} A27,27 0 0 1 ${p(d.dir + 20, 27)} Z`} fill={colors[d.id] || "#fff"} fillOpacity=".62" stroke="#fff" strokeWidth=".8" />
+      ))}
+      <circle cx="32" cy="32" r="2.4" fill="#fff" />
+    </svg>
+  );
+}
+
+// Toplam yağış: rüzgar gülüyle aynı çerçevede damla (ölçek yok, tek değer; Ali Kemal 28 Ekim)
+function RainDisc() {
+  return (
+    <svg className="gico" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="28" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.35)" />
+      <path transform="translate(32,30) scale(1.45)" d="M0,-8c4.2,4.5 7.3,8 7.3,11.3a7.3,7.3 0 1 1-14.6,0c0-3.3 3.1-6.8 7.3-11.3z" fill="#C4E2FF" stroke="#163A6B" strokeWidth="1" />
+    </svg>
+  );
+}
+
+const Arrow = ({ dir, onClick, disabled }) => (
+  <button type="button" className="garr" aria-label={dir < 0 ? "Önceki gün" : "Sonraki gün"} disabled={disabled} onClick={onClick}>
+    <svg viewBox="0 0 24 24">
+      <path d={dir < 0 ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7"} />
+    </svg>
+  </button>
+);
+
+export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHourly, onGo, unit, onUnit, multi, onPicker, loading16, beyond }) {
+  const daily = (cons.daily || []).filter((d) => pv(d.temp_max) != null || d.cond);
+  const k = Math.max(0, daily.findIndex((d) => d.date === dayKey));
+  const D = daily[k];
+  const strip = useRef(null);
+  const single = src.single;
+
+  // Seçili gün kartı şeritte görünür kalsın (ilk açılışta ve gün değişince)
+  useLayoutEffect(() => {
+    const el = strip.current;
+    const act = el && el.querySelector('[aria-pressed="true"]');
+    if (!act) return;
+    const a = act.offsetLeft;
+    const b = a + act.offsetWidth;
+    if (a < el.scrollLeft) el.scrollLeft = a - 4;
+    else if (b > el.scrollLeft + el.clientWidth) el.scrollLeft = b - el.clientWidth + 4;
+  }, [k, daily.length]);
+
+  if (!D) return <div className="loading">Tahmin yükleniyor…</div>;
+
+  const pt = parseT(D.date + "T12:00");
+  const view = condView(D.cond, 12);
+  const colors = Object.fromEntries(models.map((m) => [m.id, m.color]));
+  const W = D.wind || {};
+  const slots = (cons.slots3 || []).filter((s) => s.start.startsWith(D.date));
+  const tIndex = (t) => times.indexOf(t);
+  const rain = mmTxt(pv(D.precip_total));
+  const nModels = D.cond?.n ?? W.n ?? models.length;
+
+  return (
+    <div className="gunluk">
+      {/* Tahmin kaynağı: ortak tahmin ya da tek model (alttan açılan listeden) */}
+      <button type="button" className="gsrc" aria-label="Tahmin kaynağını seç" onClick={onPicker}>
+        <span className="dots">
+          {src.models.map((m) => (
+            <i key={m.id} style={{ background: m.color }} />
+          ))}
+        </span>
+        <span className="gsrc-t">
+          <b>{single ? src.models[0]?.label : "Ortak tahmin"}</b>
+          <small>{single ? "tek model · uyum yok" : `${src.models.length} modelin ortancası ve uyumu`}</small>
+        </span>
+        <svg className="chev" viewBox="0 0 24 24">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {/* 16 günlük şerit: ‹ › bir gün kaydırır; seçili güne ikinci dokunuş Saatlik'i açar */}
+      <div className="gstrip-w">
+        <Arrow dir={-1} disabled={k === 0} onClick={() => onDay(daily[k - 1].date)} />
+        <div className="gstrip" ref={strip}>
+          {daily.map((d, i) => {
+            const p = parseT(d.date + "T12:00");
+            const on = i === k;
+            const mm = mmTxt(pv(d.precip_total));
+            return (
+              <button
+                key={d.date}
+                type="button"
+                className="gchip"
+                aria-pressed={on}
+                aria-label={`${DAYN[p.w]} ${p.d} ${MON[p.m]}: ${d.cond?.text || ""}`}
+                onClick={() => (on ? onHourly(d.date) : onDay(d.date))}
+              >
+                <span className="gc-d">
+                  <b>{i === 0 ? "Bugün" : GUN[p.w]}</b>
+                  <small>
+                    {p.d} {MON[p.m].slice(0, 3)}
+                  </small>
+                </span>
+                <WxIcon name={condView(d.cond, 12).icon} className="gc-ic" />
+                <span className="gc-mm">{mm || ""}</span>
+                <span className="gc-t">
+                  <b className="mx">{pv(d.temp_max) == null ? "—" : Math.round(pv(d.temp_max))}</b>
+                  <span className="sl">/</span>
+                  <span className="mn">{pv(d.temp_min) == null ? "—" : Math.round(pv(d.temp_min))}</span>
+                </span>
+                <AgreeDot cond={d.cond} single={single} />
+              </button>
+            );
+          })}
+        </div>
+        <Arrow dir={1} disabled={k >= daily.length - 1} onClick={() => onDay(daily[k + 1].date)} />
+      </div>
+      {loading16 && <div className="gnote">16 günlük veri yükleniyor…</div>}
+
+      {/* Seçili günün kartı */}
+      <div className="gday" style={{ background: SKY[view.sky] }}>
+        <div className="gd-h">
+          <span>
+            {DAYN[pt.w].toLocaleUpperCase("tr")} · {pt.d} {MON[pt.m].toLocaleUpperCase("tr")}
+          </span>
+          <span>{single ? src.models[0]?.label : `${nModels} model`}</span>
+        </div>
+        <div className="gd-main">
+          <WxIcon name={view.icon} className="gd-ic" />
+          <span>
+            <b>{view.text}</b>
+            <span className="gd-t">
+              <span className="mx">{pv(D.temp_max) == null ? "—" : `${Math.round(pv(D.temp_max))}°`}</span>
+              <span className="sl"> / </span>
+              <span className="mn">{pv(D.temp_min) == null ? "—" : `${Math.round(pv(D.temp_min))}°`}</span>
+            </span>
+          </span>
+        </div>
+        <div className="gd-g">
+          <div className="gg">
+            <RainDisc />
+            <span>
+              <small>Toplam yağış</small>
+              <b>{rain ? `${rain} mm` : "yok"}</b>
+            </span>
+          </div>
+          <div className="gg">
+            <Rose dirs={W.dirs || []} colors={colors} />
+            <span>
+              <small>Rüzgar {dir16(W.dir)}</small>
+              <b>{W.max == null ? "—" : `${Math.round(speed(W.min, unit))}–${Math.round(speed(W.max, unit))} ${unitLabel(unit)}`}</b>
+              <small className="mono">{pv(D.gust_max) == null ? "hamle —" : `hamle ${Math.round(speed(pv(D.gust_max), unit))} ${unitLabel(unit)}`}</small>
+            </span>
+            <span className="gg-u">
+              <UnitToggle unit={unit} onUnit={onUnit} ghost />
+            </span>
+          </div>
+        </div>
+        {slots.length > 0 && (
+          <>
+            <div className="gd-sep" />
+            <div className="gd-slots">
+              {slots.map((s) => {
+                const h = parseT(s.start).h;
+                const i = tIndex(s.start);
+                const t = i >= 0 ? pv(cons.hourly[i]?.temp) : null;
+                const mm = s.cond?.wet ? mmTxt(pv(s.precip)) : null;
+                return (
+                  <span key={s.start} className="gs">
+                    <small>{String(h).padStart(2, "0")}</small>
+                    <WxIcon name={condView(s.cond, h + 1).icon} className="gs-ic" />
+                    <b>{t == null ? "—" : `${Math.round(t)}°`}</b>
+                    <small className="gs-mm">{mm || ""}</small>
+                  </span>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+
+      <PageNav pages={multi ? ["p1", "p2", "p3"] : ["p1"]} onGo={onGo} />
+      {beyond && <div className="gnote">Saatlik ve model sayfaları ilk 7 günü gösterir.</div>}
+    </div>
+  );
+}
+
+// Tahmin kaynağı listesi (alttan açılır): ortak tahmin (seçili modeller; tek model seçiliyken varsayılan 5 modele döner)
+// ya da tek model. Seçim Saatlik · Modeller · Grafikler sayfalarındaki model seçimiyle ortaktır.
+const REGION = {
+  ecmwf_ifs: "Avrupa",
+  gfs_seamless: "ABD",
+  icon_seamless: "Almanya",
+  ukmo_seamless: "Birleşik Krallık",
+  meteofrance_seamless: "Fransa",
+  gem_seamless: "Kanada",
+  jma_gsm: "Japonya",
+};
+export function SrcSheet({ all, selected, ortak, onChoose, onClose }) {
+  const multi = selected.length > 1;
+  const Radio = ({ on }) => <span className={"rd" + (on ? " on" : "")} />;
+  return (
+    <div className="sheet" role="dialog" aria-label="Tahmin kaynağı">
+      <div className="sh-back" onClick={onClose} />
+      <div className="sh-card">
+        <div className="sh-grip" />
+        <div className="sh-head">
+          <b>Tahmin kaynağı</b>
+          <button type="button" aria-label="Kapat" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="sh-body src">
+          <button type="button" className={"srow" + (multi ? " on" : "")} onClick={() => onChoose("ortak")}>
+            <span className="dots">
+              {ortak.map((m) => (
+                <i key={m.id} style={{ background: m.color }} />
+              ))}
+            </span>
+            <span>
+              <b>Ortak tahmin</b>
+              <small>{ortak.length} modelin ortancası ve uyumu · önerilen</small>
+            </span>
+            <Radio on={multi} />
+          </button>
+          <div className="sh-sec">TEK MODEL</div>
+          {all.map((m) => {
+            const on = !multi && selected[0] === m.id;
+            return (
+              <button key={m.id} type="button" className={"srow" + (on ? " on" : "")} onClick={() => onChoose(m.id)}>
+                <span className="dots">
+                  <i style={{ background: m.color }} />
+                </span>
+                <span>
+                  <b>{m.label}</b>
+                  <small>{REGION[m.id] || ""}</small>
+                </span>
+                <Radio on={on} />
+              </button>
+            );
+          })}
+          <p className="sh-note">Tek model seçilince uyum işaretleri gizlenir. Model seçimi Saatlik, Modeller ve Grafikler sayfalarıyla ortaktır.</p>
+        </div>
+      </div>
+    </div>
+  );
+}

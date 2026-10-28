@@ -105,51 +105,48 @@ export function UnitToggle({ unit, onUnit, ghost }) {
   );
 }
 
-const LINK_ICON = {
+// Sayfa düğmeleri (28 Ekim, günlük sayfayla aynı stil): Saatlik · Modeller · Grafikler. Koyu lacivert, alt gölge
+// şeridi (basınca iner), beyaz ikon, sağda ok. Bulunulan sayfanın düğmesi açık renkte ve basılamaz.
+const NAV_ICON = {
   p1: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#2C5E8C" strokeWidth="1.8" strokeLinecap="round">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <circle cx="12" cy="12" r="8.5" />
-      <path d="M12 7v5l3.5 2" />
+      <path d="M12 7.5V12l3 2" />
     </svg>
   ),
   p2: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#2C5E8C" strokeWidth="1.8" strokeLinejoin="round">
-      <rect x="3" y="5" width="7.5" height="14" rx="2" />
-      <rect x="13.5" y="5" width="7.5" height="14" rx="2" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+      <rect x="3.5" y="5" width="7" height="14" rx="2" />
+      <rect x="13.5" y="5" width="7" height="14" rx="2" />
     </svg>
   ),
   p3: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#2C5E8C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 18l5-6 4 3 5-8 4 5" />
-      <path d="M3 21h18" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4v16h16" />
+      <path d="M7 15l4-5 3 3 5-6" />
     </svg>
   ),
 };
-const LINK_TEXT = {
-  p1: ["Model verilerini saatlik gör", "Karşılaştırmalı · ortanca ve uyum"],
-  p2: ["Model verilerini ayrı ayrı gör", "Günlük · her model kendi kartında"],
-  p3: ["Model verilerini grafiksel gör", "Saatlik / 3 / 7 / 16 gün · tüm parametreler"],
-};
+const NAV_TEXT = { p1: "Saatlik", p2: "Modeller", p3: "Grafikler" };
 
-// Sayfalar arası bağlantı kartları (Sayfa 1 · 2 · 3)
-export function PageLinks({ pages, onGo }) {
+export function PageNav({ current, pages = ["p1", "p2", "p3"], onGo }) {
   return (
-    <div className="links">
-      {pages.map((p) => (
-        <button key={p} type="button" className="link" onClick={() => onGo(p)}>
-          <span className="li">{LINK_ICON[p]}</span>
-          <span>
-            <b>{LINK_TEXT[p][0]}</b>
-            <small>{LINK_TEXT[p][1]}</small>
-          </span>
-          <span className="ch">
-            <svg viewBox="0 0 14 14" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 2.5 L9.5 7 L5 11.5" />
-            </svg>
-          </span>
-        </button>
-      ))}
-    </div>
+    <nav className="pnav" aria-label="Sayfalar">
+      {pages.map((p) => {
+        const here = p === current;
+        return (
+          <button key={p} type="button" className="pbtn" aria-current={here ? "page" : undefined} disabled={here} onClick={() => onGo(p)}>
+            <span className="pi">{NAV_ICON[p]}</span>
+            <b>{NAV_TEXT[p]}</b>
+            {!here && (
+              <svg className="pch" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            )}
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
