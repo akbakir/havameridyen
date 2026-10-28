@@ -130,7 +130,7 @@ export default function App() {
         )}
       </div>
 
-      {view === "loc" && <Loc allModels={ALL} place={place} favorites={favorites} onPick={pick} onFavorites={(f) => update({ favorites: f })} onSheet={(p) => setSheet({ page: p })} />}
+      {view === "loc" && <Loc place={place} favorites={favorites} onPick={pick} onFavorites={(f) => update({ favorites: f })} onSheet={(p) => setSheet({ page: p })} />}
 
       {view === "fc" && (
         <>

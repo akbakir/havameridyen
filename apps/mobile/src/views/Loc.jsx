@@ -50,7 +50,7 @@ function FavCard({ place, onOpen }) {
   );
 }
 
-export default function Loc({ allModels, place, favorites, onPick, onFavorites, onSheet }) {
+export default function Loc({ place, favorites, onPick, onFavorites, onSheet }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState(null);
   const [toast, setToast] = useState("");
@@ -69,15 +69,43 @@ export default function Loc({ allModels, place, favorites, onPick, onFavorites, 
     }
   };
 
+  // "Konumumu kullan" (28 Ekim: telefonda "Konum alınamadı" — izin önce açıkça istenir, zaman aşımı uzatıldı,
+  // ağ konumu yetmezse GPS ile bir kez daha denenir; hata kodu mesajın sonunda görünür)
+  const [locating, setLocating] = useState(false);
   const gps = async () => {
     setToast("");
+    setLocating(true);
     try {
-      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000 });
+      let perm = await Geolocation.checkPermissions().catch(() => null);
+      if (perm && perm.location !== "granted" && perm.coarseLocation !== "granted") {
+        perm = await Geolocation.requestPermissions({ permissions: ["location", "coarseLocation"] });
+      }
+      if (perm && perm.location !== "granted" && perm.coarseLocation !== "granted") {
+        setToast("Konum izni verilmedi. Ayarlar › Uygulamalar › havameridyen › İzinler › Konum'dan açabilir ya da şehir arayarak devam edebilirsin.");
+        return;
+      }
+      let pos;
+      try {
+        pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 20000, maximumAge: 600000 });
+      } catch (e) {
+        if (String(e?.code || e?.message || "").includes("0010")) {
+          pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
+        } else throw e;
+      }
       const lat = Math.round(pos.coords.latitude * 100) / 100;
       const lon = Math.round(pos.coords.longitude * 100) / 100;
       onPick({ name: "Konumum", admin1: null, lat, lon });
-    } catch {
-      setToast("Konum alınamadı. Konum izni verilmediyse şehir arayarak devam edebilirsin.");
+    } catch (e) {
+      const code = String(e?.code || "");
+      const msg = String(e?.message || "");
+      const has = (c) => code.includes(c) || msg.includes(c);
+      let t = "Konum alınamadı. Şehir arayarak devam edebilirsin.";
+      if (has("0003")) t = "Konum izni verilmedi. Ayarlar › Uygulamalar › havameridyen › İzinler › Konum'dan açabilirsin.";
+      else if (has("0007") || has("0009") || has("0017")) t = "Telefonun konum hizmeti kapalı. Hızlı ayarlardan Konum'u açıp yeniden dene.";
+      else if (has("0010")) t = "Konum zamanında bulunamadı. Açık alanda ya da bir süre sonra yeniden dene.";
+      setToast(`${t}${code || msg ? ` (${code || msg})` : ""}`);
+    } finally {
+      setLocating(false);
     }
   };
 
@@ -101,8 +129,8 @@ export default function Loc({ allModels, place, favorites, onPick, onFavorites, 
           ))}
         </div>
       )}
-      <button type="button" className="gps" onClick={gps}>
-        📍 Konumumu kullan
+      <button type="button" className="gps" onClick={gps} disabled={locating}>
+        {locating ? "📍 Konum alınıyor…" : "📍 Konumumu kullan"}
       </button>
       <div className="cities">
         {HOME_CITIES.map((c) => (
@@ -129,19 +157,7 @@ export default function Loc({ allModels, place, favorites, onPick, onFavorites, 
           ☆ {placeLabel(place)} favorilere ekle
         </button>
       )}
-      <div className="sec" style={{ marginTop: 16 }}>
-        <span>Modeller</span>
-        <span>{allModels.length} model</span>
-      </div>
-      <div className="mrow">
-        {allModels.map((m) => (
-          <span key={m.id}>
-            <i style={{ background: m.color }} />
-            {m.label}
-          </span>
-        ))}
-      </div>
-      <button type="button" className="mlink" onClick={() => onSheet("modeller")}>
+      <button type="button" className="mlink" style={{ marginTop: 16 }} onClick={() => onSheet("modeller")}>
         <span>
           <b>Modeller hakkında</b>
           <small>kurum, çözünürlük, güncelleme, kararsızlık verisi</small>
