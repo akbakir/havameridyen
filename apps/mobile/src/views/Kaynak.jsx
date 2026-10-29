@@ -30,7 +30,7 @@ export function SrcBar({ models, single, onOpen }) {
       </span>
       <span className="gsrc-t">
         <b>{single ? models[0]?.label : "Ortak tahmin"}</b>
-        <small>{single ? "tek model · uyum yok" : `${models.length} modelin ortancası ve uyumu`}</small>
+        <small>{single ? "tek model" : `${models.length} modelin ortancası ve uyumu`}</small>
       </span>
       <svg className="chev" viewBox="0 0 24 24">
         <path d="M6 9l6 6 6-6" />
