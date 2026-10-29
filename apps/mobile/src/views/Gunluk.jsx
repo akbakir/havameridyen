@@ -63,6 +63,71 @@ function RainDisc() {
   );
 }
 
+// Sıcaklık rengi (soğuk mavi → ılık turkuaz → sıcak amber → çok sıcak kırmızı); aralık çubuğunun iki ucu
+const TSTOPS = [
+  [8, [61, 123, 196]],
+  [14, [66, 156, 170]],
+  [19, [227, 169, 59]],
+  [25, [217, 96, 59]],
+];
+function tcol(t) {
+  if (t <= TSTOPS[0][0]) return `rgb(${TSTOPS[0][1].join(",")})`;
+  if (t >= TSTOPS[TSTOPS.length - 1][0]) return `rgb(${TSTOPS[TSTOPS.length - 1][1].join(",")})`;
+  for (let i = 0; i < TSTOPS.length - 1; i++) {
+    const [a, ca] = TSTOPS[i];
+    const [b, cb] = TSTOPS[i + 1];
+    if (t >= a && t <= b) {
+      const f = (t - a) / (b - a);
+      return `rgb(${ca.map((c, j) => Math.round(c + (cb[j] - c) * f)).join(",")})`;
+    }
+  }
+  return "rgb(66,156,170)";
+}
+
+// 16 günlük liste: gün, ikon, yağış (yalnız yağışlı günde), en düşük, sıcaklık aralığı çubuğu, en yüksek, uyum
+function DayList({ daily, k, single, onPick }) {
+  const mins = daily.map((d) => pv(d.temp_min)).filter((v) => v != null);
+  const maxs = daily.map((d) => pv(d.temp_max)).filter((v) => v != null);
+  const LO = Math.min(...mins);
+  const HI = Math.max(...maxs);
+  const pc = (v) => (HI > LO ? ((v - LO) / (HI - LO)) * 100 : 50);
+  return (
+    <div className="glist">
+      <div className="gl-h">
+        <span>gün · yağış · en düşük — en yüksek</span>
+        <span>{single ? "" : "uyum"}</span>
+      </div>
+      {daily.map((d, i) => {
+        const p = parseT(d.date + "T12:00");
+        const mn = pv(d.temp_min);
+        const mx = pv(d.temp_max);
+        const mm = d.cond?.wet ? mmTxt(pv(d.precip_total)) : null;
+        return (
+          <button key={d.date} type="button" className={"gl-r" + (i === k ? " on" : "")} onClick={() => onPick(d.date)}>
+            <span className="gl-d">
+              <b>{i === 0 ? "Bugün" : GUN[p.w]}</b>
+              <small>
+                {p.d} {MON[p.m].slice(0, 3)}
+              </small>
+            </span>
+            <WxIcon name={condView(d.cond, 12).icon} className="gl-ic" />
+            <span className="gl-mm">{mm ? `${mm} mm` : ""}</span>
+            <span className="gl-mn">{mn == null ? "—" : `${Math.round(mn)}°`}</span>
+            <span className="gl-bar">
+              {mn != null && mx != null && (
+                <i style={{ left: `${pc(mn)}%`, width: `${Math.max(2, pc(mx) - pc(mn))}%`, background: `linear-gradient(90deg,${tcol(mn)},${tcol(mx)})` }} />
+              )}
+            </span>
+            <span className="gl-mx">{mx == null ? "—" : `${Math.round(mx)}°`}</span>
+            <AgreeDot cond={d.cond} single={single} />
+          </button>
+        );
+      })}
+      <p className="gl-n">Bir satıra dokun → o gün yukarıdaki kartta açılır.</p>
+    </div>
+  );
+}
+
 const Arrow = ({ dir, onClick, disabled }) => (
   <button type="button" className="garr" aria-label={dir < 0 ? "Önceki gün" : "Sonraki gün"} disabled={disabled} onClick={onClick}>
     <svg viewBox="0 0 24 24">
@@ -71,7 +136,7 @@ const Arrow = ({ dir, onClick, disabled }) => (
   </button>
 );
 
-export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHourly, unit, onUnit, onPicker, loading16, beyond }) {
+export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHourly, unit, onUnit, onPicker, loading16, beyond, listOpen, onListOpen }) {
   const daily = (cons.daily || []).filter((d) => pv(d.temp_max) != null || d.cond);
   const k = Math.max(0, daily.findIndex((d) => d.date === dayKey));
   const D = daily[k];
@@ -222,6 +287,23 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
       </div>
 
       {beyond && <div className="gnote">Saatlik ve model sayfaları ilk 7 günü gösterir.</div>}
+
+      {/* 16 günlük liste (29 Ekim, Ali Kemal: "boşluğu doldurmak adına … kullanıcı tıklayarak açarsa"): kapalı başlar,
+          son tercih cihazda hatırlanır. Satıra dokununca o gün yukarıdaki kartta açılır ve sayfa başa kayar. */}
+      <button type="button" className="glist-t" aria-expanded={!!listOpen} onClick={() => onListOpen(!listOpen)}>
+        <svg viewBox="0 0 24 24" className="li">
+          <path d="M8 6h12M8 12h12M8 18h12" />
+          <circle cx="4" cy="6" r="1.2" />
+          <circle cx="4" cy="12" r="1.2" />
+          <circle cx="4" cy="18" r="1.2" />
+        </svg>
+        <b>{daily.length} günü liste olarak gör</b>
+        <small>{listOpen ? "kapat" : `${parseT(daily[0].date + "T12:00").d} ${MON[parseT(daily[0].date + "T12:00").m].slice(0, 3)} – ${parseT(daily[daily.length - 1].date + "T12:00").d} ${MON[parseT(daily[daily.length - 1].date + "T12:00").m].slice(0, 3)}`}</small>
+        <svg viewBox="0 0 24 24" className="ch">
+          <path d={listOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"} />
+        </svg>
+      </button>
+      {listOpen && <DayList daily={daily} k={k} single={single} onPick={(date) => { onDay(date); window.scrollTo({ top: 0, behavior: "smooth" }); }} />}
     </div>
   );
 }

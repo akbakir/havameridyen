@@ -246,6 +246,8 @@ export default function App() {
               unit={unit}
               onUnit={(u) => update({ unit: u })}
               onPicker={() => setSrcOpen(true)}
+              listOpen={prefs.listOpen}
+              onListOpen={(v) => update({ listOpen: v })}
               loading16={long.key === placeKey(place) && long.status === "loading"}
               beyond={beyond}
             />

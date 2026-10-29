@@ -12,6 +12,7 @@ const DEFAULTS = {
   // ECMWF, 23 Eylül). Kayıtlı seçimi olan kurulumlar etkilenmez.
   selected: ["ecmwf_ifs", "gfs_seamless", "icon_seamless", "ukmo_seamless", "meteofrance_seamless"],
   unit: "kmh",
+  listOpen: false, // günlük sayfadaki 16 günlük liste (son tercih hatırlanır)
 };
 
 export function loadPrefs() {
@@ -23,6 +24,7 @@ export function loadPrefs() {
       favorites: Array.isArray(raw.favorites) ? raw.favorites.filter((f) => f && Number.isFinite(f.lat)) : DEFAULTS.favorites,
       selected: Array.isArray(raw.selected) && raw.selected.length ? raw.selected : DEFAULTS.selected,
       unit: raw.unit === "kt" ? "kt" : "kmh",
+      listOpen: raw.listOpen === true,
     };
   } catch {
     return { ...DEFAULTS };

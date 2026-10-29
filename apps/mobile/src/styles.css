@@ -425,3 +425,25 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 .tab[aria-current="page"]{color:#2C4A6E;border-top-color:#2C4A6E}
 .tab[aria-current="page"] span{font-weight:700}
 .tab.off{opacity:.38}
+
+/* Günlük sayfa · açılır 16 günlük liste (29 Ekim) */
+.glist-t{display:flex;align-items:center;gap:10px;width:100%;height:50px;padding:0 14px;border-radius:14px;border:1px solid var(--s-line);background:var(--s-card);color:var(--s-ink);cursor:pointer;text-align:left}
+.glist-t b{font:600 14.5px var(--f-body)}
+.glist-t small{margin-left:auto;font:400 11px var(--f-mono);color:var(--s-soft)}
+.glist-t .li{width:20px;height:20px;fill:none;stroke:#2C4A6E;stroke-width:2;stroke-linecap:round;flex:none}.glist-t .li circle{fill:#2C4A6E;stroke:none}
+.glist-t .ch{width:18px;height:18px;fill:none;stroke:var(--s-ink);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.glist{border-radius:16px;background:var(--s-card);border:1px solid var(--s-line);padding:4px 12px 6px;margin-top:-4px}
+.gl-h{display:flex;justify-content:space-between;font:400 10.5px var(--f-mono);color:var(--s-soft);padding:6px 0 2px}
+.gl-r{display:flex;align-items:center;gap:8px;width:100%;height:48px;border:0;border-top:1px solid var(--s-line);background:none;padding:0;cursor:pointer;color:var(--s-ink);text-align:left}
+.gl-r:first-of-type{border-top:0}
+.gl-r.on{background:#EEF3F0;margin:0 -12px;padding:0 12px;width:calc(100% + 24px)}
+.gl-d{width:48px;display:flex;flex-direction:column;line-height:1.1;flex:none}
+.gl-d b{font:600 14.5px var(--f-body)}.gl-d small{font:400 10px var(--f-mono);color:var(--s-faint)}
+.gl-ic{display:block;width:30px;height:30px;flex:none}.gl-ic svg{width:100%;height:100%}
+.gl-mm{width:46px;flex:none;font:500 11px var(--f-mono);color:var(--min)}
+.gl-mn{width:28px;flex:none;text-align:right;font:400 13.5px var(--f-mono);color:var(--min)}
+.gl-mx{width:28px;flex:none;font:500 13.5px var(--f-mono);color:var(--max)}
+.gl-bar{position:relative;flex:1;min-width:30px;height:6px;border-radius:3px;background:#E2E7E0}
+.gl-bar i{position:absolute;top:0;bottom:0;border-radius:3px}
+.gl-r .gdot{width:20px;height:20px}.gl-r .gdot svg{width:11px;height:11px}
+.gl-n{margin:6px 0 2px;font:400 11px var(--f-mono);color:var(--s-soft)}
