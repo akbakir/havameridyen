@@ -297,8 +297,9 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
           <circle cx="4" cy="12" r="1.2" />
           <circle cx="4" cy="18" r="1.2" />
         </svg>
-        <b>{daily.length} günü liste olarak gör</b>
-        <small>{listOpen ? "kapat" : `${parseT(daily[0].date + "T12:00").d} ${MON[parseT(daily[0].date + "T12:00").m].slice(0, 3)} – ${parseT(daily[daily.length - 1].date + "T12:00").d} ${MON[parseT(daily[daily.length - 1].date + "T12:00").m].slice(0, 3)}`}</small>
+        {/* 29 Ekim (Ali Kemal): "16 günü liste olarak gör" yerine "Liste Görünümü"; tarih aralığı ve ok kalır */}
+        <b>Liste Görünümü</b>
+        <small>{`${parseT(daily[0].date + "T12:00").d} ${MON[parseT(daily[0].date + "T12:00").m].slice(0, 3)} – ${parseT(daily[daily.length - 1].date + "T12:00").d} ${MON[parseT(daily[daily.length - 1].date + "T12:00").m].slice(0, 3)}`}</small>
         <svg viewBox="0 0 24 24" className="ch">
           <path d={listOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"} />
         </svg>
