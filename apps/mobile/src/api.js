@@ -6,19 +6,23 @@ import { MODELS } from "@lib/forecast";
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? (import.meta.env.DEV ? "" : "https://www.havameridyen.com");
 export const ALL_MODEL_IDS = MODELS.map((m) => m.id);
-export const FORECAST_DAYS = 7;
+export const FORECAST_DAYS = 16; // 29 Ekim (Ali Kemal: "16 GÜNE UZATALIM"): Saatlik ve Modeller de 16 gün
 
 const memo = new Map(); // aynı oturumda 10 dakika
 const TTL = 10 * 60 * 1000;
 
+// Aynı adres aynı anda iki kez istenirse tek istek gider (29 Ekim: Saatlik de 16 gün olunca günlük sayfanın
+// 16 günlük isteğiyle aynı adres)
 async function getJson(path) {
   const hit = memo.get(path);
-  if (hit && Date.now() - hit.at < TTL) return hit.data;
-  const r = await fetch(API_BASE + path);
-  if (!r.ok) throw new Error(`${r.status}`);
-  const data = await r.json();
-  memo.set(path, { at: Date.now(), data });
-  return data;
+  if (hit && Date.now() - hit.at < TTL) return hit.p;
+  const p = fetch(API_BASE + path).then((r) => {
+    if (!r.ok) throw new Error(`${r.status}`);
+    return r.json();
+  });
+  memo.set(path, { at: Date.now(), p });
+  p.catch(() => memo.delete(path));
+  return p;
 }
 
 // Sunucunun kanonik adresiyle aynı yazım (koordinat 2 ondalık, modeller sabit sırada): yönlendirme (308)
