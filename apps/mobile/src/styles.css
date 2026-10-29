@@ -452,3 +452,8 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 .sh-warn{margin:6px 8px 0!important;padding:7px 9px;border-radius:8px;background:#FBEEDB;color:#7A4A10;font-size:12px}
 .apply{display:block;width:calc(100% - 8px);margin:12px 4px 0;border:0;background:#2C4A6E;color:#fff;border-radius:12px;padding:12px 0;font:600 14px var(--f-body);box-shadow:0 3px 0 #1B3048;cursor:pointer}
 .apply:active{transform:translateY(2px);box-shadow:0 1px 0 #1B3048}
+/* stil2 (29 Ekim, telefonda başlık iki satıra kırılıyordu): kart başlığı tek satır; sağda yalnız "5 model" / "ECMWF"
+   (Günlük karttaki gibi). Dar ekranda sol taraf kısalır (…), satır kırılmaz. */
+.p1title{gap:10px;white-space:nowrap}
+.p1title span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.p1title span:last-child{flex:none}

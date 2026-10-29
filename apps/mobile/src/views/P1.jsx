@@ -161,7 +161,7 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
             kartta sağa / sola kaydırma da gün değiştirir */}
         <div className="p1title">
           <span>{heroTitle(t)}</span>
-          <span>ortanca · {models.length} model</span>
+          <span>{models.length} model</span>
         </div>
         {miss.length > 0 && <div className="miss">bu saat için veri yok: {miss.join(", ")}</div>}
         <div className="grid1">

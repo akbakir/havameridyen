@@ -197,7 +197,7 @@ export default function Single({ m, times, days, idx, nowIdx, unit, onUnit, onId
         {/* 29 Ekim (stil birliği): Sayfa 1 ile aynı başlık; yer adı üst çubukta, gün seçimi gün şeridinde (App) */}
         <div className="p1title">
           <span>{heroTitle(t)}</span>
-          <span>{m.label} · tek model</span>
+          <span>{m.label}</span>
         </div>
         <div className="cond">
           <WxIcon name={view.icon} className="ic" />
