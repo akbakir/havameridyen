@@ -47,11 +47,11 @@ export async function searchLocations(q) {
   return d.results || [];
 }
 
-// "Konumumu kullan": koordinattan ilçe / il adı (sunucu /api/v1/reverse, OpenStreetMap). 5 sn içinde gelmezse null.
+// "Konumumu kullan": koordinattan ilçe / il adı (sunucu /api/v1/reverse, OpenStreetMap). 9 sn içinde gelmezse null.
 export async function reverseName(lat, lon) {
   try {
     const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
-    const t = setTimeout(() => ctl && ctl.abort(), 5000);
+    const t = setTimeout(() => ctl && ctl.abort(), 9000);
     const r = await fetch(`${API_BASE}/api/v1/reverse?lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}`, ctl ? { signal: ctl.signal } : undefined);
     clearTimeout(t);
     if (!r.ok) return null;

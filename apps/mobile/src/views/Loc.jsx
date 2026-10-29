@@ -72,7 +72,7 @@ function FavCard({ place, onOpen }) {
   );
 }
 
-export default function Loc({ place, favorites, onPick, onRemove, onSheet }) {
+export default function Loc({ place, favorites, onPick, onRemove, onRename, onSheet }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState(null);
   const [toast, setToast] = useState("");
@@ -91,9 +91,48 @@ export default function Loc({ place, favorites, onPick, onRemove, onSheet }) {
   };
 
   // "Konumumu kullan" (28 Ekim): yalnız yaklaşık konum istenir ve yalnız uygulama kullanılırken (Ali Kemal: "tam konum
-  // şeklinde bir daha sorulmasın"); hassas konum izni manifestte de yok. Bekleme 20 sn, gelmezse 30 sn ile bir kez
-  // daha. Bulunan noktanın ilçe adı sunucudan alınır: "Konumum · İzmit" (bulunamazsa "Konumum").
+  // şeklinde bir daha sorulmasın"); hassas konum izni manifestte de yok.
+  // 29 Ekim (Ali Kemal: "Konumu al istikrarlı çalışmıyor"): konum üç adımda aranır —
+  //   1) son 15 dakikadaki bilinen konum ya da hızlı bir yaklaşık konum (10 sn),
+  //   2) gelmezse konum takibi açılır ve ilk gelen konum alınır (en çok 25 sn; bazı telefonlarda tek seferlik istekten
+  //      daha güvenilir),
+  //   3) yine gelmezse son 6 saat içinde bu cihazda bulunan konum kullanılır ve bunu söyleyen not çıkar.
+  // Bulunan nokta cihazda saklanır (yalnız bu cihazda, iki ondalık).
   const [locating, setLocating] = useState(false);
+  const LASTFIX = "hm_lastfix";
+  const readLast = () => {
+    try {
+      const x = JSON.parse(localStorage.getItem(LASTFIX) || "null");
+      return x && Number.isFinite(x.lat) && Number.isFinite(x.lon) && Date.now() - x.at < 6 * 3600e3 ? x : null;
+    } catch {
+      return null;
+    }
+  };
+  // İzin yok ya da telefonun konum hizmeti kapalıysa yeniden denemenin anlamı yok; diğer hatalarda (zaman aşımı,
+  // "konum alınamadı" 0002 vb.) sonraki adıma geçilir
+  const hard = (e) => /000[379]|0017/.test(String(e?.code || "") + String(e?.message || "")) || e?.code === 1;
+  const firstFix = (ms) =>
+    new Promise((resolve, reject) => {
+      let id = null;
+      let done = false;
+      const end = (fn, v) => {
+        if (done) return;
+        done = true;
+        clearTimeout(t);
+        if (id != null) Geolocation.clearWatch({ id }).catch(() => {});
+        fn(v);
+      };
+      const t = setTimeout(() => end(reject, { code: "OS-PLUG-GLOC-0010", message: "takip zaman aşımı" }), ms);
+      Geolocation.watchPosition({ enableHighAccuracy: false, timeout: ms, maximumAge: 60000 }, (p, err) => {
+        if (p) end(resolve, p);
+        else if (err && hard(err)) end(reject, err);
+      })
+        .then((x) => {
+          id = x;
+          if (done) Geolocation.clearWatch({ id: x }).catch(() => {});
+        })
+        .catch((e) => end(reject, e));
+    });
   const gps = async () => {
     setToast("");
     setLocating(true);
@@ -106,18 +145,38 @@ export default function Loc({ place, favorites, onPick, onRemove, onSheet }) {
         setToast("Konum izni verilmedi. Ayarlar › Uygulamalar › havameridyen › İzinler › Konum'dan açabilir ya da şehir arayarak devam edebilirsin.");
         return;
       }
-      let pos;
+      let pos = null;
+      let stale = false;
       try {
-        pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 20000, maximumAge: 600000 });
+        pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 900000 });
       } catch (e) {
-        if (String(e?.code || e?.message || "").includes("0010")) {
-          pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 30000, maximumAge: 1800000 });
-        } else throw e;
+        if (hard(e)) throw e;
+        try {
+          pos = await firstFix(25000);
+        } catch (e2) {
+          const last = readLast();
+          if (!last) throw e2;
+          pos = { coords: { latitude: last.lat, longitude: last.lon } };
+          stale = true;
+        }
       }
       const lat = Math.round(pos.coords.latitude * 100) / 100;
       const lon = Math.round(pos.coords.longitude * 100) / 100;
-      const nm = await reverseName(lat, lon);
-      onPick({ name: nm ? `Konumum · ${nm.name}` : "Konumum", admin1: nm ? nm.admin1 : null, lat, lon });
+      try {
+        if (!stale) localStorage.setItem(LASTFIX, JSON.stringify({ lat, lon, at: Date.now() }));
+      } catch {
+        /* depolama kapalı */
+      }
+      // Sayfa beklemeden "Konumum" ile açılır; ilçe adı arka planda istenir (en çok 2 deneme), gelince
+      // "Konumum · İzmit" olur (29 Ekim: "istikrarlı çalışmıyor")
+      onPick({ name: "Konumum", admin1: null, lat, lon }, stale ? "Şu an konum bulunamadı; son bilinen konumun gösteriliyor." : null);
+      (async () => {
+        for (let k = 0; k < 2; k++) {
+          const nm = await reverseName(lat, lon);
+          if (nm) return onRename({ lat, lon }, `Konumum · ${nm.name}`, nm.admin1);
+          await new Promise((r) => setTimeout(r, 3000));
+        }
+      })();
     } catch (e) {
       const code = String(e?.code || "");
       const msg = String(e?.message || "");
@@ -197,7 +256,7 @@ export default function Loc({ place, favorites, onPick, onRemove, onSheet }) {
         </div>
       </div>
       <div className="foot">
-        Veri: Open-Meteo (CC BY 4.0) · Konum adları © OpenStreetMap katkıcıları
+        Veri: Open-Meteo (CC BY 4.0) · Konum adları © OpenStreetMap katkıda bulunanlar
         <div className="infolinks">
           {MENU.map(([k, t]) => (
             <button key={k} type="button" onClick={() => onSheet(k)}>

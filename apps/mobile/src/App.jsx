@@ -134,6 +134,16 @@ export default function App() {
       notify(`★ ${place.name} favorilere eklendi`, () => setFavs(before));
     }
   };
+  // "Konumumu kullan": ilçe adı sonradan gelince konum ve aynı noktadaki "Konumum" favorisi yeniden adlandırılır
+  const renamePlace = (pt, name, admin1) => {
+    const k = placeKey(pt);
+    setPrefs((p) => {
+      const ren = (x) => (placeKey(x) === k && String(x.name).startsWith("Konumum") ? { ...x, name, admin1: admin1 || null } : x);
+      const n = { ...p, place: ren(p.place), favorites: p.favorites.map(ren) };
+      savePrefs(n);
+      return n;
+    });
+  };
   const removeFav = (f) => {
     const before = favorites;
     setFavs(favorites.filter((x) => placeKey(x) !== placeKey(f)));
@@ -166,12 +176,13 @@ export default function App() {
     goPage(p);
   };
 
-  const pick = (p) => {
+  const pick = (p, note) => {
     update({ place: { name: p.name, admin1: p.admin1 || null, lat: p.lat, lon: p.lon } });
     setView("fc");
     setPage("day");
     setDayKey(null);
     window.scrollTo(0, 0);
+    if (note) notify(note);
   };
   const toggle = (id) => {
     const on = selected.includes(id);
@@ -208,7 +219,7 @@ export default function App() {
         )}
       </div>
 
-      {view === "loc" && <Loc place={place} favorites={favorites} onPick={pick} onRemove={removeFav} onSheet={(p) => setSheet({ page: p })} />}
+      {view === "loc" && <Loc place={place} favorites={favorites} onPick={pick} onRemove={removeFav} onRename={renamePlace} onSheet={(p) => setSheet({ page: p })} />}
 
       {view === "fc" && (
         <>
