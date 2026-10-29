@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
-import { dir16, fmt, fmtS, parseT, speed, unitLabel, whenText } from "../format";
+import { dir16, fmt, fmtS, heroTitle, parseT, speed, unitLabel } from "../format";
 import { dayIndexOf, dayMax, dayMin, dayTotal, gust, sourceOf, val } from "../data";
 import { HourStrip, UnitToggle, useDaySwipe } from "./common";
 import { PrecipGrid } from "./precip";
@@ -166,7 +166,7 @@ function InstRow({ m, i, k, term, name, unit, label, dec, offText, exp, onExp, o
   );
 }
 
-export default function Single({ m, times, days, idx, nowIdx, place, unit, onUnit, onIdx, onTerm }) {
+export default function Single({ m, times, days, idx, nowIdx, unit, onUnit, onIdx, onTerm }) {
   const i = Math.min(idx, Math.max(0, m.hz - 1));
   const t = times[i];
   const d = dayIndexOf(days, i);
@@ -194,17 +194,10 @@ export default function Single({ m, times, days, idx, nowIdx, place, unit, onUni
   return (
     <>
       <div className="hero" style={{ background: SKY[view.sky] }} {...swipe}>
-        <div className="hnav">
-          <button type="button" aria-label="Önceki gün" disabled={d <= 0} onClick={() => goDay(-1)}>
-            ‹
-          </button>
-          <div className="mid">
-            <div className="pl">{place}</div>
-            <div className="when">{whenText(t)}</div>
-          </div>
-          <button type="button" aria-label="Sonraki gün" disabled={d >= lastDay} onClick={() => goDay(1)}>
-            ›
-          </button>
+        {/* 29 Ekim (stil birliği): Sayfa 1 ile aynı başlık; yer adı üst çubukta, gün seçimi gün şeridinde (App) */}
+        <div className="p1title">
+          <span>{heroTitle(t)}</span>
+          <span>{m.label} · tek model</span>
         </div>
         <div className="cond">
           <WxIcon name={view.icon} className="ic" />

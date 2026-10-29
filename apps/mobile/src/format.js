@@ -25,6 +25,12 @@ export function parseT(t) {
   return { y: +y, m: +m - 1, d: +d, w, h: +h, key: t.slice(0, 10) };
 }
 
+// Kart başlığı (29 Ekim, stil birliği; Günlük karttaki gibi): "PAZAR · 25 EKİM · 14:00"
+export const heroTitle = (t) => {
+  const p = parseT(t);
+  return `${DAYN[p.w].toLocaleUpperCase("tr")} · ${p.d} ${MON[p.m].toLocaleUpperCase("tr")} · ${pad(p.h)}:00`;
+};
+
 export const whenText = (t) => {
   const p = parseT(t);
   return `${p.d} ${MON[p.m]} ${DAYN[p.w]} · ${pad(p.h)}:00 TSİ`;

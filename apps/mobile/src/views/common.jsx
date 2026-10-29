@@ -1,30 +1,8 @@
-// Ortak parçalar: model çipleri, saat şeridi, gün okları, rüzgar birimi, sayfa bağlantıları, uyum işareti.
+// Ortak parçalar: saat şeridi, gün okları, rüzgar birimi, sayfa bağlantıları, uyum işareti.
 
 import { useLayoutEffect, useRef } from "react";
 import { HourIcon } from "../icons";
 import { pad, parseT } from "../format";
-
-export function ModelChips({ all, selected, onToggle }) {
-  return (
-    <div className="models" role="group" aria-label="Modeller">
-      {all.map((m) => {
-        const on = selected.includes(m.id);
-        return (
-          <button key={m.id} type="button" className="mchip" role="checkbox" aria-checked={on} style={{ "--c": m.color }} onClick={() => onToggle(m.id)}>
-            <span className="box">
-              {on && (
-                <svg viewBox="0 0 12 12" width="10" height="10">
-                  <path d="M2.4 6.4 L5 9 L9.6 3.4" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </span>
-            {m.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 // V09 P1–P3: şeride dokununca ortalanmaz, kaydırma yeri korunur; yeni gün / ekran açılınca seçili saat ortalanır,
 // seçili saat görünmüyorsa yalnız görünecek kadar kayar.

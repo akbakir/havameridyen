@@ -1,7 +1,8 @@
 // havameridyen mobil uygulaması — iskelet (sunucu madde 5, Ekim 2026; Prototip 9).
 // Akış (28 Ekim): Konum sayfası → Günlük sayfa (16 gün) → Saatlik (iki ve daha çok model seçiliyse Sayfa 1, tek
 // modelse tek model ekranı) · Modeller (Sayfa 2) · Grafikler (Sayfa 3). Sayfalar alttaki düğmelerle birbirine bağlı.
-// Seçili saat üç sayfada ortak. Tahmin sayfalarının üst çubuğunda konum + favori yıldızı.
+// Seçili saat üç sayfada ortak. Tahmin sayfalarının üst çubuğunda konum + favori yıldızı; altında (29 Ekim, stil
+// birliği) dört sayfada aynı tahmin kaynağı çubuğu, Saatlik / Modeller / tek model ekranında Günlük'teki gün şeridi.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { App as CapApp } from "@capacitor/app";
@@ -9,12 +10,13 @@ import { MODELS } from "@lib/forecast";
 import { buildConsensus } from "@lib/consensus";
 import { FAV_MODEL_IDS, fetchForecast, fetchForecast16 } from "./api";
 import { parseT, tsiNowHour } from "./format";
-import { daysOf, nowIndex, toModels } from "./data";
-import { loadPrefs, placeKey, placeLabel, savePrefs } from "./store";
+import { dayIndexOf, daysOf, nowIndex, toModels } from "./data";
+import { loadPrefs, placeKey, savePrefs } from "./store";
 import { syncWidgetPlace } from "./widget";
-import { ModelChips, TabBar } from "./views/common";
+import { TabBar } from "./views/common";
 import Loc from "./views/Loc";
-import Gunluk, { SrcSheet } from "./views/Gunluk";
+import Gunluk, { DayStrip, dailyOf } from "./views/Gunluk";
+import { SrcBar, SrcSheet } from "./views/Kaynak";
 import Single from "./views/Single";
 import P1 from "./views/P1";
 import P2 from "./views/P2";
@@ -150,12 +152,32 @@ export default function App() {
     notify(`${f.name} favorilerden çıkarıldı`, () => setFavs(before));
   };
 
-  // Tahmin kaynağı: "ortak" → (tek model seçiliyse) varsayılan 5 model; model kimliği → yalnız o model
-  const chooseSrc = (c) => {
+  // Tahmin kaynağı penceresi (Kaynak.jsx): Ortak tahmin → işaretli modeller (en az 2, "Uygula"), Tek model → [id].
+  // Tek modele geçilirken Modeller / Grafikler'deysek Saatlik'e (tek model ekranı) geçilir; o iki sayfa tek modelde kapalı.
+  const applySrc = (ids) => {
     setSrcOpen(false);
-    if (c === "ortak") {
-      if (!multi) update({ selected: FAV_MODEL_IDS });
-    } else update({ selected: [c] });
+    update({ selected: ids });
+    if (ids.length === 1 && (page === "p2" || page === "p3")) goPage("p1");
+  };
+
+  // Gün şeridi (Saatlik, Modeller, tek model ekranı): 7 günlük veriden, en uzun modelin menziline kadar. Güne
+  // dokununca saat aynı kalır (ör. Pazar 14:00 → Salı 14:00), sayfalardaki eski ‹ › oklarıyla aynı kural.
+  const cons1 = useMemo(() => (page !== "day" && selModels.length === 1 ? buildConsensus(selModels) : null), [page, selModels]);
+  const hzSel = selModels.length ? Math.max(...selModels.map((m) => m.hz)) : 0;
+  const stripDays = useMemo(() => {
+    const c = cons || cons1;
+    if (!c || !data.days || !hzSel) return [];
+    const last = dayIndexOf(data.days, hzSel - 1);
+    const keys = new Set(data.days.slice(0, last + 1).map((d) => d.key));
+    return dailyOf(c).filter((d) => keys.has(d.date));
+  }, [cons, cons1, data.days, hzSel]);
+  const curDay = data.days && hzSel ? data.days[dayIndexOf(data.days, Math.min(idx, hzSel - 1))] : null;
+  const jumpDay = (key) => {
+    const days = data.days;
+    const nd = days.findIndex((x) => x.key === key);
+    if (nd < 0 || !curDay) return;
+    const h = Math.min(idx, hzSel - 1) - curDay.h0;
+    setIdx(Math.min(hzSel - 1, days[nd].h0 + Math.min(h, days[nd].h1 - days[nd].h0 - 1)));
   };
 
   // Günlük sayfadan Saatlik / Modeller / Grafikler: seçili gün 7 günlük verideyse o gün (bugünse şimdiki saat,
@@ -183,11 +205,6 @@ export default function App() {
     setDayKey(null);
     window.scrollTo(0, 0);
     if (note) notify(note);
-  };
-  const toggle = (id) => {
-    const on = selected.includes(id);
-    if (on && selected.length === 1) return; // en az bir model seçili kalır
-    update({ selected: on ? selected.filter((x) => x !== id) : ALL.map((m) => m.id).filter((x) => x === id || selected.includes(x)) });
   };
   const goPage = (p) => {
     setPage(p);
@@ -223,7 +240,14 @@ export default function App() {
 
       {view === "fc" && (
         <>
-          {page !== "day" && <ModelChips all={ALL} selected={selected} onToggle={toggle} />}
+          <div className="srcw">
+            <SrcBar models={ALL.filter((m) => selected.includes(m.id))} single={!multi} onOpen={() => setSrcOpen(true)} />
+          </div>
+          {data.status === "ok" && (page === "p1" || page === "p2") && stripDays.length > 0 && (
+            <div className="stripw">
+              <DayStrip daily={stripDays} k={stripDays.findIndex((d) => d.date === curDay?.key)} single={!multi} onPick={jumpDay} compact />
+            </div>
+          )}
           {data.status === "loading" && <div className="loading">Tahmin yükleniyor…</div>}
           {data.status === "error" && (
             <div className="err">
@@ -245,7 +269,6 @@ export default function App() {
               onHourly={(key) => openAt(key, "p1")}
               unit={unit}
               onUnit={(u) => update({ unit: u })}
-              onPicker={() => setSrcOpen(true)}
               listOpen={prefs.listOpen}
               onListOpen={(v) => update({ listOpen: v })}
               loading16={long.key === placeKey(place) && long.status === "loading"}
@@ -259,7 +282,6 @@ export default function App() {
               days={data.days}
               idx={idx}
               nowIdx={data.nowIdx}
-              place={placeLabel(place)}
               unit={unit}
               onUnit={(u) => update({ unit: u })}
               onIdx={setIdx}
@@ -317,14 +339,14 @@ export default function App() {
           current={page}
           off={multi ? [] : ["p2", "p3"]}
           onGo={(p) => {
-            if (!multi && (p === "p2" || p === "p3")) return notify("Modeller ve Grafikler birden çok modelle çalışır: Günlük'te üstten Ortak tahmin'i seç.");
+            if (!multi && (p === "p2" || p === "p3")) return notify("Modeller ve Grafikler birden çok modelle çalışır: üstten Ortak tahmin'i seç.");
             if (p === "day") return goPage("day");
             if (page === "day" && p !== "p3") return openAt(selDay, p);
             goPage(p);
           }}
         />
       )}
-      {srcOpen && <SrcSheet all={ALL} selected={selected} ortak={multi ? ALL.filter((m) => selected.includes(m.id)) : ALL.filter((m) => FAV_MODEL_IDS.includes(m.id))} onChoose={chooseSrc} onClose={() => setSrcOpen(false)} />}
+      {srcOpen && <SrcSheet all={ALL} selected={selected} recommended={FAV_MODEL_IDS} onApply={applySrc} onClose={() => setSrcOpen(false)} />}
       {snack && (
         <div className="snack" role="status">
           <span>{snack.text}</span>

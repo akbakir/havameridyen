@@ -1,12 +1,12 @@
-// Sayfa 2 — modeller ayrı ayrı (Prototip 9): gün sekmeleri, saat şeridi (ortak durum + ortanca sıcaklık) ve her
+// Sayfa 2 — modeller ayrı ayrı (Prototip 9): saat şeridi (gün seçimi 29 Ekim'den beri üstteki gün şeridinde, App) (ortak durum + ortanca sıcaklık) ve her
 // model için yana kaydırılan bir kart. Kartta seçili saatin durumu ve sıcaklığı, günün min / maks, ortalama nem,
 // hakim rüzgar yönü, ortalama rüzgar, en yüksek hamle ve yağış / kar ızgarası. Durum ifadesi web ile aynı kural
 // (lib/agreement.js condAt).
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
-import { DAYN, MON, fmt, pad, parseT, speed, unitLabel } from "../format";
+import { MON, fmt, pad, parseT, speed, unitLabel } from "../format";
 import { avg, dayGust, dayIndexOf, dayMax, dayMin, dayVals, hakim, hasDay, val } from "../data";
 import { HourStrip, UnitToggle } from "./common";
 import { PrecipGrid } from "./precip";
@@ -18,48 +18,6 @@ function MiniRose({ deg, color }) {
       <circle cx="12" cy="12" r="10.5" fill="none" stroke="#C9D0C6" />
       {deg != null && <path d={`M12,12 L${p(deg - 22.5)} A10,10 0 0 1 ${p(deg + 22.5)} Z`} fill={color} fillOpacity=".7" />}
     </svg>
-  );
-}
-
-// V04 P3: sekme şeridi her çizimde baştan kaymaz; seçili gün görünmüyorsa görünecek kadar kayar
-function DayTabs({ days, d, today, lastDay, onDay }) {
-  const ref = useRef(null);
-  const first = useRef(true);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    const act = el && el.querySelector('[aria-selected="true"]');
-    if (!el || !act) return;
-    el.style.scrollBehavior = "auto";
-    if (first.current) el.scrollLeft = act.offsetLeft - 60;
-    const a = act.offsetLeft;
-    const b = a + act.offsetWidth;
-    if (a < el.scrollLeft) el.scrollLeft = a - 4;
-    else if (b > el.scrollLeft + el.clientWidth) el.scrollLeft = b - el.clientWidth + 4;
-    el.style.scrollBehavior = "";
-    first.current = false;
-  });
-  return (
-    <div className="days">
-      <button type="button" className="arr" aria-label="Önceki gün" disabled={d <= 0} onClick={() => onDay(d - 1)}>
-        ‹
-      </button>
-      <div className="dtabs" role="tablist" ref={ref}>
-        {days.slice(0, lastDay + 1).map((day, k) => {
-          const q = parseT(day.key + "T00");
-          return (
-            <button key={day.key} type="button" className="dtab" role="tab" aria-selected={k === d} onClick={() => onDay(k)}>
-              {k === today ? "Bugün" : DAYN[q.w]}
-              <small>
-                {q.d} {MON[q.m]}
-              </small>
-            </button>
-          );
-        })}
-      </div>
-      <button type="button" className="arr" aria-label="Sonraki gün" disabled={d >= lastDay} onClick={() => onDay(d + 1)}>
-        ›
-      </button>
-    </div>
   );
 }
 
@@ -167,15 +125,8 @@ export default function P2({ models, cons, times, days, idx, nowIdx, unit, onUni
   const i = Math.min(idx, Math.max(0, hz - 1));
   const d = Math.min(dayIndexOf(days, i), lastDay);
   const day = days[d];
-  const today = dayIndexOf(days, nowIdx);
   const [vrbOpen, setVrbOpen] = useState(null);
 
-  // Gün değişince saat aynı kalır (ör. Salı 14:00 → Çarşamba 14:00); kartların yatay kaydırma yeri korunur
-  const goDay = (nd) => {
-    if (nd < 0 || nd > lastDay) return;
-    const h = i - day.h0;
-    onIdx(Math.min(hz - 1, days[nd].h0 + Math.min(h, days[nd].h1 - days[nd].h0 - 1)));
-  };
 
   const hours = [];
   for (let j = day.h0; j < day.h1 && j < hz; j++) {
@@ -185,7 +136,6 @@ export default function P2({ models, cons, times, days, idx, nowIdx, unit, onUni
 
   return (
     <>
-      <DayTabs days={days} d={d} today={today} lastDay={lastDay} onDay={goDay} />
       <HourStrip hours={hours} idx={i} nowIdx={nowIdx} onPick={onIdx} stripKey={`p2|${d}`} />
       <div className="sec" style={{ margin: "6px 14px 2px" }}>
         <span>

@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { median } from "@lib/agreement";
 import { CLS_RNG, CLS_TXT, SKY, WxIcon, condView } from "../icons";
-import { dir16, fmt, pad, parseT, speed, tsuf, unitLabel, whenText } from "../format";
+import { dir16, fmt, heroTitle, pad, parseT, speed, tsuf, unitLabel } from "../format";
 import { dayIndexOf, gust, val } from "../data";
 import { HourStrip, UnitToggle, useDaySwipe } from "./common";
 
@@ -157,24 +157,13 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
   return (
     <>
       <div className="hero" style={{ background: SKY[view.sky] }} {...swipe}>
+        {/* 29 Ekim (stil birliği): Günlük karttaki başlık düzeni; gün seçimi kartın üstündeki gün şeridinde (App),
+            kartta sağa / sola kaydırma da gün değiştirir */}
         <div className="p1title">
-          <span>Saatlik tahmin</span>
+          <span>{heroTitle(t)}</span>
           <span>ortanca · {models.length} model</span>
         </div>
-        <div className="hnav" style={{ marginTop: 6 }}>
-          <button type="button" aria-label="Önceki gün" disabled={d <= 0} onClick={() => goDay(-1)}>
-            ‹
-          </button>
-          <div className="mid">
-            <div className="when" style={{ fontSize: 12, opacity: 1 }}>
-              {whenText(t)}
-            </div>
-            {miss.length > 0 && <div className="miss">bu saat için veri yok: {miss.join(", ")}</div>}
-          </div>
-          <button type="button" aria-label="Sonraki gün" disabled={d >= lastDay} onClick={() => goDay(1)}>
-            ›
-          </button>
-        </div>
+        {miss.length > 0 && <div className="miss">bu saat için veri yok: {miss.join(", ")}</div>}
         <div className="grid1">
           <span />
           <span className="hd">uyum</span>
