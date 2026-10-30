@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
-import { dir16, fmt, fmtS, heroTitle, parseT, speed, unitLabel } from "../format";
+import { fmt, windDir, fmtS, heroTitle, parseT, speed, unitLabel } from "../format";
 import { dayIndexOf, dayMax, dayMin, dayTotal, gust, sourceOf, val } from "../data";
 import { HourStrip, UnitToggle, useDaySwipe } from "./common";
 import { PrecipGrid } from "./precip";
@@ -75,7 +75,7 @@ function Gauges({ m, i, unit, onUnit }) {
           <circle className="core" cx="32" cy="32" r="2.6" />
         </svg>
         <span className="gl">Rüzgar</span>
-        <span className="gv">{ww == null ? "—" : `${dir16(wd)} ${Math.round(speed(ww, unit))} ${unitLabel(unit)}`}</span>
+        <span className="gv">{ww == null ? "—" : `${windDir(wd, ww)} ${Math.round(speed(ww, unit))} ${unitLabel(unit)}`}</span>
         <span className="gs">{ww == null ? "" : wg == null ? "hamle —" : "hamle " + Math.round(speed(wg, unit))}</span>
         <UnitToggle unit={unit} onUnit={onUnit} ghost />
       </div>

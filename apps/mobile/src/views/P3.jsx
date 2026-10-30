@@ -24,7 +24,7 @@ import {
 } from "@lib/agreement";
 import { MODELS } from "@lib/forecast";
 import { CLS_RNG, CLS_TXT, Mark, SKY_SOLID, condView, currentSun as SUN_NOW, iconSvgAt } from "../icons";
-import { MON, dir16, fmt, pad, parseT, speed, tsuf, unitLabel } from "../format";
+import { MON, fmt, windDir, pad, parseT, speed, tsuf, unitLabel } from "../format";
 import { DIR8, dayGust, gust, val } from "../data";
 import { UnitToggle } from "./common";
 
@@ -688,7 +688,7 @@ function Table({ ms, times, a, z, slot, unit }) {
               <td>{fmt(tv, 1)}</td>
               <td>{rs == null ? "—" : rs < 0.05 ? <span className="na">yok</span> : fmt(rs, 1)}</td>
               <td>
-                {dir16(val(m, "wind_direction", a))} {fmt(spd(val(m, "wind_speed", a)))}
+                {windDir(val(m, "wind_direction", a), val(m, "wind_speed", a))} {fmt(spd(val(m, "wind_speed", a)))}
                 <span className="gust">/{g == null ? "—" : fmt(spd(g))}</span>
               </td>
               <td>{fmt(val(m, "humidity", a))}</td>

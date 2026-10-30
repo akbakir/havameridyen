@@ -248,7 +248,7 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
           <div className="gg">
             <Rose dirs={W.dirs || []} colors={colors} />
             <span>
-              <small>Rüzgar {dir16(W.dir)}</small>
+              <small>Rüzgar {W.max == null ? "—" : W.dir == null ? "VRB" : dir16(W.dir)}</small>
               <b>{W.max == null ? "—" : `${Math.round(speed(W.min, unit))}–${Math.round(speed(W.max, unit))} ${unitLabel(unit)}`}</b>
               <small className="mono">{pv(D.gust_max) == null ? "hamle —" : `hamle ${Math.round(speed(pv(D.gust_max), unit))} ${unitLabel(unit)}`}</small>
             </span>

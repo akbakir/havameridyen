@@ -17,6 +17,14 @@ export function fmt(v, d = 0) {
 export const fmtS = (v, d = 0) => fmt(v, d).replace("-", "−");
 
 export const dir16 = (d) => (d == null ? "—" : CMP[Math.round(d / 22.5) % 16]);
+// Rüzgar yönü yazısı (31 Ekim, Ali Kemal: "yön verilmemiş ve hız varsa VRB"): hız var ama yön yoksa VRB (değişken
+// yönlü). Yön yok sayılır: 3 knot altındaki sakin rüzgar ya da modellerin yönleri birbirini götürünce. kmh verilirse
+// 3 kt altı da VRB (tek model değerinde).
+export const windDir = (d, kmh) => {
+  if (kmh == null) return "—";
+  if (d == null || kmh * KT < 3) return "VRB";
+  return CMP[Math.round(d / 22.5) % 16];
+};
 
 // "2026-10-17T14:00" → { y, m (0–11), d, w (0 = Pazar), h, key: "2026-10-17" }
 export function parseT(t) {

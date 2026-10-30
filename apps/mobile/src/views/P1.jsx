@@ -244,7 +244,7 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
             <div className="windrow">
               <Rose models={models} i={i} />
               <div style={{ textAlign: "left" }}>
-                <div className="k">Rüzgar {dir16(H.wind.dir)}</div>
+                <div className="k">Rüzgar {H.wind.v == null ? "—" : H.wind.dir == null ? "VRB" : dir16(H.wind.dir)}</div>
                 <div className="mid">
                   {fmt(speed(H.wind.v, unit))} {unitLabel(unit)}
                 </div>
