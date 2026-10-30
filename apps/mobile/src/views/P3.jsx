@@ -143,8 +143,8 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
     { id: "rs", h: 10 },
     ...(snowOn
       ? [
-          { id: "sn", h: 58, title: "Taze kar", unit: `cm/${step} sa · ${cnt}` },
-          { id: "sd", h: 64, title: "Toplam kar kalınlığı", unit: "cm · " + cnt },
+          { id: "sn", h: 64, title: "Taze kar", unit: `cm/${step} sa · ${cnt}` },
+          { id: "sd", h: 78, title: "Toplam kar kalınlığı", unit: "cm · " + cnt },
         ]
       : []),
     { id: "w", h: 62, title: "Rüzgar hızı", unit: U, ctl: "unit" },
@@ -192,11 +192,12 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
   const axes = [];
   const titles = [];
 
+  const tkTxt = (v) => String(+(+v).toFixed(2)).replace(".", ","); // eksen yazısı: 0,25 · 1,5 · 20
   const lineSet = (p, key, lo, hi, ticks, withMed, map = (v) => v) => {
     const yy = (v) => p.y + p.h - ((v - lo) / (hi - lo)) * (p.h - 10) - 4;
     for (const tk of ticks) {
       svg += `<line x1="0" x2="${W}" y1="${yy(tk)}" y2="${yy(tk)}" stroke="#E1E6DE" stroke-dasharray="2 3"/>`;
-      axes.push(`<text x="32" y="${yy(tk) + 3}" text-anchor="end" font-size="8.5" fill="#5B665D">${tk}</text>`);
+      axes.push(`<text x="32" y="${yy(tk) + 3}" text-anchor="end" font-size="8.5" fill="#5B665D">${tkTxt(tk)}</text>`);
     }
     for (const m of ms) {
       let d = "";
@@ -304,16 +305,25 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
     if (lo > hi) return [0, 1];
     return [Math.floor(lo - pd), Math.ceil(hi + pd)];
   };
+  // Okunur eksen adımı (30 Ekim, Ali Kemal: kar grafiklerinde çizgiler veriye göre dinamik): 1 · 2 · 2,5 · 5 × 10^k;
+  // panel yüksekliğine göre en çok "count" aralık. Küçük değerlerde ondalıklı adım (0,1 · 0,2 · 0,25 · 0,5 cm).
+  const niceStep = (span, count) => {
+    const raw = span / Math.max(1, count);
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    for (const k of [1, 2, 2.5, 5, 10]) if (k * mag >= raw - 1e-9) return k * mag;
+    return 10 * mag;
+  };
+  const tickCount = (p) => Math.max(2, Math.min(5, Math.floor((p.h - 10) / 15)));
   const ticksOf = (lo, hi, st) => {
     const a = [];
-    for (let v = Math.ceil(lo / st) * st; v <= hi; v += st) a.push(v);
+    for (let v = Math.ceil(lo / st - 1e-9) * st; v <= hi + 1e-9; v += st) a.push(+v.toFixed(3));
     return a;
   };
   const yTick = (yy, tk, txt = String(tk)) => {
     svg += `<line x1="0" x2="${W}" y1="${yy}" y2="${yy}" stroke="#E1E6DE" stroke-dasharray="2 3"/>`;
     axes.push(`<text x="32" y="${yy + 3}" text-anchor="end" font-size="8.5" fill="#5B665D">${txt}</text>`);
   };
-  const bars = (p, key, opacity, titleOf) => {
+  const bars = (p, key, opacity, titleOf, nice = null) => {
     const sums = [];
     let mx = 0;
     for (let s = 0; s < n; s += step) {
@@ -334,9 +344,19 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
         if (v != null) mx = Math.max(mx, v);
       });
     }
-    const top = Math.max(1, Math.ceil(mx));
+    let top;
+    let tks;
+    if (nice) {
+      // Taze kar: eksen en büyük değere göre (en az nice.min); küçük miktarlar da okunur
+      const st = niceStep(Math.max(mx, nice.min), tickCount(p));
+      top = Math.max(st, Math.ceil(mx / st - 1e-9) * st);
+      tks = ticksOf(0, top, st);
+    } else {
+      top = Math.max(1, Math.ceil(mx));
+      tks = [0, top / 2, top].map((v) => +v.toFixed(1));
+    }
     const yy = (v) => p.y + p.h - (v / top) * (p.h - 10);
-    for (const tk of [0, top / 2, top].map((v) => +v.toFixed(1))) yTick(yy(tk), tk, String(tk).replace(".", ","));
+    for (const tk of tks) yTick(yy(tk), tk, tkTxt(tk));
     const bw = Math.max(0.8, (step * px - 2) / ms.length);
     sums.forEach((row, si) =>
       row.forEach((v, mi) => {
@@ -491,16 +511,31 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
       });
       axes.push(`<text x="32" y="${rs.y + 8}" text-anchor="end" font-size="7.5" fill="#8B948B">uzlaşı</text>`);
     }
-    if (p.id === "sn") bars(p, "snowfall", ".85", (m, v) => `${m.label}: ${fmt(v, 1)} cm`);
+    if (p.id === "sn") bars(p, "snowfall", ".85", (m, v) => `${m.label}: ${fmt(v, 2)} cm`, { min: 0.5 });
     if (p.id === "sd") {
+      // Toplam kar kalınlığı (30 Ekim): eksen veriye göre; 4–5 okunur çizgi. Kalın ve az değişen örtüde (en düşük
+      // değer en yükseğin yarısından fazlaysa) eksen 0'dan değil verinin altından başlar, değişim görünür.
+      let lo = Infinity;
       let hi = 0;
       for (const m of ms)
         for (let i = 0; i < n; i++) {
           const v = val(m, "snow_depth", i);
-          if (v != null) hi = Math.max(hi, v);
+          if (v == null) continue;
+          hi = Math.max(hi, v);
+          lo = Math.min(lo, v);
         }
-      const top = Math.max(5, Math.ceil(hi / 5) * 5);
-      lineSet(p, "snow_depth", 0, top, ticksOf(0, top, top > 20 ? 10 : 5), false);
+      if (!isFinite(lo)) lo = 0;
+      const cnt = tickCount(p);
+      const base = lo > hi * 0.5 && hi - lo >= 1 ? lo : 0;
+      let st = niceStep(Math.max(hi - base, 1), cnt);
+      let a = Math.floor(base / st + 1e-9) * st;
+      let b = Math.max(a + st, Math.ceil(hi / st - 1e-9) * st);
+      if ((b - a) / st > cnt) {
+        st = niceStep(b - a, cnt);
+        a = Math.floor(base / st + 1e-9) * st;
+        b = Math.max(a + st, Math.ceil(hi / st - 1e-9) * st);
+      }
+      lineSet(p, "snow_depth", a, b, ticksOf(a, b, st), false);
     }
     if (p.id === "c") {
       ms.forEach((m, mi) => {
