@@ -164,7 +164,7 @@ export default function SehirPage() {
     setSelection((s) => ({ ...s, i: nowIndex - (nowIndex % s.step), reveal: s.reveal + 1 }));
   }
 
-  const panelProps = { models: forecast?.models, period, status, selection, onSelect: selectAt };
+  const panelProps = { models: forecast?.models, period, status, selection, onSelect: selectAt, sun: forecast?.sun };
   // Kar panelleri (30 Ekim): ayrı koşullarla (kar3) — Taze kar yalnız aralıkta yeni kar varsa, Toplam kar kalınlığı
   // yalnız yerde kar varsa (seçili modellerden biri ≥ 0.05 cm)
   const anySnow = (key) => (forecast?.models || []).some((m) => m.series.some((x) => (numOrNull(x[key]) ?? 0) >= 0.05));

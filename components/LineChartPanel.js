@@ -6,7 +6,7 @@
 // - Yatay çizgiler parametreye göre (sıcaklıkta 2 °C'de bir); eksen en düşük / en yüksek model değerinin
 //   hemen dışından başlar (çift sayıya yuvarlanmaz). Çizgi kalınlığı 1,3.
 // - Her grafiğin kendi 1s / 3s / 6s seçimi var (varsayılan: Saatlik 1s, 3 gün 3s, 7/16 gün 6s).
-// - 06–18 arası gündüz bandı, 06 / 12 / 18 dikmeleri, "şimdi" çizgisi.
+// - Gündüz bandı gün doğumundan gün batımına (31 Ekim; sun yoksa 06–18), 06 / 12 / 18 dikmeleri, "şimdi" çizgisi.
 // - Saatte en az 4 px: 16 günde grafik yatay kaydırılır; sol eksen sabit kalır. Kaydırılan grafikler
 //   saat üzerinden birlikte kayar.
 // - Uyum şeridi çizilen noktaların uyumundan (26 Ekim; 3/6/12 saatte dilimlerin ilk saati); dilim uzunluğu aralıktan
@@ -87,6 +87,27 @@ export function timeText(t) {
 
 export function tsiNowKey() {
   return new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 13);
+}
+
+// Gündüz bandı (31 Ekim, Ali Kemal): her gün için [başlangıç, bitiş] saat sırası (ondalık) — gün doğumundan gün
+// batımına (sun: lib/forecast.js yanıtındaki [{ date, rise, set }]); yoksa eski sabit 06–18.
+export function dayBands(times, sun) {
+  const by = Object.fromEntries((sun || []).map((s) => [s.date, s]));
+  const out = [];
+  let i = 0;
+  while (i < times.length) {
+    const key = String(times[i] || "").slice(0, 10);
+    const p = parseTime(times[i]);
+    const start = i - (p ? p.hour : 0); // günün 00:00 sırası
+    let j = i;
+    while (j < times.length && String(times[j] || "").slice(0, 10) === key) j++;
+    const s = by[key];
+    const a = Math.max(i, start + (s && s.rise != null ? s.rise : 6));
+    const b = Math.min(j, start + (s && s.set != null ? s.set : 18));
+    if (b > a) out.push([a, b]);
+    i = j;
+  }
+  return out;
 }
 
 export function defaultStepFor(period) {
@@ -329,7 +350,7 @@ export function Chip({ bg, ink, level, children }) {
   );
 }
 
-export default function LineChartPanel({ cfg, models, period, status, extraTitle, selection, onSelect }) {
+export default function LineChartPanel({ cfg, models, period, status, extraTitle, selection, onSelect, sun }) {
   const [step, setStep] = useState(defaultStepFor(period));
   useEffect(() => setStep(defaultStepFor(period)), [period]);
 
@@ -621,8 +642,6 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
           </span>
         );
     }
-    const days = [];
-    for (let d = 0; d * 24 < n; d++) days.push(d);
     const hours = [];
     for (let i = 0; i < n; i += 6) hours.push(i);
     body = (
@@ -641,11 +660,9 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
         }}
       >
         {/* gündüz bandı */}
-        {days.map((d) => {
-          const g0 = x(d * 24 + 6);
-          const g1 = x(Math.min(n, d * 24 + 18));
-          return g1 > g0 ? <rect key={`dn${d}`} x={g0} y={PT} width={g1 - g0} height={geo.PH} fill="#F3EAD3" opacity="0.55" /> : null;
-        })}
+        {dayBands(times, sun).map(([a, b]) => (
+          <rect key={`dn${a}`} x={x(a)} y={PT} width={x(b) - x(a)} height={geo.PH} fill="#F3EAD3" opacity="0.55" />
+        ))}
         {(cfg.bands || []).map((b) => {
           const A = Math.max(geo.lo, b.from);
           const B = Math.min(geo.hi, b.to);

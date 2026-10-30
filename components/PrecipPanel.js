@@ -1,5 +1,5 @@
 // Toplam yağış paneli (Paket 3, Ekim 2026) — çizgi grafiklerle aynı düzen:
-// sabit sol eksen, 06–18 gündüz bandı, 06 / 12 / 18 dikmeleri, "şimdi" çizgisi, 16 günde yatay kaydırma
+// sabit sol eksen, gündüz bandı (gün doğumu – batımı, 31 Ekim), 06 / 12 / 18 dikmeleri, "şimdi" çizgisi, 16 günde yatay kaydırma
 // (diğer grafiklerle saat üzerinden birlikte kayar), altta yalnız anahtar.
 // - Çubuk: seçilen dilimdeki (1s / 3s / 6s) toplam yağış, her model kendi renginde yan yana.
 // - Uyum şeridi günlüktür: her modelin o günkü toplamı eşiğe (varsayılan 0.2 mm) göre "yağış var / yok"
@@ -16,6 +16,7 @@ import { RAIN_DAY_DEFAULT, groupDays, rainDayAgreement } from "../lib/agreement"
 import {
   Chip,
   DAY3,
+  dayBands,
   SelFrame,
   LABW,
   MIN_PXH,
@@ -64,7 +65,7 @@ function slotText(times, s0, step) {
   return `${day} ${pad2(p.hour)}:00–${pad2(e ? e.hour : p.hour)}:59 TSİ`;
 }
 
-export default function PrecipPanel({ models, period, status, selection, onSelect, kind = "rain" }) {
+export default function PrecipPanel({ models, period, status, selection, onSelect, kind = "rain", sun }) {
   const K = KIND[kind] || KIND.rain;
   const snow = kind === "snow";
   const [step, setStep] = useState(defaultStepFor(period));
@@ -238,8 +239,6 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
         )}
       </svg>
     );
-    const dayIdx = [];
-    for (let d = 0; d * 24 < n; d++) dayIdx.push(d);
     const hours = [];
     for (let i = 0; i < n; i += 6) hours.push(i);
     const bw = Math.max(0.8, (cw - 1.5) / models.length);
@@ -259,11 +258,9 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
           setTimeout(onLeave, 2600);
         }}
       >
-        {dayIdx.map((d) => {
-          const g0 = x(d * 24 + 6);
-          const g1 = x(Math.min(n, d * 24 + 18));
-          return g1 > g0 ? <rect key={`dn${d}`} x={g0} y={PT} width={g1 - g0} height={PH} fill="#F3EAD3" opacity="0.55" /> : null;
-        })}
+        {dayBands(times, sun).map(([a, b]) => (
+          <rect key={`dn${a}`} x={x(a)} y={PT} width={x(b) - x(a)} height={PH} fill="#F3EAD3" opacity="0.55" />
+        ))}
         {ticks.map((v) => (
           <line key={`g${v}`} x1={X0} x2={x(n)} y1={y(v)} y2={y(v)} stroke="#DCE1D9" />
         ))}

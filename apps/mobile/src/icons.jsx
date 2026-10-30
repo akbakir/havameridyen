@@ -10,6 +10,7 @@ let SUN_KEY = "";
 export function sunOf(lat, lon) {
   return sunTimes(lat, lon, new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10));
 }
+export const currentSun = () => SUN;
 export function setSunPlace(lat, lon) {
   const today = new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);
   const k = `${lat},${lon},${today}`;

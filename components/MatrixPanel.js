@@ -47,6 +47,7 @@ import {
   f1,
   numOrNull,
   pad2,
+  dayBands,
   parseTime,
   SelFrame,
   tipStyle,
@@ -395,7 +396,7 @@ const WX = {
 
 export const MATRICES = { wx: WX, wind: WIND, cloud: CLOUD };
 
-export default function MatrixPanel({ cfg, models, period, status, selection, onSelect }) {
+export default function MatrixPanel({ cfg, models, period, status, selection, onSelect, sun }) {
   const [step, setStep] = useState(defaultStepFor(period));
   useEffect(() => setStep(defaultStepFor(period)), [period]);
   const [unitId, setUnitId] = useState(cfg.units ? cfg.units[0].id : null);
@@ -540,11 +541,8 @@ export default function MatrixPanel({ cfg, models, period, status, selection, on
       </svg>
     );
     const head = [];
-    for (let d = 0; d * 24 < n; d++) {
-      const g0 = x(d * 24 + 6);
-      const g1 = x(Math.min(n, d * 24 + 18));
-      if (g1 > g0) head.push(<rect key={`dn${d}`} x={g0} y={33} width={g1 - g0} height={4} rx="1" fill="#E9D9B0" />);
-    }
+    // gündüz şeridi: gün doğumundan gün batımına (31 Ekim)
+    for (const [a, b] of dayBands(times, sun)) head.push(<rect key={`dn${a}`} x={x(a)} y={33} width={x(b) - x(a)} height={4} rx="1" fill="#E9D9B0" />);
     const nowCol = nowIdx >= 0 ? Math.floor(nowIdx / step) : -1;
     for (let c = 0; c < cols; c++) {
       const i = c * step;

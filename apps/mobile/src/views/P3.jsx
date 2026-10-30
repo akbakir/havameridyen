@@ -23,7 +23,7 @@ import {
   windAgreement,
 } from "@lib/agreement";
 import { MODELS } from "@lib/forecast";
-import { CLS_RNG, CLS_TXT, Mark, SKY_SOLID, condView, iconSvgAt } from "../icons";
+import { CLS_RNG, CLS_TXT, Mark, SKY_SOLID, condView, currentSun as SUN_NOW, iconSvgAt } from "../icons";
 import { MON, dir16, fmt, pad, parseT, speed, tsuf, unitLabel } from "../format";
 import { DIR8, dayGust, gust, val } from "../data";
 import { UnitToggle } from "./common";
@@ -176,8 +176,11 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
   let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Mono,monospace">`;
   for (const day of days) {
     const h0 = parseT(times[day.h0]).h;
-    const a = x(day.h0 + Math.max(0, 7 - h0)) - px / 2;
-    const b = Math.min(x(day.h0 + 19 - h0) - px / 2, W);
+    // gündüz bandı gün doğumundan gün batımına (31 Ekim; bakılan konumun bugünkü değeri, yoksa 07–19)
+    const r = SUN_NOW() ? SUN_NOW().rise : 7;
+    const st = SUN_NOW() ? SUN_NOW().set : 19;
+    const a = Math.max(0, x(day.h0 + Math.max(0, r - h0)) - px / 2);
+    const b = Math.min(x(day.h0 + st - h0) - px / 2, W);
     if (b > a) svg += `<rect x="${a}" y="0" width="${b - a}" height="${H}" fill="#F4F1DC" opacity=".7"/>`;
     svg += `<line x1="${day.h0 * px}" y1="0" x2="${day.h0 * px}" y2="${H}" stroke="#C9D0C6"/>`;
   }
