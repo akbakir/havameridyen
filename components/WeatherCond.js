@@ -41,6 +41,7 @@ export const WX_KEY = [
 export const WX_KEY_OBS = [
   ["fog", "Sisli (görüş ≤ 1 km)"],
   ["haze", "Puslu (1–5 km)"],
+  ["hazeC", "Puslu, kapalı"],
 ];
 
 export const WX_KEY_SNOW = [

@@ -4,7 +4,7 @@ import { wxSvg } from "@lib/wxicons";
 
 // Hava ikonları lib/wxicons.js'ten: site ve widget'larla ortak 16 ikon (26 Ekim). Adlar lib/agreement.js ic adlarıdır
 // (clear, few, part + gece "N"; cloud, over; rain, rainL, shower, showerL, storm, snow, snowshower, snowstorm;
-// 30 Ekim: fog, haze, hazeN);
+// 30 Ekim: fog, haze, hazeN; 31 Ekim: hazeC — puslu ve kapalı);
 // wxSvg(ad) tam SVG metnini verir, bilinmeyen ad → Çok Bulutlu.
 export const SKY = {
   "day-clear": "linear-gradient(172deg,#1E6F8C 0%,#4E9DB0 52%,#E3C58E 100%)",

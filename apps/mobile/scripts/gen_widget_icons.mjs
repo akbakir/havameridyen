@@ -29,6 +29,7 @@ const NAMES = {
   fog: "wx_fog", // 30 Ekim: Sisli
   haze: "wx_haze", // Puslu (gündüz)
   hazeN: "wx_haze_night", // Puslu (gece)
+  hazeC: "wx_haze_cloud", // Puslu + Kapalı (31 Ekim)
 };
 
 function node(n, ind, op) {

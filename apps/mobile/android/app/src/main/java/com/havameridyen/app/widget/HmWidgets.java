@@ -567,6 +567,7 @@ public final class HmWidgets {
         String base = ic.endsWith("N") ? ic.substring(0, ic.length() - 1) : ic;
         // Sis / pus (30 Ekim): yağış yokken görüş veren modellerin en az yarısı ≤ 1 km Sisli, 1–5 km Puslu; zemin kapalı gökyüzü
         if (base.equals("fog")) return new Look(R.drawable.wx_fog, R.drawable.wsky_overcast);
+        if (base.equals("hazeC")) return new Look(R.drawable.wx_haze_cloud, R.drawable.wsky_overcast); // Puslu + Kapalı (31 Ekim)
         if (base.equals("haze")) {
             boolean nt = h < 6 || h >= 20;
             return new Look(nt ? R.drawable.wx_haze_night : R.drawable.wx_haze, R.drawable.wsky_overcast);
