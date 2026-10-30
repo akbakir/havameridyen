@@ -65,7 +65,7 @@ const TREND_BY = Object.fromEntries(TREND.map((t) => [t.key, t]));
 
 export const f1 = (v) => (v == null ? "—" : (Math.round(v * 10) / 10).toFixed(1));
 export const pad2 = (n) => String(n).padStart(2, "0");
-const pickStep = (span, steps) => steps.find((k) => span / k <= 9) ?? steps[steps.length - 1];
+const pickStep = (span, steps, most = 9) => steps.find((k) => span / k <= most) ?? steps[steps.length - 1];
 const CAPE_CLASS_TEXT = ["500 J/kg altı", "500–1000 J/kg", "1000 J/kg üstü"];
 
 export function trPossessive(n) {
@@ -149,6 +149,25 @@ export const LINE_CHARTS = {
     fmt: (v) => `${f1(v)} hPa`,
     term: { href: "/terimler#basinc", label: "Basınç eğilimi nedir?" },
   },
+};
+
+// Toplam kar kalınlığı (30 Ekim, Ali Kemal: "Web sitesinde de kar grafikleri olsun"; çizgiler dinamik ve okunur):
+// yatay çizgi adımı veriye göre (en çok 6 çizgi), küçük kalınlıkta ondalıklı. İnce ya da değişen örtüde eksen
+// 0'dan başlar; kalın ve az değişen örtüde (en düşük değer en yükseğin yarısından fazla) verinin hemen altından,
+// değişim görünsün diye. Uyum: en çok ve en az kar veren model farkı 5 cm altı hemfikir, 5–10 kısmen, üstü
+// ayrışıyor (lib/consensus.js BANDS.snow_depth ile aynı 5 cm). UKMO, ARPEGE, JMA kar kalınlığı vermiyor.
+// Sayfa paneli yalnız seçili modellerden biri kar verirken gösterir.
+LINE_CHARTS.snowDepth = {
+  key: "snow_depth",
+  title: "Toplam kar kalınlığı",
+  unit: "yerdeki kar · cm",
+  tick: (v) => String(v),
+  grid: (span) => pickStep(span, [0.25, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100], 6),
+  autoZero: true,
+  minTop: 1,
+  agree: { type: "spread", partial: 5, split: 10, unit: " cm", pair: "en çok ve en az kar kalınlığı veren model" },
+  fmt: (v) => `${f1(v)} cm`,
+  term: { href: "/terimler#kar", label: "Kar kalınlığı nedir?" },
 };
 
 // --- Uyum hesapları (kurallar lib/agreement.js'te) ---
@@ -342,11 +361,17 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
         }
       }
     if (!Number.isFinite(lo)) return null;
+    const rawLo = lo;
     const pad = Math.max(0.4, (hi - lo) * 0.04);
     lo -= pad;
     hi += pad;
     if (cfg.floorZero) {
       lo = 0;
+      hi = Math.max(hi, cfg.minTop || 0);
+    }
+    if (cfg.autoZero) {
+      if (rawLo <= (hi - pad) * 0.5) lo = 0;
+      else lo = Math.max(0, lo);
       hi = Math.max(hi, cfg.minTop || 0);
     }
     if (cfg.clamp) {

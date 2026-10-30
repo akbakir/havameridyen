@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Layout from "../components/Layout";
-import LineChartPanel, { LINE_CHARTS, defaultStepFor } from "../components/LineChartPanel";
+import LineChartPanel, { LINE_CHARTS, defaultStepFor, numOrNull } from "../components/LineChartPanel";
 import PrecipPanel from "../components/PrecipPanel";
 import MatrixPanel, { MATRICES } from "../components/MatrixPanel";
 import ModelDetails from "../components/ModelDetails";
@@ -165,6 +165,10 @@ export default function SehirPage() {
   }
 
   const panelProps = { models: forecast?.models, period, status, selection, onSelect: selectAt };
+  // Kar panelleri (30 Ekim): seçili modellerden biri bu aralıkta taze kar ya da kar örtüsü veriyorsa görünür
+  const hasSnow = (forecast?.models || []).some((m) =>
+    m.series.some((x) => (numOrNull(x.snowfall) ?? 0) >= 0.05 || (numOrNull(x.snow_depth) ?? 0) >= 0.05)
+  );
 
   function resetModels() {
     setActiveModels(new Set(MODELS.filter((m) => m.defaultActive).map((m) => m.id)));
@@ -273,6 +277,10 @@ export default function SehirPage() {
           <LineChartPanel cfg={LINE_CHARTS.temp} {...panelProps} />
 
           <PrecipPanel {...panelProps} />
+
+          {hasSnow && <PrecipPanel kind="snow" {...panelProps} />}
+
+          {hasSnow && <LineChartPanel cfg={LINE_CHARTS.snowDepth} {...panelProps} />}
 
           <MatrixPanel cfg={MATRICES.cloud} {...panelProps} />
 
@@ -434,6 +442,7 @@ function findNowIndex(series) {
 // Grafikler, matrisler ve tablo:
 // - Sıcaklık, Nem, CAPE, Basınç: components/LineChartPanel.js
 // - Toplam yağış: components/PrecipPanel.js
+// - Taze kar (PrecipPanel kind="snow") ve Toplam kar kalınlığı (LINE_CHARTS.snowDepth): yalnız kar varken
 // - Hava durumu, Bulutluluk ve Rüzgar (model × zaman matrisleri): components/MatrixPanel.js
 // - Hava durumu ifadesi ve ikonları: components/WeatherCond.js
 // - Model detayları: components/ModelDetails.js

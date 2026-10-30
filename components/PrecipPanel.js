@@ -7,6 +7,9 @@
 //   "modeller bölünmüş". Eşik anahtardaki düğmelerle değiştirilebilir.
 //   (Yağış olasılığı kullanılmaz: UKMO ve ARPEGE bu değeri sunmuyor.)
 // - Tıklanan dilim ortak seçili zamandır (Model detayları oraya gider; bkz. LineChartPanel SelFrame).
+// - kind="snow" (30 Ekim, Ali Kemal: "Web sitesinde de kar grafikleri olsun"): aynı panel "Taze kar" olarak — dilimdeki
+//   taze kar (cm), uyum şeridi ve eşik düğmeleri yok; eksen küçük miktarlarda ondalıklı (0.1 · 0.2 · 0.25 · 0.5 cm),
+//   tepe en az 0.5 cm. Sayfa paneli yalnız seçili modellerden biri kar verirken gösterir.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RAIN_DAY_DEFAULT, groupDays, rainDayAgreement } from "../lib/agreement";
@@ -36,6 +39,11 @@ const PT = 26;
 const PH = 150;
 const RAIN_THRESHOLD_OPTIONS = [0.2, 0.5, 1, 2, 5];
 const RAIN_GRID = [0.2, 0.5, 1, 2, 5, 10, 20, 50];
+const SNOW_GRID = [0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50];
+const KIND = {
+  rain: { key: "precip_amount", unit: "mm", title: "Toplam yağış", grid: RAIN_GRID, empty: "yağış" },
+  snow: { key: "snowfall", unit: "cm", title: "Taze kar", grid: SNOW_GRID, empty: "kar" },
+};
 
 const RAIN_STATE = {
   wet: { bg: "#3B6FB6", ink: "#FFFFFF", text: "yağışta uzlaşı" },
@@ -56,7 +64,9 @@ function slotText(times, s0, step) {
   return `${day} ${pad2(p.hour)}:00–${pad2(e ? e.hour : p.hour)}:59 TSİ`;
 }
 
-export default function PrecipPanel({ models, period, status, selection, onSelect }) {
+export default function PrecipPanel({ models, period, status, selection, onSelect, kind = "rain" }) {
+  const K = KIND[kind] || KIND.rain;
+  const snow = kind === "snow";
   const [step, setStep] = useState(defaultStepFor(period));
   useEffect(() => setStep(defaultStepFor(period)), [period]);
   const [threshold, setThreshold] = useState(RAIN_DAY_DEFAULT);
@@ -70,8 +80,9 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
   const ok = status === "ok" && models && models.length > 0;
   const n = ok ? models[0].series.length : 0;
   const times = ok ? models[0].series.map((s) => s.time) : [];
-  const hasAny = ok && models.some((m) => m.series.some((s) => numOrNull(s.precip_amount) != null));
+  const hasAny = ok && models.some((m) => m.series.some((s) => numOrNull(s[K.key]) != null));
   const multi = ok && models.length > 1;
+  const strip = multi && !snow; // günlük yağış uyum şeridi (karda yok)
 
   const geo = useMemo(() => {
     if (!hasAny || !width) return null;
@@ -87,7 +98,7 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
         let a = 0;
         let any = false;
         for (let i = c * step; i < c * step + step && i < n; i++) {
-          const v = numOrNull(m.series[i]?.precip_amount);
+          const v = numOrNull(m.series[i]?.[K.key]);
           if (v != null) {
             a += v;
             any = true;
@@ -100,21 +111,21 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
       });
       sums.push(row);
     }
-    const g = RAIN_GRID.find((k) => Math.max(mx, 0.5) / k <= 5) ?? 50;
+    const g = K.grid.find((k) => Math.max(mx, 0.5) / k <= 5) ?? 50;
     const top = Math.max(g, Math.ceil(mx / g - 1e-9) * g);
     const ticks = [];
     for (let v = 0; v <= top + 1e-9; v += g) ticks.push(Math.round(v * 100) / 100);
     const PB = PT + PH;
     const y = (v) => PT + (1 - v / top) * PH;
     const SY = PB + 22;
-    const H = multi ? SY + STRIP_H + 6 : PB + 20;
+    const H = strip ? SY + STRIP_H + 6 : PB + 20;
     return { pxh, x, W, cols, sums, ticks, y, PB, SY, H, cw: step * pxh };
-  }, [hasAny, width, n, step, models, multi]);
+  }, [hasAny, width, n, step, models, strip, K]);
 
   const days = useMemo(() => {
-    if (!geo || !multi) return [];
+    if (!geo || !strip) return [];
     return groupDays(models[0].series.map((s) => s.time)).map((d) => rainDayAgreement(models, d, threshold));
-  }, [geo, multi, models, threshold]);
+  }, [geo, strip, models, threshold]);
 
   const nowIdx = useNowIndex(times);
   const { more, onScroll } = useSyncedScroll(scRef, geo, period, nowIdx);
@@ -168,7 +179,7 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
               <i style={{ background: r.m.color }} />
               {r.m.label}
             </span>
-            <span>{r.v == null ? "veri yok" : r.v < 0.05 ? "yok" : `${mm(r.v)} mm`}</span>
+            <span>{r.v == null ? "veri yok" : r.v < (snow ? 0.01 : 0.05) ? "yok" : `${snow ? (Math.round(r.v * 100) / 100).toFixed(2) : mm(r.v)} ${K.unit}`}</span>
           </div>
         ))}
         {rows.some((r) => r.v == null) && <div className="lc-mono lc-rule">veri yok: modelin tahmin süresi bitti</div>}
@@ -220,7 +231,7 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
             {v}
           </text>
         ))}
-        {multi && (
+        {strip && (
           <text x={LABW - 8} y={SY + STRIP_H / 2 + 3.5} textAnchor="end" fontFamily={MONO} fontSize="10" fill="var(--ink-soft)">
             uyum
           </text>
@@ -239,7 +250,7 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
         height={H}
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label="Toplam yağış"
+        aria-label={K.title}
         onMouseMove={onMove}
         onMouseLeave={onLeave}
         onClick={onClick}
@@ -293,7 +304,7 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
         {/* çubuklar: dilim toplamı, modeller yan yana */}
         {sums.map((row, c) =>
           row.map((v, mi) =>
-            v == null || v < 0.05 ? null : (
+            v == null || v < (snow ? 0.01 : 0.05) ? null : (
               <rect
                 key={`${c}-${mi}`}
                 x={(x(c * step) + 0.75 + mi * bw).toFixed(2)}
@@ -309,7 +320,7 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
           <rect pointerEvents="none" x={x(hoverC * step)} y={PT} width={cw} height={PH} fill="var(--ink)" opacity="0.07" />
         )}
         {/* günlük uyum şeridi */}
-        {multi &&
+        {strip &&
           days.map((r, di) => {
             if (!r.st) return null;
             const R = RAIN_STATE[r.st];
@@ -346,14 +357,14 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
 
   const scrollable = geo && scRef.current ? geo.W > scRef.current.clientWidth + 4 : false;
   const sub = ok
-    ? `mm / ${step} saat (dilim toplamı) · ${models.length} model${scrollable ? " · yatay kaydırılabilir" : ""}`
-    : "mm";
+    ? `${K.unit} / ${step} saat (dilim toplamı) · ${models.length} model${scrollable ? " · yatay kaydırılabilir" : ""}`
+    : K.unit;
 
   return (
     <div className="panel">
       <div className="panel-head">
         <div className="panel-head-left">
-          <div className="panel-title">Toplam yağış</div>
+          <div className="panel-title">{K.title}</div>
           <div className="panel-sub" title={sub}>
             {sub}
           </div>
@@ -368,7 +379,7 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
       </div>
       {status === "loading" && <div className="loading">Veri yükleniyor…</div>}
       {status === "error" && <div className="err">Veri alınamadı — bağlantını kontrol et.</div>}
-      {ok && !hasAny && <div className="err">Bu modeller için yağış verisi yok.</div>}
+      {ok && !hasAny && <div className="err">Bu modeller için {K.empty} verisi yok.</div>}
       {ok && hasAny && (
         <>
           <div className={"lc" + (more ? " more" : "")} ref={setBoxEl}>
@@ -377,7 +388,7 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
               {body}
             </div>
           </div>
-          {multi && (
+          {strip && (
             <div className="lc-key">
               {["wet", "dry", "mixed"].map((k) => (
                 <Chip key={k} bg={RAIN_STATE[k].bg} ink={RAIN_STATE[k].ink}>
