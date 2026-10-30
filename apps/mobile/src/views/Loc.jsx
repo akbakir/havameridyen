@@ -5,7 +5,7 @@ import { Geolocation } from "@capacitor/geolocation";
 import { HOME_CITIES } from "@lib/slugify";
 import { fetchFavorite, reverseName, searchLocations } from "../api";
 import { fmt, parseT, tsiNowHour } from "../format";
-import { WxIcon, condView } from "../icons";
+import { WxIcon, condView, sunOf } from "../icons";
 import { nowIndex } from "../data";
 import { placeKey, placeLabel } from "../store";
 import { MENU } from "./Sheet";
@@ -50,7 +50,7 @@ function FavCard({ place, onOpen }) {
   return (
     <button type="button" className="favcard" onClick={onOpen}>
       {/* hava ikonu (28 Ekim, Ali Kemal: "Favorilerde hava durumu ikonu sayfayı renklendirdi güzel") */}
-      <WxIcon name={st.status === "ok" ? condView(st.cond, st.h).icon : "cloud"} className={"ic" + (st.status === "ok" ? "" : " off")} />
+      <WxIcon name={st.status === "ok" ? condView(st.cond, st.h, sunOf(place.lat, place.lon)).icon : "cloud"} className={"ic" + (st.status === "ok" ? "" : " off")} />
       <span className="n">{placeLabel(place)}</span>
       <span className="t">
         {st.status === "ok" ? `${fmt(st.t)}°` : "—"}

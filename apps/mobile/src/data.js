@@ -22,6 +22,7 @@ const FIELDS = [
   ["cin", "cin"],
   ["lifted_index", "lifted_index"],
   ["visibility", "visibility"], // m (30 Ekim, sis / pus)
+  ["is_day", "is_day"], // 1 / 0 (31 Ekim, gün doğumu / batımı)
 ];
 
 export function toModels(resp) {

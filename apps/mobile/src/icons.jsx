@@ -1,6 +1,22 @@
 // Uygulama ikonları ve gökyüzü renkleri (Prototip 9). Durum ifadesinin kuralları web ile ortak
 // (lib/agreement.js condAt / consensusCond); burada yalnız o sonucun ekrandaki görünüşü seçilir.
 import { wxSvg } from "@lib/wxicons";
+import { skyPhase, sunTimes } from "@lib/sun";
+
+// Gökyüzü evresi ve ay ikonu (31 Ekim): bakılan konumun bugünkü gün doğumu / batımından (lib/sun.js). App konum
+// değişince setSunPlace çağırır; 16 gün içinde birkaç dakikalık kayma yok sayılır.
+let SUN = null;
+let SUN_KEY = "";
+export function sunOf(lat, lon) {
+  return sunTimes(lat, lon, new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10));
+}
+export function setSunPlace(lat, lon) {
+  const today = new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);
+  const k = `${lat},${lon},${today}`;
+  if (k === SUN_KEY) return;
+  SUN_KEY = k;
+  SUN = sunTimes(lat, lon, today);
+}
 
 // Hava ikonları lib/wxicons.js'ten: site ve widget'larla ortak 16 ikon (26 Ekim). Adlar lib/agreement.js ic adlarıdır
 // (clear, few, part + gece "N"; cloud, over; rain, rainL, shower, showerL, storm, snow, snowshower, snowstorm;
@@ -27,14 +43,15 @@ export const CLS_TXT = ["Açık", "Az Bulutlu", "Parçalı Bulutlu", "Çok Bulut
 export const CLS_RNG = ["% 0–10", "% 10–30", "% 30–50", "% 50–90", "% 90–100"];
 
 // cond: condAt / consensusCond sonucu ({ text, ic, wet, snow }); h: saat (0–23)
-export function condView(cond, h) {
+// sun: { rise, set } (yoksa bakılan konumun bugünkü değeri; favori kartları kendi konumunu verir)
+export function condView(cond, h, sun = SUN) {
   if (!cond) return { text: "Veri yok", icon: "cloud", sky: "nodata", wet: false, cls: null };
   if (cond.wet) return { text: cond.text, icon: cond.ic || "rain", sky: cond.snow ? "snow" : "rain", wet: true, snow: !!cond.snow, cls: null };
   // Sis / pus (30 Ekim): ikon kuraldan (fog · haze · gece hazeN)
   if (cond.obs) return { text: cond.text, icon: cond.ic, sky: "fog", wet: false, cls: null, obs: cond.obs };
   const base = String(cond.ic).replace(/N$/, "");
   const k = DRY_CLASS[base] ?? 3;
-  const ph = h >= 8 && h <= 17 ? "day" : h === 6 || h === 7 ? "dawn" : h === 18 || h === 19 ? "dusk" : "night";
+  const ph = skyPhase(h, sun);
   const night = ph === "night";
   const icon = k <= 2 ? DRY_ICON[k] + (night ? "N" : "") : DRY_ICON[k];
   const sky = k === 4 ? "overcast" : k <= 1 ? `${ph}-clear` : `${ph}-cloud`;

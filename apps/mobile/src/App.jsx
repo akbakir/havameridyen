@@ -13,6 +13,7 @@ import { parseT, tsiNowHour } from "./format";
 import { dayIndexOf, daysOf, nowIndex, toModels } from "./data";
 import { loadPrefs, placeKey, savePrefs } from "./store";
 import { syncWidgetPlace } from "./widget";
+import { setSunPlace } from "./icons";
 import { TabBar } from "./views/common";
 import Loc from "./views/Loc";
 import Gunluk, { DayStrip, dailyOf } from "./views/Gunluk";
@@ -48,6 +49,7 @@ export default function App() {
   }, []);
 
   const { place, selected, unit, favorites } = prefs;
+  setSunPlace(place.lat, place.lon); // gündüz / gece ve gökyüzü evresi bu konumun gün doğumu / batımından (31 Ekim)
 
   // Ana ekran widget'ı son bakılan konumu gösterir
   useEffect(() => syncWidgetPlace(place), [place]);

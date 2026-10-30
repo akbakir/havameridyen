@@ -283,6 +283,7 @@ public final class HmWidgets {
 
     private static RemoteViews build(Context ctx, int kind, JSONObject d) {
         RemoteViews v = new RemoteViews(ctx.getPackageName(), LAYOUT[kind]);
+        setSun(ctx); // gece / gündüz bu konumun bugünkü gün doğumu / batımından (31 Ekim)
         Intent open = new Intent(ctx, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         v.setOnClickPendingIntent(R.id.w_root,
             PendingIntent.getActivity(ctx, 0, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
@@ -547,6 +548,52 @@ public final class HmWidgets {
         }
     }
 
+    // --- Gün doğumu / batımı (31 Ekim; lib/sun.js'in Java karşılığı, NOAA denklemi): gece ikonu ve gökyüzü evresi ---
+    private static double sunRise = -1, sunSet = -1; // TSİ ondalık saat; -1 = bilinmiyor (eski sabit kural)
+
+    private static double sunEvent(double lat, double lon, int n, boolean rise) {
+        double rad = Math.PI / 180, lngHour = lon / 15;
+        double t = n + ((rise ? 6 : 18) - lngHour) / 24;
+        double M = 0.9856 * t - 3.289;
+        double L = M + 1.916 * Math.sin(M * rad) + 0.02 * Math.sin(2 * M * rad) + 282.634;
+        L = ((L % 360) + 360) % 360;
+        double RA = Math.atan(0.91764 * Math.tan(L * rad)) / rad;
+        RA = ((RA % 360) + 360) % 360;
+        RA += Math.floor(L / 90) * 90 - Math.floor(RA / 90) * 90;
+        RA /= 15;
+        double sinDec = 0.39782 * Math.sin(L * rad);
+        double cosDec = Math.cos(Math.asin(sinDec));
+        double cosH = (Math.cos(90.833 * rad) - sinDec * Math.sin(lat * rad)) / (cosDec * Math.cos(lat * rad));
+        if (cosH > 1 || cosH < -1) return -1;
+        double H = (rise ? 360 - Math.acos(cosH) / rad : Math.acos(cosH) / rad) / 15;
+        double T = H + RA - 0.06571 * t - 6.622;
+        double UT = (((T - lngHour) % 24) + 24) % 24;
+        return (((UT + 3) % 24) + 24) % 24;
+    }
+
+    private static void setSun(Context ctx) {
+        SharedPreferences p = prefs(ctx);
+        double lat = Double.longBitsToDouble(p.getLong(K_LAT, Double.doubleToLongBits(40.77)));
+        double lon = Double.longBitsToDouble(p.getLong(K_LON, Double.doubleToLongBits(29.94)));
+        Calendar c = Calendar.getInstance(TimeZone.getTimeZone("Europe/Istanbul"));
+        int n = c.get(Calendar.DAY_OF_YEAR);
+        sunRise = sunEvent(lat, lon, n, true);
+        sunSet = sunEvent(lat, lon, n, false);
+    }
+
+    private static boolean isDayHour(int h) {
+        if (sunRise < 0 || sunSet < 0) return h >= 6 && h < 20;
+        return h >= sunRise - 0.5 && h < sunSet + 0.5;
+    }
+
+    private static String phase(int h) {
+        if (sunRise < 0 || sunSet < 0) return h >= 8 && h <= 17 ? "day" : (h == 6 || h == 7) ? "dawn" : (h == 18 || h == 19) ? "dusk" : "night";
+        if (!isDayHour(h)) return "night";
+        if (h < sunRise + 1) return "dawn";
+        if (h >= sunSet - 1) return "dusk";
+        return "day";
+    }
+
     private static Look look(JSONObject c, int h) {
         String ic = c.optString("ic", "");
         if (ic.isEmpty()) return new Look(R.drawable.wx_cloud, R.drawable.wsky_nodata);
@@ -569,7 +616,7 @@ public final class HmWidgets {
         if (base.equals("fog")) return new Look(R.drawable.wx_fog, R.drawable.wsky_overcast);
         if (base.equals("hazeC")) return new Look(R.drawable.wx_haze_cloud, R.drawable.wsky_overcast); // Puslu + Kapalı (31 Ekim)
         if (base.equals("haze")) {
-            boolean nt = h < 6 || h >= 20;
+            boolean nt = !isDayHour(h);
             return new Look(nt ? R.drawable.wx_haze_night : R.drawable.wx_haze, R.drawable.wsky_overcast);
         }
         int k;
@@ -580,7 +627,7 @@ public final class HmWidgets {
             case "over": k = 4; break;
             default: k = 3;
         }
-        String ph = h >= 8 && h <= 17 ? "day" : (h == 6 || h == 7) ? "dawn" : (h == 18 || h == 19) ? "dusk" : "night";
+        String ph = phase(h);
         boolean night = ph.equals("night");
         // İkonlar lib/wxicons.js'ten (site ve uygulamayla ortak 16 ikon; Az ve Parçalı Bulutlu ayrı, 26 Ekim)
         int icon = k == 0 ? (night ? R.drawable.wx_moon : R.drawable.wx_sun)
