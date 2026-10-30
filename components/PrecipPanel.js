@@ -112,7 +112,7 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
       sums.push(row);
     }
     const g = K.grid.find((k) => Math.max(mx, 0.5) / k <= 5) ?? 50;
-    const top = Math.max(g, Math.ceil(mx / g - 1e-9) * g);
+    const top = Math.max(snow ? 0.5 : g, Math.ceil(mx / g - 1e-9) * g); // karda tepe en az 0.5 cm (kar3)
     const ticks = [];
     for (let v = 0; v <= top + 1e-9; v += g) ticks.push(Math.round(v * 100) / 100);
     const PB = PT + PH;

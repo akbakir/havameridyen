@@ -165,10 +165,11 @@ export default function SehirPage() {
   }
 
   const panelProps = { models: forecast?.models, period, status, selection, onSelect: selectAt };
-  // Kar panelleri (30 Ekim): seçili modellerden biri bu aralıkta taze kar ya da kar örtüsü veriyorsa görünür
-  const hasSnow = (forecast?.models || []).some((m) =>
-    m.series.some((x) => (numOrNull(x.snowfall) ?? 0) >= 0.05 || (numOrNull(x.snow_depth) ?? 0) >= 0.05)
-  );
+  // Kar panelleri (30 Ekim): ayrı koşullarla (kar3) — Taze kar yalnız aralıkta yeni kar varsa, Toplam kar kalınlığı
+  // yalnız yerde kar varsa (seçili modellerden biri ≥ 0.05 cm)
+  const anySnow = (key) => (forecast?.models || []).some((m) => m.series.some((x) => (numOrNull(x[key]) ?? 0) >= 0.05));
+  const hasSnowfall = anySnow("snowfall");
+  const hasSnowDepth = anySnow("snow_depth");
 
   function resetModels() {
     setActiveModels(new Set(MODELS.filter((m) => m.defaultActive).map((m) => m.id)));
@@ -278,9 +279,9 @@ export default function SehirPage() {
 
           <PrecipPanel {...panelProps} />
 
-          {hasSnow && <PrecipPanel kind="snow" {...panelProps} />}
+          {hasSnowfall && <PrecipPanel kind="snow" {...panelProps} />}
 
-          {hasSnow && <LineChartPanel cfg={LINE_CHARTS.snowDepth} {...panelProps} />}
+          {hasSnowDepth && <LineChartPanel cfg={LINE_CHARTS.snowDepth} {...panelProps} />}
 
           <MatrixPanel cfg={MATRICES.cloud} {...panelProps} />
 

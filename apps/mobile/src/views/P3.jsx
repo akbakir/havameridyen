@@ -132,7 +132,11 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
   const today = days.findIndex((d) => nowIdx >= d.h0 && nowIdx < d.h1);
   const hasGust = (m) => m.series.some((s, i) => i < n && s.wind_gust != null);
   const gm = ms.filter(hasGust);
-  const snowOn = ms.some((m) => m.series.some((s, i) => i < n && ((s.snowfall ?? 0) >= 0.05 || (s.snow_depth ?? 0) >= 0.05)));
+  // 30 Ekim (kar3): iki kar paneli ayrı koşulla — taze kar yalnız aralıkta yeni kar varsa, kalınlık yalnız yerde kar varsa
+  // (Zermatt: örtü var, 3 günde yeni kar yok → boş taze kar paneli açılıyordu)
+  const anyOf = (key) => ms.some((m) => m.series.some((s, i) => i < n && (s[key] ?? 0) >= 0.05));
+  const sfOn = anyOf("snowfall");
+  const sdOn = anyOf("snow_depth");
   const WX_ROW = 22;
   const panels = [
     { id: "x", h: ms.length * WX_ROW + 4, title: "Hava durumu", unit: `dilimde en belirgin · ${cnt}` },
@@ -141,12 +145,8 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
     { id: "ts", h: 13 },
     { id: "r", h: 74, title: "Toplam yağış", unit: `mm/${step} sa`, ctl: "rain" },
     { id: "rs", h: 10 },
-    ...(snowOn
-      ? [
-          { id: "sn", h: 64, title: "Taze kar", unit: `cm/${step} sa · ${cnt}` },
-          { id: "sd", h: 78, title: "Toplam kar kalınlığı", unit: "cm · " + cnt },
-        ]
-      : []),
+    ...(sfOn ? [{ id: "sn", h: 64, title: "Taze kar", unit: `cm/${step} sa · ${cnt}` }] : []),
+    ...(sdOn ? [{ id: "sd", h: 78, title: "Toplam kar kalınlığı", unit: "cm · " + cnt }] : []),
     { id: "w", h: 62, title: "Rüzgar hızı", unit: U, ctl: "unit" },
     { id: "ws", h: 13 },
     { id: "d", h: 56, title: "Rüzgar yönü", unit: "nokta/model · " + cnt },
@@ -349,7 +349,7 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
     if (nice) {
       // Taze kar: eksen en büyük değere göre (en az nice.min); küçük miktarlar da okunur
       const st = niceStep(Math.max(mx, nice.min), tickCount(p));
-      top = Math.max(st, Math.ceil(mx / st - 1e-9) * st);
+      top = Math.max(nice.min, Math.ceil(mx / st - 1e-9) * st); // tepe en az nice.min (0,5 cm; kar3)
       tks = ticksOf(0, top, st);
     } else {
       top = Math.max(1, Math.ceil(mx));
