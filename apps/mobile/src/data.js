@@ -21,6 +21,7 @@ const FIELDS = [
   ["cape", "cape"],
   ["cin", "cin"],
   ["lifted_index", "lifted_index"],
+  ["visibility", "visibility"], // m (30 Ekim, sis / pus)
 ];
 
 export function toModels(resp) {

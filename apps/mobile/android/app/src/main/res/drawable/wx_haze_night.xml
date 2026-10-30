@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- havameridyen: üretildi (scripts/gen_widget_icons.mjs, lib/wxicons.js). Elle düzenlemeyin. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="36dp"
+    android:height="36dp"
+    android:viewportWidth="36"
+    android:viewportHeight="36">
+    <group
+        android:translateX="1"
+        android:translateY="-3"
+        android:scaleX="0.75"
+        android:scaleY="0.75">
+        <path
+            android:fillColor="#DCE4F0"
+            android:strokeColor="#7F93AE"
+            android:strokeWidth="1"
+            android:pathData="M22 6a11 11 0 1 0 8 18 9.5 9.5 0 0 1-8-18z" />
+    </group>
+    <path
+        android:strokeColor="#7C8B98"
+        android:strokeWidth="4.2"
+        android:strokeLineCap="round"
+        android:pathData="M5 23L31 23" />
+    <path
+        android:strokeColor="#E4EAEF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M5 23L31 23" />
+    <path
+        android:strokeColor="#7C8B98"
+        android:strokeWidth="4.2"
+        android:strokeLineCap="round"
+        android:pathData="M5 28L31 28" />
+    <path
+        android:strokeColor="#E4EAEF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M5 28L31 28" />
+    <path
+        android:strokeColor="#7C8B98"
+        android:strokeWidth="4.2"
+        android:strokeLineCap="round"
+        android:pathData="M5 33L31 33" />
+    <path
+        android:strokeColor="#E4EAEF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M5 33L31 33" />
+</vector>

@@ -103,6 +103,8 @@ function GustBar({ models, i, unit }) {
   return { node, med };
 }
 
+// Görüş: 1 km altı metre (10 m'ye yuvarlı), 10 km'ye kadar tek ondalık km, üstü tam km
+const visTxt = (v) => (v < 1000 ? `${Math.round(v / 10) * 10} m` : v < 10000 ? `${fmt(v / 1000, 1)} km` : `${Math.round(v / 1000)} km`);
 const medTxt = (v, u, none) => (v == null ? "—" : v < 0.05 ? none : `${fmt(v, 1)} ${u}`);
 
 export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUnit, onIdx, onGo }) {
@@ -137,6 +139,8 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
 
   const condInfo = view.wet
     ? ["Hava durumu · yağış: modellerin en az yarısı o saat ≥ 0,1 mm", "yağış veriyor"]
+    : view.obs
+    ? [`Hava durumu · ${view.obs === 2 ? "sis: görüş ≤ 1 km" : "pus: görüş 1–5 km"} · görüş veren modeller`, view.obs === 2 ? "sisli" : "sisli ya da puslu"]
     : view.cls == null
     ? ["Hava durumu", "uyumlu"]
     : [`Hava durumu · ${CLS_TXT[view.cls]} (${CLS_RNG[view.cls]})`, "aynı sınıfta"];
@@ -225,6 +229,16 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
             <span className="mid lbv">% {fmt(H.humidity.v)}</span>
           </div>
           <Bar p={H.humidity} title="Nem · eşik % 10" onInfo={showInfo} />
+          {/* Görüş (30 Ekim, Ali Kemal): yalnız yağış yokken ve o saatte ortak durum sis ya da pus iken */}
+          {view.obs && H.visibility && H.visibility.v != null && (
+            <>
+              <div className="v">
+                <span className="k">Görüş</span>
+                <span className="mid lbv">{visTxt(H.visibility.v)}</span>
+              </div>
+              <Bar p={H.visibility} title="Görüş · sınıf: sis ≤ 1 km · pus 1–5 km · açık 5 km ve üstü" what="aynı sınıfta" onInfo={showInfo} />
+            </>
+          )}
           <div className="sep" />
           <div className="v">
             <div className="windrow">

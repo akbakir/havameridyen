@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AgreeMark from "./AgreeMark";
-import { WX_KEY, WX_KEY_SNOW, WxIcon } from "./WeatherCond";
+import { WX_KEY, WX_KEY_OBS, WX_KEY_SNOW, WxIcon } from "./WeatherCond";
 import {
   KN_PER_KMH,
   LEVEL_ORDER,
@@ -68,6 +68,13 @@ function slotText(times, s0, step) {
   if (step === 1) return `${day} ${pad2(p.hour)}:00 TSİ`;
   const e = parseTime(times[Math.min(times.length - 1, s0 + step - 1)]);
   return `${day} ${pad2(p.hour)}:00–${pad2(e ? e.hour : p.hour)}:59 TSİ`;
+}
+
+// Görüş: 1 km altı metre, 10 km'ye kadar tek ondalık km, üstü tam km
+function visText(v) {
+  if (v == null) return "—";
+  if (v < 1000) return `${Math.round(v / 10) * 10} m`;
+  return v < 10000 ? `${(v / 1000).toFixed(1)} km` : `${Math.round(v / 1000)} km`;
 }
 
 function hourText(times, i) {
@@ -337,6 +344,12 @@ const WX = {
             {step > 1 ? " (dilim toplamı)" : ""} · Bulut %{cc == null ? "—" : Math.round(cc)}
             {e != null ? ` · CAPE ${Math.round(e)} J/kg` : ""}
           </div>
+          {numOrNull(m.series[sc.i]?.visibility) != null && (
+            <div>
+              Görüş {visText(numOrNull(m.series[sc.i]?.visibility))}
+              {step > 1 ? ` (${hourText(times, sc.i)})` : ""}
+            </div>
+          )}
           {step > 1 && <div className="lc-mono">en belirgin saat {hourText(times, sc.i)}</div>}
         </>
       ),
@@ -353,17 +366,26 @@ const WX = {
     <>
       <div>
         {whereText(times, pk)} · {pk.n} modelin {pk.inClass}&apos;{trPossessive(pk.inClass)}{" "}
-        {pk.mode === "yağış" ? "yağış veriyor" : `aynı sınıfta: ${pk.mode}`}
+        {pk.mode === "yağış"
+          ? "yağış veriyor"
+          : pk.obs
+          ? `görüş veren modeller içinde ${pk.mode.toLocaleLowerCase("tr")}`
+          : `aynı sınıfta: ${pk.mode}`}
       </div>
       <div className="lc-mono lc-rule">
-        Modellerin en az yarısı yağış veriyorsa yağış verenlerin oranı, değilse ortanca bulut sınıfındaki modellerin
-        oranı (yağış veren azınlık da bulut sınıfıyla sayılır): % 75 ve üstü hemfikir, % 50–75 kısmen, altı ayrışıyor. 3 / 6 /
-        12 saatlik görünümde sütundaki ikonlar, yani her modelin dilim durumu karşılaştırılır.
+        Modellerin en az yarısı yağış veriyorsa yağış verenlerin oranı; değilse görüş veren modellerin (ECMWF, GFS, UKMO,
+        ICON) en az yarısı sisli (≤ 1 km) ya da puslu (1–5 km) ise onların oranı; değilse ortanca bulut sınıfındaki
+        modellerin oranı (yağış veren azınlık da bulut sınıfıyla sayılır): % 75 ve üstü hemfikir, % 50–75 kısmen, altı
+        ayrışıyor. 3 / 6 / 12 saatlik görünümde sütundaki ikonlar, yani her modelin dilim durumu karşılaştırılır.
       </div>
     </>
   ),
   key: (models) =>
-    [...WX_KEY, ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.snow)) ? WX_KEY_SNOW : [])].map(([ic, t]) => (
+    [
+      ...WX_KEY,
+      ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.obs)) ? WX_KEY_OBS : []),
+      ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.snow)) ? WX_KEY_SNOW : []),
+    ].map(([ic, t]) => (
       <span key={ic} className="lc-ik">
         <WxIcon ic={ic} size={18} />
         {t}

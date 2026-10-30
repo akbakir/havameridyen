@@ -37,6 +37,12 @@ export const WX_KEY = [
 ];
 
 // Kar ikonları açıklamada yalnız gösterilen dönemde en az bir modelde kar ifadesi varsa görünür
+// Sis ve pus ikonları (30 Ekim) açıklamada yalnız gösterilen dönemde en az bir modelde görünüyorsa
+export const WX_KEY_OBS = [
+  ["fog", "Sisli (görüş ≤ 1 km)"],
+  ["haze", "Puslu (1–5 km)"],
+];
+
 export const WX_KEY_SNOW = [
   ["snow", "Kar Yağışlı"],
   ["snowshower", "Kar Sağanağı"],

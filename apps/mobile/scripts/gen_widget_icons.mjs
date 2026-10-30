@@ -26,6 +26,9 @@ const NAMES = {
   snow: "wx_snow",
   snowshower: "wx_snow_heavy",
   snowstorm: "wx_snow_storm",
+  fog: "wx_fog", // 30 Ekim: Sisli
+  haze: "wx_haze", // Puslu (gündüz)
+  hazeN: "wx_haze_night", // Puslu (gece)
 };
 
 function node(n, ind, op) {

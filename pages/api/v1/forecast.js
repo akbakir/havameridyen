@@ -46,6 +46,7 @@ const HOURLY_FIELDS = [
   ["cape", "cape"],
   ["cin", "cin"],
   ["lifted_index", "lifted_index"],
+  ["visibility", "visibility"], // m (30 Ekim, sis / pus)
 ];
 
 const round2 = (v) => Math.round(v * 100) / 100;

@@ -85,8 +85,10 @@ function wxInfo(ms, i) {
   if (r.level === "na") return r;
   return {
     ...r,
-    txt: `${r.n} modelin ${r.inClass}'${tsuf(r.inClass)} ${r.mode === "yağış" ? "yağış veriyor" : `aynı sınıfta: ${r.mode}`}`,
-    rule: "en az yarısı yağış veriyorsa yağış verenlerin, değilse ortanca bulut sınıfındaki modellerin oranı (yağış veren azınlık da sayılır): % 75 ve üstü hemfikir · % 50–75 kısmen",
+    txt: r.obs
+      ? `görüş veren ${r.n} modelin ${r.inClass}'${tsuf(r.inClass)} ${r.mode.toLocaleLowerCase("tr")}`
+      : `${r.n} modelin ${r.inClass}'${tsuf(r.inClass)} ${r.mode === "yağış" ? "yağış veriyor" : `aynı sınıfta: ${r.mode}`}`,
+    rule: "en az yarısı yağış veriyorsa yağış verenlerin; değilse görüş veren modellerin en az yarısı sisli (≤ 1 km) ya da puslu (1–5 km) ise onların; değilse ortanca bulut sınıfındaki modellerin oranı: % 75 ve üstü hemfikir · % 50–75 kısmen",
   };
 }
 // 3/6/12 saat: sütundaki ikonların (her modelin dilim durumu) uyumu — Ali Kemal, 26 Ekim
@@ -95,8 +97,10 @@ function wxSlotInfo(ms, s0, st) {
   if (r.level === "na") return r;
   return {
     ...r,
-    txt: `${r.n} modelin ${r.inClass}'${tsuf(r.inClass)} ${r.mode === "yağış" ? "dilimi yağışlı" : `dilim ikonu aynı sınıfta: ${r.mode}`}`,
-    rule: "dilim ikonları: en az yarısı yağışlıysa yağışlıların, değilse ortanca bulut sınıfındaki modellerin oranı: % 75 ve üstü hemfikir · % 50–75 kısmen",
+    txt: r.obs
+      ? `görüş veren ${r.n} modelin ${r.inClass}'${tsuf(r.inClass)} dilimi ${r.mode.toLocaleLowerCase("tr")}`
+      : `${r.n} modelin ${r.inClass}'${tsuf(r.inClass)} ${r.mode === "yağış" ? "dilimi yağışlı" : `dilim ikonu aynı sınıfta: ${r.mode}`}`,
+    rule: "dilim ikonları: en az yarısı yağışlıysa yağışlıların; değilse görüş veren modellerin en az yarısının diliminde sis / pus varsa onların; değilse ortanca bulut sınıfındaki modellerin oranı: % 75 ve üstü hemfikir · % 50–75 kısmen",
   };
 }
 // 3/6/12 saat bulutluluk: satırdaki dilim ortalamasının uyumu

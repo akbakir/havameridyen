@@ -209,7 +209,8 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
   // Yağış miktarı yalnız yağışlı günde (gün kuralı: model günü ≥ 0,2 mm, modellerin yarısı; 28 Ekim, Ali Kemal:
   // "yağışsız bir günün altında 0.1mm yazılmasın")
   const rain = D.cond?.wet ? mmTxt(pv(D.precip_total)) : null;
-  const nModels = D.cond?.n ?? W.n ?? models.length;
+  // Sis / pus gününde cond.n görüş veren model sayısıdır (30 Ekim); başlıkta seçili model sayısı kalır
+  const nModels = D.cond?.obs ? W.n ?? models.length : D.cond?.n ?? W.n ?? models.length;
 
   return (
     <div className="gunluk">

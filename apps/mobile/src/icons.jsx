@@ -3,7 +3,8 @@
 import { wxSvg } from "@lib/wxicons";
 
 // Hava ikonları lib/wxicons.js'ten: site ve widget'larla ortak 16 ikon (26 Ekim). Adlar lib/agreement.js ic adlarıdır
-// (clear, few, part + gece "N"; cloud, over; rain, rainL, shower, showerL, storm, snow, snowshower, snowstorm);
+// (clear, few, part + gece "N"; cloud, over; rain, rainL, shower, showerL, storm, snow, snowshower, snowstorm;
+// 30 Ekim: fog, haze, hazeN);
 // wxSvg(ad) tam SVG metnini verir, bilinmeyen ad → Çok Bulutlu.
 export const SKY = {
   "day-clear": "linear-gradient(172deg,#1E6F8C 0%,#4E9DB0 52%,#E3C58E 100%)",
@@ -18,6 +19,8 @@ export const SKY = {
   nodata: "linear-gradient(172deg,#3A423E 0%,#59625D 100%)",
   snow: "linear-gradient(172deg,#4D6070 0%,#8395A5 55%,#C3CFD8 100%)",
   overcast: "linear-gradient(172deg,#3E4A50 0%,#5E6B71 55%,#8E989B 100%)",
+  // Sis / pus (30 Ekim): soluk gri-mavi gökyüzü
+  fog: "linear-gradient(172deg,#55636B 0%,#7E8C93 55%,#AEB7B9 100%)",
 };
 
 export const CLS_TXT = ["Açık", "Az Bulutlu", "Parçalı Bulutlu", "Çok Bulutlu", "Kapalı"];
@@ -27,6 +30,8 @@ export const CLS_RNG = ["% 0–10", "% 10–30", "% 30–50", "% 50–90", "% 90
 export function condView(cond, h) {
   if (!cond) return { text: "Veri yok", icon: "cloud", sky: "nodata", wet: false, cls: null };
   if (cond.wet) return { text: cond.text, icon: cond.ic || "rain", sky: cond.snow ? "snow" : "rain", wet: true, snow: !!cond.snow, cls: null };
+  // Sis / pus (30 Ekim): ikon kuraldan (fog · haze · gece hazeN)
+  if (cond.obs) return { text: cond.text, icon: cond.ic, sky: "fog", wet: false, cls: null, obs: cond.obs };
   const base = String(cond.ic).replace(/N$/, "");
   const k = DRY_CLASS[base] ?? 3;
   const ph = h >= 8 && h <= 17 ? "day" : h === 6 || h === 7 ? "dawn" : h === 18 || h === 19 ? "dusk" : "night";
@@ -53,6 +58,7 @@ export const SKY_SOLID = {
   nodata: "#59625D",
   snow: "#8395A5",
   overcast: "#5E6B71",
+  fog: "#7E8C93",
 };
 export function iconSvgAt(name, x, y, size) {
   return wxSvg(name).replace("<svg ", `<svg x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${size}" height="${size}" `);
