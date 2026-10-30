@@ -14,7 +14,22 @@ const STORM_KMH = 62;
 const pctOf = (p) => (p && p.n >= 2 ? p.in / p.n : null);
 const levelOf = (pct) => (pct == null ? "na" : pct >= 0.75 ? "ok" : pct >= 0.5 ? "partial" : "split");
 
-function Bar({ p, thin, title, what = "uyumlu", onInfo }) {
+function Bar({ p, thin, title, what = "uyumlu", u = "", dp = 1, uLong, onInfo }) {
+  // İki model kalınca (31 Ekim) yüzde yerine fark: "fark 3,2°" (seviye sunucudan: lib/consensus.js packBand)
+  if (p && p.n === 2 && p.sp != null) {
+    const info2 = (
+      <>
+        <div>{title}</div>
+        <div>yalnız 2 modelin verisi var · aralarındaki fark {fmt(p.sp, dp)}{uLong ?? u}</div>
+      </>
+    );
+    return (
+      <button type="button" className={"abar" + (thin ? " thin" : "")} aria-label={`İki model arasındaki fark ${fmt(p.sp, dp)}${uLong ?? u}`} onClick={() => onInfo(info2)}>
+        <i style={{ width: "100%", background: AG_COL[p.level] || AG_COL.ok }} />
+        <span>fark {fmt(p.sp, dp)}{u}</span>
+      </button>
+    );
+  }
   const pct = pctOf(p);
   const l = levelOf(pct);
   const info = (
@@ -165,7 +180,7 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
             kartta sağa / sola kaydırma da gün değiştirir */}
         <div className="p1title">
           <span>{heroTitle(t)}</span>
-          <span>{models.length} model</span>
+          <span>{models.length - miss.length} model</span>
         </div>
         {miss.length > 0 && <div className="miss">bu saat için veri yok: {miss.join(", ")}</div>}
         <div className="grid1">
@@ -202,7 +217,7 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
                 <span className="k">Toplam kar kalınlığı</span>
                 <span className="mid lbv">{medTxt(H.snow_depth.v, "cm", "kar yok")}</span>
               </div>
-              <Bar p={H.snow_depth} title="Toplam kar kalınlığı · eşik 5 cm" onInfo={showInfo} />
+              <Bar p={H.snow_depth} title="Toplam kar kalınlığı · eşik 5 cm" u=" cm" onInfo={showInfo} />
             </>
           )}
           <div className="v">
@@ -211,24 +226,24 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
               <span className="deg">°C</span>
             </div>
           </div>
-          <Bar p={H.temp} title="Sıcaklık · eşik 2 °C" onInfo={showInfo} />
+          <Bar p={H.temp} title="Sıcaklık · eşik 2 °C" u="°" onInfo={showInfo} />
           <div className="v" style={{ font: "500 13px var(--f-mono)" }}>
             Min <span className="mn">{fmt(D.temp_min.v)}°</span> &nbsp; Maks <span className="mx">{fmt(D.temp_max.v)}°</span>
           </div>
           <div className="astack">
-            <Bar p={D.temp_min} thin title="Günlük minimum sıcaklık · eşik 2 °C" onInfo={showInfo} />
-            <Bar p={D.temp_max} thin title="Günlük maksimum sıcaklık · eşik 2 °C" onInfo={showInfo} />
+            <Bar p={D.temp_min} thin title="Günlük minimum sıcaklık · eşik 2 °C" u="°" onInfo={showInfo} />
+            <Bar p={D.temp_max} thin title="Günlük maksimum sıcaklık · eşik 2 °C" u="°" onInfo={showInfo} />
           </div>
           <div className="v">
             <span className="k">Hissedilen</span>
             <span className="mid lbv">{fmt(H.feels_like.v, 1)}°</span>
           </div>
-          <Bar p={H.feels_like} title="Hissedilen sıcaklık · eşik 2 °C" onInfo={showInfo} />
+          <Bar p={H.feels_like} title="Hissedilen sıcaklık · eşik 2 °C" u="°" onInfo={showInfo} />
           <div className="v">
             <span className="k">Nem</span>
             <span className="mid lbv">% {fmt(H.humidity.v)}</span>
           </div>
-          <Bar p={H.humidity} title="Nem · eşik % 10" onInfo={showInfo} />
+          <Bar p={H.humidity} title="Nem · eşik % 10" dp={0} uLong=" puan" onInfo={showInfo} />
           {/* Görüş (30 Ekim, Ali Kemal): yalnız yağış yokken ve o saatte ortak durum sis ya da pus iken */}
           {view.obs && H.visibility && H.visibility.v != null && (
             <>

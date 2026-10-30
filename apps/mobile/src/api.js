@@ -13,13 +13,54 @@ const TTL = 10 * 60 * 1000;
 
 // Aynı adres aynı anda iki kez istenirse tek istek gider (29 Ekim: Saatlik de 16 gün olunca günlük sayfanın
 // 16 günlük isteğiyle aynı adres)
+// Çevrimdışı yedek (31 Ekim, eksikler turu): son başarılı tahmin yanıtları cihazda saklanır (en çok 4 adres, en çok
+// 3 gün). Bağlantı yokken ya da sunucu yanıt vermezken saklanan yanıt döner; _stale alanı kayıt zamanıdır (ms) ve
+// uygulama "Çevrimdışı · son veri …" notu gösterir. Yer arama ve yer adı saklanmaz.
+const OFF_KEY = "hm_off";
+const OFF_MAX = 4;
+const OFF_AGE = 3 * 24 * 3600e3;
+function offSave(path, data) {
+  if (!path.startsWith("/api/v1/forecast")) return;
+  try {
+    const idx = JSON.parse(localStorage.getItem(OFF_KEY) || "[]").filter((p) => p !== path);
+    idx.unshift(path);
+    for (const old of idx.splice(OFF_MAX)) localStorage.removeItem(OFF_KEY + ":" + old);
+    localStorage.setItem(OFF_KEY + ":" + path, JSON.stringify({ at: Date.now(), data }));
+    localStorage.setItem(OFF_KEY, JSON.stringify(idx));
+  } catch {
+    // depolama dolu ya da kapalı: yedeksiz devam
+  }
+}
+function offLoad(path) {
+  try {
+    const o = JSON.parse(localStorage.getItem(OFF_KEY + ":" + path) || "null");
+    if (o && o.data && Date.now() - o.at < OFF_AGE) return { ...o.data, _stale: o.at };
+  } catch {
+    // okunamadı
+  }
+  return null;
+}
+
 async function getJson(path) {
   const hit = memo.get(path);
   if (hit && Date.now() - hit.at < TTL) return hit.p;
-  const p = fetch(API_BASE + path).then((r) => {
-    if (!r.ok) throw new Error(`${r.status}`);
-    return r.json();
-  });
+  const p = fetch(API_BASE + path)
+    .then((r) => {
+      if (!r.ok) throw new Error(`${r.status}`);
+      return r.json();
+    })
+    .then((d) => {
+      offSave(path, d);
+      return d;
+    })
+    .catch((e) => {
+      const o = offLoad(path);
+      if (o) {
+        memo.delete(path); // bağlantı gelince yeniden denensin
+        return o;
+      }
+      throw e;
+    });
   memo.set(path, { at: Date.now(), p });
   p.catch(() => memo.delete(path));
   return p;

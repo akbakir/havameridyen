@@ -26,7 +26,7 @@ export default function Yasal() {
 
       <div className="kicker">Yasal</div>
       <h1>Gizlilik Politikası ve Kullanım Şartları</h1>
-      <div className="legal-meta">Son güncelleme: 30 Ağustos 2026</div>
+      <div className="legal-meta">Son güncelleme: 31 Ekim 2026</div>
 
       <div className="legal-section">
         <h2>1. Gizlilik Politikası</h2>
@@ -48,6 +48,15 @@ export default function Yasal() {
           <li>
             <strong>Favoriler:</strong> Favori şehirlerin yalnızca kendi tarayıcının yerel depolama alanında
             (localStorage) tutulur; bu veri sunucularımıza hiç gönderilmez ve tarayıcından silindiğinde kaybolur.
+          </li>
+          <li>
+            <strong>Mobil uygulama (Android) ve konum:</strong> Uygulamada hesap, reklam ve takip aracı yoktur.
+            &quot;Konumumu kullan&quot; yalnız uygulama açıkken ve yalnız <em>yaklaşık konum</em> izniyle çalışır; hassas
+            konum istenmez. Tahmin ve yer adı için koordinat yaklaşık 1 km&apos;ye (iki ondalık) yuvarlanarak
+            sunucumuza gönderilir, kullanıcıyla ya da cihazla ilişkilendirilmez ve saklanmaz. Yer adı, sunucumuz
+            üzerinden OpenStreetMap servislerinden (Nominatim, Photon) alınır; bu servislere de yalnız yuvarlanmış
+            koordinat gider. Favoriler, ayarlar, ana ekran widget&apos;ının konumu ve çevrimdışı görmek için son tahmin
+            yalnız cihazda saklanır.
           </li>
           <li>
             <strong>Teknik günlükler:</strong> Barındırma sağlayıcımız (Vercel), standart sunucu günlükleri (IP

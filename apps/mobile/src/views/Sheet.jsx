@@ -1,7 +1,8 @@
 // ⓘ menüsü ve alttan açılan sayfa (V07 C3): Modeller · Terimler · SSS · Hakkında · Yasal.
 // Terimler web ile aynı kaynaktan (lib/terms.js); diğer metinler Prototip 9 ile aynı.
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { App as CapApp } from "@capacitor/app";
 import { TERMS } from "@lib/terms";
 import { pad } from "../format";
 import { sourceOf } from "../data";
@@ -128,13 +129,22 @@ function Body({ page, allModels, loaded, onPage }) {
           şeyi söyleyip nerede ayrıştığını göstermektir.
         </p>
         <p>Veri: Open-Meteo (CC BY 4.0). Meteoroloji Genel Müdürlüğü'nün (MGM) resmi bir kanalı değildir.</p>
+        <p>Konum adları © OpenStreetMap katkıda bulunanlar (ODbL).</p>
+        <p style={{ color: "var(--s-soft)" }}>
+          <Version />
+        </p>
       </>
     );
   if (page === "yasal")
     return (
       <>
         <h4>Gizlilik</h4>
-        <p>Hesap yok; favoriler ve ayarlar yalnız cihazda saklanır, kişisel veri sunucuya gönderilmez.</p>
+        <p>Hesap yok, reklam ve takip aracı yok. Favoriler, ayarlar ve son tahmin (çevrimdışı görmek için) yalnız cihazda saklanır.</p>
+        <p>
+          Konum: "Konumumu kullan" yalnız uygulama açıkken ve yalnız <b>yaklaşık konum</b> izniyle çalışır. Tahmin ve yer adı için
+          koordinat yaklaşık 1 km'ye yuvarlanarak havameridyen sunucusuna gönderilir; hesapla ya da cihazla ilişkilendirilmez ve
+          saklanmaz. Yer adı OpenStreetMap servislerinden (Nominatim, Photon) sunucu üzerinden alınır.
+        </p>
         <h4>Sorumluluk</h4>
         <p>Gösterilen değerler model tahminidir, ölçüm değildir. Afet ve acil durumlarda MGM uyarıları esas alınır.</p>
         <p style={{ color: "var(--s-soft)" }}>Tam metin: havameridyen.com/yasal (Gizlilik Politikası ve Kullanım Şartları, KVKK).</p>
@@ -144,6 +154,17 @@ function Body({ page, allModels, loaded, onPage }) {
 }
 
 // sheet: { page, term? } ya da null
+// Sürüm (31 Ekim, eksikler turu): Android'de uygulamanın sürüm adı ve numarası (build.gradle versionName / versionCode)
+function Version() {
+  const [v, setV] = useState(null);
+  useEffect(() => {
+    CapApp.getInfo()
+      .then((i) => setV(`Sürüm ${i.version} (${i.build})`))
+      .catch(() => setV("Sürüm: web önizleme"));
+  }, []);
+  return v || "";
+}
+
 export default function Sheet({ sheet, allModels, loaded, onSheet }) {
   const bodyRef = useRef(null);
   useEffect(() => {

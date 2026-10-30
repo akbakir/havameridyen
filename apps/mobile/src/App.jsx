@@ -25,6 +25,12 @@ import P3 from "./views/P3";
 import Sheet from "./views/Sheet";
 
 const ALL = MODELS.map(({ id, label, color }) => ({ id, label, color }));
+const MON_S = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+// Çevrimdışı notu: kaydın TSİ tarihi ve saati ("31 Eki 00:30")
+function staleText(ms) {
+  const d = new Date(ms + 3 * 3600e3);
+  return `${d.getUTCDate()} ${MON_S[d.getUTCMonth()]} ${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+}
 
 export default function App() {
   const [prefs, setPrefs] = useState(loadPrefs);
@@ -63,7 +69,7 @@ export default function App() {
         const models = toModels(resp);
         const times = resp.time || [];
         const now = nowIndex(times, tsiNowHour());
-        setData((d) => (d.key === key ? { status: "ok", key, models, times, days: daysOf(times), nowIdx: now } : d));
+        setData((d) => (d.key === key ? { status: "ok", key, models, times, days: daysOf(times), nowIdx: now, stale: resp._stale || null } : d));
         setIdx(now);
       })
       .catch(() => setData((d) => (d.key === key ? { status: "error", key } : d)));
@@ -245,6 +251,17 @@ export default function App() {
           <div className="srcw">
             <SrcBar models={ALL.filter((m) => selected.includes(m.id))} single={!multi} onOpen={() => setSrcOpen(true)} />
           </div>
+          {/* Çevrimdışı (31 Ekim): sunucuya ulaşılamadı, cihazdaki son tahmin gösteriliyor */}
+          {data.status === "ok" && data.stale && (
+            <div className="offline" role="status">
+              <span>
+                Çevrimdışı · son veri {staleText(data.stale)}
+              </span>
+              <button type="button" onClick={load}>
+                Yeniden dene
+              </button>
+            </div>
+          )}
           {data.status === "ok" && (page === "p1" || page === "p2") && stripDays.length > 0 && (
             <div className="stripw">
               <DayStrip daily={stripDays} k={stripDays.findIndex((d) => d.date === curDay?.key)} single={!multi} onPick={jumpDay} compact />
