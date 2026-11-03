@@ -307,6 +307,7 @@ public final class HmWidgets {
             if (hasNowBar(kind)) v.setViewVisibility(R.id.w_bar, View.INVISIBLE);
             if (hasAgree(kind)) v.setTextViewText(R.id.w_agree, "");
             if (hasNowRain(kind)) v.setTextViewText(R.id.w_p, "");
+            if (kind == KIND_I) v.setViewVisibility(R.id.w_p, View.GONE);
             if (hasHours(kind)) for (int k = 0; k < 5; k++) hideSlot(v, k);
             if (hasDays(kind)) for (int k = 0; k < 4; k++) hideDay(v, k);
             return v;
@@ -358,10 +359,15 @@ public final class HmWidgets {
                         ss.setSpan(new RelativeSizeSpan(0.8f), 0, rng.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                         v.setTextViewText(R.id.w_p, ss);
                         p = null;
+                        v.setViewVisibility(R.id.w_p, View.VISIBLE);
                     }
                 }
             }
-            if (p != null) v.setTextViewText(R.id.w_p, p);
+            if (p != null) {
+                v.setTextViewText(R.id.w_p, p);
+                // İ: yağış kendi satırında; boşken GONE (hadise kesilmesin — ince2, 3 Kasım)
+                if (kind == KIND_I) v.setViewVisibility(R.id.w_p, p.isEmpty() ? View.GONE : View.VISIBLE);
+            }
         }
 
         if (hasHours(kind)) {

@@ -39,35 +39,30 @@
         android:layout_marginStart="10dp"
         android:orientation="vertical">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/w_cond"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/hm_w_text"
+            android:textSize="13dp" />
 
-            <TextView
-                android:id="@+id/w_cond"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:fontFamily="sans-serif-medium"
-                android:includeFontPadding="false"
-                android:maxLines="1"
-                android:textColor="@color/hm_w_text"
-                android:textSize="13dp" />
-
-            <TextView
-                android:id="@+id/w_p"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:fontFamily="sans-serif-medium"
-                android:includeFontPadding="false"
-                android:maxLines="1"
-                android:textColor="@color/hm_w_rain"
-                android:textSize="11dp" />
-        </LinearLayout>
+        <!-- İçinde bulunulan 3 saatlik dilimin yağışı ("21.00-24.00 1,0 mm"); kuruysa GONE, widget iki satıra döner (ince2, 3 Kasım) -->
+        <TextView
+            android:id="@+id/w_p"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/hm_w_rain"
+            android:textSize="11dp"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/w_minmax"
