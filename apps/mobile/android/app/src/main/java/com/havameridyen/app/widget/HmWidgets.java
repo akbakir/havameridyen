@@ -7,9 +7,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -279,7 +281,7 @@ public final class HmWidgets {
     private static boolean hasNowBar(int k) { return k == KIND_I; }
     private static boolean hasHours(int k) { return k == KIND_G1 || k == KIND_GS; }
     private static boolean hasDays(int k) { return k == KIND_G2 || k == KIND_GS; }
-    private static boolean hasNowRain(int k) { return k == KIND_K || k == KIND_I; } // K: bugünün toplamı · İ: içinde bulunulan 3 saatlik dilim
+    private static boolean hasNowRain(int k) { return k == KIND_K || k == KIND_I; } // K: bugünün toplamı · İ: içinde bulunulan 3 saatlik dilim (saat aralığıyla)
 
     private static RemoteViews build(Context ctx, int kind, JSONObject d) {
         RemoteViews v = new RemoteViews(ctx.getPackageName(), LAYOUT[kind]);
@@ -346,9 +348,20 @@ public final class HmWidgets {
             if (kind == KIND_K && today != null && today.optBoolean("wet", false)) p = mm(today, "bugün ");
             if (kind == KIND_I && s0 >= 0) {
                 JSONObject cur = slots.optJSONObject(s0);
-                if (cur != null && cur.optBoolean("wet", false)) p = mm(cur, "3 sa ");
+                if (cur != null && cur.optBoolean("wet", false)) {
+                    // Dilimin saat aralığı küçük puntoyla ("21.00-24.00 2,6 mm"; 3 Kasım, Ali Kemal — eski "3 sa")
+                    String amt = mm(cur, "");
+                    if (!amt.isEmpty()) {
+                        int sh = hourOf(cur.optString("t"));
+                        String rng = String.format(Locale.US, "%02d.00-%02d.00 ", sh, sh + 3);
+                        SpannableString ss = new SpannableString(rng + amt);
+                        ss.setSpan(new RelativeSizeSpan(0.8f), 0, rng.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        v.setTextViewText(R.id.w_p, ss);
+                        p = null;
+                    }
+                }
             }
-            v.setTextViewText(R.id.w_p, p);
+            if (p != null) v.setTextViewText(R.id.w_p, p);
         }
 
         if (hasHours(kind)) {
