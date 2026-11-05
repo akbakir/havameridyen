@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
   try {
     const forecast = await getForecast(latNum, lonNum, period, parseModelIds(models));
-    res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate");
+    res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=21600"); // 5 Kas: eski yanıt 6 saate kadar hemen, yenisi arka planda
     res.status(200).json({
       location: { name: name || null, lat: latNum, lon: lonNum },
       ...forecast,

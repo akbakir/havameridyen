@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
 import { fmt, windDir, fmtS, heroTitle, mmTxt, parseT, speed, unitLabel } from "../format";
-import { dayIndexOf, dayMax, dayMin, dayTotal, gust, sourceOf, val } from "../data";
+import { dayIndexOf, dayMax, dayMin, dayTotal, gust, hasField, sourceOf, val } from "../data";
 import { HourStrip, UnitToggle, useDaySwipe } from "./common";
 import { PrecipGrid } from "./precip";
 // NOAA SPC kademesi
@@ -78,7 +78,7 @@ function Gauges({ m, i, unit, onUnit }) {
         <span className="gv">{ww == null ? "—" : `${windDir(wd, ww)} ${Math.round(speed(ww, unit))} ${unitLabel(unit)}`}</span>
         {/* Hamle (5 Kas): "hamle" soluk kalır, değer + birim kalın turuncu ve koyu konturlu (.gustv) */}
         <span className="gs gst">
-          {ww == null ? "" : (
+          {ww == null || !hasField(m, "wind_gust") ? "" : (
             <>
               <span className="gustl">hamle</span> {wg == null ? <span className="gustl">—</span> : <span className="gustv">{`${Math.round(speed(wg, unit))} ${unitLabel(unit)}`}</span>}
             </>
@@ -247,6 +247,9 @@ export default function Single({ m, times, days, idx, nowIdx, unit, onUnit, onId
           <div className="psep" />
           <PrecipGrid m={m} i={i} day={day} times={times} />
         </div>
+        {/* Kararsızlık (5 Kas): modelin CAPE, CIN ve LI'nin hiçbirini vermiyorsa (AIFS) bölüm gösterilmez */}
+        {["cape", "cin", "lifted_index"].some((k) => hasField(m, k)) && (
+        <>
         <div className="sec">
           <span>Kararsızlık</span>
           <span>dokun: ad / etiket</span>
@@ -271,6 +274,8 @@ export default function Single({ m, times, days, idx, nowIdx, unit, onUnit, onId
             <InstRow m={m} i={i} k="lifted_index" term="li" name="Lifted Index" unit="" label={liL} dec={1} exp={exp} onExp={onExp} onTerm={onTerm} />
           </div>
         </div>
+        </>
+        )}
         <div className="foot">
           İkinci bir model seçince karşılaştırmalı görünüm açılır.
           <br />

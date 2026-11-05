@@ -20,7 +20,8 @@ const OFF_KEY = "hm_off";
 const OFF_MAX = 4;
 const OFF_AGE = 3 * 24 * 3600e3;
 function offSave(path, data) {
-  if (!path.startsWith("/api/v1/forecast")) return;
+  // LI parçası (part=li) çevrimdışı saklanmaz: 4 yerlik alanı temel tahminlerden yemesin
+  if (!path.startsWith("/api/v1/forecast") || path.includes("part=li")) return;
   try {
     const idx = JSON.parse(localStorage.getItem(OFF_KEY) || "[]").filter((p) => p !== path);
     idx.unshift(path);
@@ -78,6 +79,9 @@ export const fetchForecast = (lat, lon) => getJson(forecastPath(lat, lon));
 
 // Sayfa 3 "16 gün": yalnız o görünüm açılınca, bütün modeller 16 gün
 export const fetchForecast16 = (lat, lon) => getJson(forecastPath(lat, lon, 16));
+
+// Hesaplanan LI (5 Kas, hız): temel tahminle aynı anda istenir, gelince modellere eklenir (data.js mergeLi)
+export const fetchLi = (lat, lon, days = FORECAST_DAYS) => getJson(forecastPath(lat, lon, days) + "&part=li");
 
 // Favori kartı: beş modelin ortak tahmini (site favorileri ve widget'la aynı adres: 5 gün, varsayılan 5 model)
 export const FAV_MODEL_IDS = ["ecmwf_ifs", "gfs_seamless", "icon_seamless", "ukmo_seamless", "meteofrance_seamless"];

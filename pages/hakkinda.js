@@ -20,7 +20,7 @@ export default function Hakkinda() {
       <div className="body-text">
         <p>
           havameridyen, Türkiye&apos;deki kullanıcılar için{" "}
-          <strong>ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA</strong> gibi
+          <strong>ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA, AIFS</strong> gibi
           dünyanın önde gelen sayısal hava tahmin modellerini tek ekranda yan yana gösteren, bağımsız bir
           web uygulamasıdır.
         </p>
@@ -33,7 +33,7 @@ export default function Hakkinda() {
 
       <div className="stat-row">
         <div className="stat">
-          <div className="stat-value">7</div>
+          <div className="stat-value">8</div>
           <div className="stat-label">karşılaştırılan model</div>
         </div>
         <div className="stat">

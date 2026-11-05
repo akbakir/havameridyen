@@ -8,9 +8,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { App as CapApp } from "@capacitor/app";
 import { MODELS } from "@lib/forecast";
 import { buildConsensus } from "@lib/consensus";
-import { FAV_MODEL_IDS, fetchForecast, fetchForecast16 } from "./api";
+import { FAV_MODEL_IDS, fetchForecast, fetchForecast16, fetchLi } from "./api";
 import { parseT, tsiNowHour } from "./format";
-import { dayIndexOf, daysOf, nowIndex, toModels } from "./data";
+import { dayIndexOf, daysOf, mergeLi, nowIndex, toModels } from "./data";
 import { loadPrefs, placeKey, savePrefs } from "./store";
 import { syncWidgetPlace } from "./widget";
 import { setSunPlace } from "./icons";
@@ -60,10 +60,12 @@ export default function App() {
   // Ana ekran widget'ı son bakılan konumu gösterir
   useEffect(() => syncWidgetPlace(place), [place]);
 
-  // Konum değişince tahmin (7 model, 7 gün) bir kerede alınır
+  // Konum değişince tahmin (8 model) bir kerede alınır. Hız (5 Kas): temel tahmin ve hesaplanan LI (part=li) aynı anda
+  // istenir; temel gelince ekranlar hemen çizilir, LI gelince modellere eklenir (Kararsızlık satırı sonradan dolar).
   const load = useCallback(() => {
     const key = placeKey(place);
     setData({ status: "loading", key });
+    const liP = fetchLi(place.lat, place.lon).catch(() => null);
     fetchForecast(place.lat, place.lon)
       .then((resp) => {
         const models = toModels(resp);
@@ -71,6 +73,7 @@ export default function App() {
         const now = nowIndex(times, tsiNowHour());
         setData((d) => (d.key === key ? { status: "ok", key, models, times, days: daysOf(times), nowIdx: now, stale: resp._stale || null } : d));
         setIdx(now);
+        liP.then((li) => li && setData((d) => (d.key === key && d.status === "ok" ? { ...d, models: mergeLi(d.models, li, d.times) } : d)));
       })
       .catch(() => setData((d) => (d.key === key ? { status: "error", key } : d)));
   }, [place]);
@@ -88,6 +91,10 @@ export default function App() {
       .then((resp) => {
         const times = resp.time || [];
         setLong((d) => (d.key === key ? { status: "ok", key, models: toModels(resp), times } : d));
+        // Hesaplanan LI (5 Kas): aynı adres, uygulama içi önbellekten gelir
+        fetchLi(place.lat, place.lon, 16)
+          .then((li) => setLong((d) => (d.key === key && d.status === "ok" ? { ...d, models: mergeLi(d.models, li, d.times) } : d)))
+          .catch(() => {});
       })
       .catch(() => setLong((d) => (d.key === key ? { status: "error", key } : d)));
   }, [place, long.key, long.status]);

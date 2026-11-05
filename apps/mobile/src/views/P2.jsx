@@ -7,7 +7,7 @@ import { useState } from "react";
 import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
 import { MON, fmt, mmTxt, pad, parseT, speed, unitLabel } from "../format";
-import { avg, dayGust, dayIndexOf, dayMax, dayMin, dayVals, hakim, hasDay, val } from "../data";
+import { avg, dayGust, dayIndexOf, dayMax, dayMin, dayVals, hakim, hasDay, hasField, val } from "../data";
 import { HourStrip, UnitToggle } from "./common";
 import { PrecipGrid } from "./precip";
 
@@ -98,6 +98,8 @@ function Card({ m, day, i, times, unit, vrbOpen, onVrb }) {
             {fmt(speed(avg(ws), unit), 1)} {u}
           </dd>
         </div>
+        {/* 5 Kas: hamle vermeyen modelde (AIFS) satır yok */}
+        {hasField(m, "wind_gust") && (
         <div className="r">
           <dt>Maks. hamle</dt>
           <dd>
@@ -112,6 +114,7 @@ function Card({ m, day, i, times, unit, vrbOpen, onVrb }) {
             )}
           </dd>
         </div>
+        )}
       </dl>
       <div className="psep" style={{ margin: "2px 0 1px" }} />
       <PrecipGrid m={m} i={i} day={day} times={times} withDay compact />

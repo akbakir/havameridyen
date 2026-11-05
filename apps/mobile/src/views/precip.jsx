@@ -2,7 +2,7 @@
 // Miktarlar alt alta hizalı; MGM şiddet sınıfı son 12 saatin toplamıyla; kar satırları yalnız karlı günlerde.
 
 import { fmt, pad, parseT } from "../format";
-import { dayTotal, daySnow, hasSnowDay, sum12, val } from "../data";
+import { dayTotal, daySnow, hasField, hasSnowDay, sum12, val } from "../data";
 
 // MGM yağış şiddet sınıfı (son 12 saat)
 export function mgm(mm) {
@@ -73,12 +73,17 @@ export function PrecipGrid({ m, i, day, times, withDay = false, compact = false 
             <span className="lbl">Saat {hh}:00</span>
             <Amt v={val(m, "snowfall", i)} u="cm" none="kar yok" />
             {!compact && <span />}
-            <span className="lbl">Toplam kar kalınlığı</span>
-            <Amt v={val(m, "snow_depth", i)} u="cm" none="kar yok" />
-            {!compact && (
-              <span className="bd">
-                <span className="lbl">{hh}:00</span>
-              </span>
+            {/* 5 Kas: kar kalınlığı vermeyen modelde (AIFS, UKMO, ARPEGE, JMA) "kar yok" yazmasın, satır gösterilmez */}
+            {hasField(m, "snow_depth") && (
+              <>
+                <span className="lbl">Toplam kar kalınlığı</span>
+                <Amt v={val(m, "snow_depth", i)} u="cm" none="kar yok" />
+                {!compact && (
+                  <span className="bd">
+                    <span className="lbl">{hh}:00</span>
+                  </span>
+                )}
+              </>
             )}
           </div>
         </>

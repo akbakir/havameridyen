@@ -6,6 +6,9 @@
 //             aynı içeriğin tek adreste önbelleğe alınması için kanonik adrese yönlendirilir (308).
 //   days      1–16, varsayılan 7
 //   models    virgülle model kimlikleri; yoksa varsayılan beş model (ECMWF, GFS, ICON, UKMO, ARPEGE)
+//   part      (5 Kas, hız) yoksa temel yanıt: basınç seviyesi istenmez, LI yalnız modelin kendi değeri (GFS) — hızlı.
+//             part=li → yalnız hesaplanan LI: { v, part: "li", time, models: [{ id, calculated, hourly: { lifted_index } }] }
+//             (ICON, UKMO, ARPEGE, GEM, JMA; basınç seviyelerinden). Uygulama ikisini aynı anda ister, LI'yi sonradan ekler.
 //
 // Yanıt (saatler TSİ, "YYYY-MM-DDTHH:mm"):
 //   { v: 1, location: {lat, lon}, days, timezone, generated_at, time: [...],
@@ -21,7 +24,7 @@
 // Uyum seviyeleri: ok (hemfikir) · partial (kısmen) · split (ayrışıyor) · na (karşılaştıracak model yok) ·
 // none (yağış / kar: hiçbir model eşiği aşmıyor — satır gösterilmez).
 
-import { MODELS, defaultActiveModelIds, getForecastDays, MAX_DAYS } from "../../../lib/forecast";
+import { LI_CALC_MODELS, MODELS, defaultActiveModelIds, getForecastDays, MAX_DAYS } from "../../../lib/forecast";
 import { buildConsensus } from "../../../lib/consensus";
 import { cors } from "../../../lib/apiCors";
 
@@ -48,6 +51,7 @@ const HOURLY_FIELDS = [
   ["lifted_index", "lifted_index"],
   ["visibility", "visibility"], // m (30 Ekim, sis / pus)
   ["is_day", "is_day"], // 1 / 0 (31 Ekim, gün doğumu / batımı)
+  ["showers", "showers"], // mm, yalnız AIFS (5 Kas: sağanak payı; diğer modellerde null)
 ];
 
 const round2 = (v) => Math.round(v * 100) / 100;
@@ -64,14 +68,16 @@ function canonical(query) {
       : defaultActiveModelIds();
   const ids = MODELS.map((m) => m.id).filter((id) => asked.includes(id));
   const models = ids.length ? ids : defaultActiveModelIds();
-  return { lat: round2(lat), lon: round2(lon), days, models };
+  const part = query.part === "li" ? "li" : null;
+  return { lat: round2(lat), lon: round2(lon), days, models, part };
 }
 
 // İstek kanonik biçimde mi: yalnız lat, lon, days, models; her biri kanonik yazımıyla
 function isCanonical(query, c) {
   const keys = Object.keys(query).sort().join(",");
   return (
-    keys === "days,lat,lon,models" &&
+    keys === (c.part ? "days,lat,lon,models,part" : "days,lat,lon,models") &&
+    (c.part ? query.part === c.part : true) &&
     query.lat === c.lat.toFixed(2) &&
     query.lon === c.lon.toFixed(2) &&
     query.days === String(c.days) &&
@@ -80,7 +86,7 @@ function isCanonical(query, c) {
 }
 
 function canonicalSearch(c) {
-  return `lat=${c.lat.toFixed(2)}&lon=${c.lon.toFixed(2)}&days=${c.days}&models=${c.models.join(",")}`;
+  return `lat=${c.lat.toFixed(2)}&lon=${c.lon.toFixed(2)}&days=${c.days}&models=${c.models.join(",")}` + (c.part ? `&part=${c.part}` : "");
 }
 
 export default async function handler(req, res) {
@@ -105,14 +111,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    const f = await getForecastDays(c.lat, c.lon, c.days, c.models, { levels: true });
+    // part=li: yalnız LI'si hesaplanan modeller, basınç seviyeleriyle; yanıtta yalnız lifted_index
+    if (c.part === "li") {
+      const ids = c.models.filter((id) => LI_CALC_MODELS.has(id));
+      const g = ids.length ? await getForecastDays(c.lat, c.lon, c.days, ids, { levels: true }) : { models: [] };
+      res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=21600");
+      return res.status(200).json({
+        v: 1,
+        part: "li",
+        time: g.models[0]?.series.map((s) => s.time) || [],
+        models: g.models.map((m) => ({ id: m.id, calculated: m.calculated, hourly: { lifted_index: m.series.map((s) => s.lifted_index ?? null) } })),
+      });
+    }
+    // Temel yanıt (5 Kas, hız): basınç seviyesi istenmez → hızlı; hesaplanan LI part=li ile ayrıca gelir
+    const f = await getForecastDays(c.lat, c.lon, c.days, c.models, { levels: false });
     const time = f.models[0]?.series.map((s) => s.time) || [];
     const models = f.models.map((m) => {
       const hourly = {};
       for (const [out, key] of HOURLY_FIELDS) hourly[out] = m.series.map((s) => s[key] ?? null);
       return { id: m.id, label: m.label, color: m.color, calculated: m.calculated, hourly };
     });
-    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+    // Hız (5 Kas): 1 saat taze; sonra 6 saate kadar eski yanıt hemen verilir, yenisi arka planda çekilir (modeller
+    // zaten 6 saatte bir güncellenir)
+    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=21600");
     return res.status(200).json({
       v: 1,
       location: { lat: c.lat, lon: c.lon },

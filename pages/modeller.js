@@ -72,11 +72,23 @@ const MODELS = [
     note: "Diğer modellere göre daha düşük çözünürlüklü, ancak Asya-Pasifik bölgesinde uzun yıllardır kullanılan, kanıtlanmış bir model.",
     optional: true,
   },
+  // 5 Kas 2026: renk lib/forecast.js MODELS ile aynı olmalı (iki ayrı dizi)
+  {
+    code: "AIFS",
+    flag: "AVRUPA",
+    color: "#4FA37A",
+    agency: "ECMWF Yapay Zekâ Tahmin Sistemi (AIFS)",
+    resolution: "~28 km",
+    update: "Günde 4 kez · 6 saatlik veri · 15 gün",
+    note: "ECMWF'nin makine öğrenmesiyle çalışan küresel modeli. Yalnız 6 saatlik adım üretir; aradaki saatler hesaplanır, yağış 6 saate eşit bölünür. Hamle, CAPE, CIN, kar kalınlığı ve görüş vermez. Ortak tahminde yağış miktarı sayılır, yağış türü ECMWF'ye göre alınır.",
+    optional: true,
+    ai: true,
+  },
 ];
 
 export default function Modeller() {
   return (
-    <Layout title="Modeller — ECMWF, GFS, ICON, UKMO, ARPEGE ve 2 model daha · havameridyen">
+    <Layout title="Modeller — ECMWF, GFS, ICON, UKMO, ARPEGE ve 3 model daha · havameridyen">
       <div className="models-page">
         <Link className="back-link" href="/">
           ← Ana sayfaya dön
@@ -84,14 +96,14 @@ export default function Modeller() {
 
         <div className="page-head lead">
           <div className="kicker">Model rehberi</div>
-          <h1>7 model, 7 farklı bakış açısı</h1>
+          <h1>8 model, 8 farklı bakış açısı</h1>
           <p>
             Her hava tahmin merkezi kendi verisini, kendi fiziksel varsayımlarını ve kendi çözünürlüğünü kullanır. Bu
             yüzden aynı gün için farklı sonuçlar görebilirsin — hangisinin &quot;doğru&quot; olduğu değil, hangisinin
             senin durumun için daha güvenilir olduğu önemlidir.
           </p>
           <p>
-            Şehir sayfasında varsayılan olarak 5 model (ECMWF, GFS, ICON, UKMO, ARPEGE) açık gelir. Aşağıdaki 2 model
+            Şehir sayfasında varsayılan olarak 5 model (ECMWF, GFS, ICON, UKMO, ARPEGE) açık gelir. Aşağıdaki 3 model
             ise opsiyoneldir — grafiklerin üstündeki &quot;Modeller&quot; satırında işaret kutularıyla istediğin an ekleyip çıkarabilirsin.
           </p>
         </div>
@@ -102,6 +114,7 @@ export default function Modeller() {
               <div className="model-top">
                 <div className="model-code">{m.code}</div>
                 <div className="model-top-tags">
+                  {m.ai && <div className="model-optional-tag">Yapay zekâ</div>}
                   {m.optional && <div className="model-optional-tag">Opsiyonel</div>}
                   <div className="model-flag">{m.flag}</div>
                 </div>

@@ -280,10 +280,13 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
             <span>
               <small>Rüzgar {W.max == null ? "—" : W.dir == null ? "VRB" : dir16(W.dir)}</small>
               <b>{W.max == null ? "—" : `${Math.round(speed(W.min, unit))}–${Math.round(speed(W.max, unit))} ${unitLabel(unit)}`}</b>
-              {/* Hamle (5 Kas): "hamle" soluk kalır, değer + birim kalın turuncu ve koyu konturlu (.gustv) */}
-              <small className="mono gst">
-                <span className="gustl">hamle</span> {pv(D.gust_max) == null ? <span className="gustl">—</span> : <span className="gustv">{`${Math.round(speed(pv(D.gust_max), unit))} ${unitLabel(unit)}`}</span>}
-              </small>
+              {/* Hamle (5 Kas): "hamle" soluk kalır, değer + birim kalın turuncu ve koyu konturlu (.gustv). Hiçbir model
+                  hamle vermiyorsa (ör. yalnız AIFS seçili) satır gösterilmez. */}
+              {D.gust_max?.n > 0 && (
+                <small className="mono gst">
+                  <span className="gustl">hamle</span> {pv(D.gust_max) == null ? <span className="gustl">—</span> : <span className="gustv">{`${Math.round(speed(pv(D.gust_max), unit))} ${unitLabel(unit)}`}</span>}
+                </small>
+              )}
             </span>
             <span className="gg-u">
               <UnitToggle unit={unit} onUnit={onUnit} ghost />

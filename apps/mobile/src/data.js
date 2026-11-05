@@ -23,6 +23,7 @@ const FIELDS = [
   ["lifted_index", "lifted_index"],
   ["visibility", "visibility"], // m (30 Ekim, sis / pus)
   ["is_day", "is_day"], // 1 / 0 (31 Ekim, gün doğumu / batımı)
+  ["showers", "showers"], // mm, yalnız AIFS (5 Kas: sağanak payı)
 ];
 
 export function toModels(resp) {
@@ -42,6 +43,26 @@ export function toModels(resp) {
 }
 
 export const val = (m, key, i) => numOrNull(m?.series[i]?.[key]);
+
+// Hesaplanan LI'yi (/api/v1 part=li) modellere ekler; yeni dizi döner (ekranlar yeniden hesaplansın). Saat dizisi aynı
+// değilse dokunmaz.
+export function mergeLi(models, li, time) {
+  if (!li || !Array.isArray(li.models) || !li.models.length) return models;
+  if (li.time && time && (li.time.length !== time.length || li.time[0] !== time[0])) return models;
+  return models.map((m) => {
+    const x = li.models.find((l) => l.id === m.id);
+    const arr = x?.hourly?.lifted_index;
+    if (!arr) return m;
+    return {
+      ...m,
+      calculated: Array.from(new Set([...(m.calculated || []), ...(x.calculated || [])])),
+      series: m.series.map((s, i) => (s.lifted_index == null && arr[i] != null ? { ...s, lifted_index: arr[i] } : s)),
+    };
+  });
+}
+
+// Model bu alanı hiç veriyor mu (5 Kas: AIFS hamle, CAPE, CIN, LI, kar kalınlığı vermez → o satırlar gösterilmez)
+export const hasField = (m, key) => !!m && m.series.some((s) => s && s[key] != null);
 
 // Hamle ortalama rüzgardan düşükse gösterilmez (23 Eylül kararı)
 export function gust(m, i) {

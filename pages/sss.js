@@ -166,7 +166,9 @@ const FAQS = [
           Her model için saat saat bakılır. Modelin o günkü toplam yağışı en az 0.2 mm ve o saatteki yağışı en az 0.1
           mm ise yağış ifadesi kullanılır. Ayrımı o saatin CAPE değeri yapar: 500 J/kg ve altı &quot;Yağmurlu&quot;, 500
           üstü &quot;Sağanak Yağış&quot;, 1000 üstü &quot;Gök Gürültülü Sağanak Yağış&quot;. JMA CAPE vermediği için
-          JMA&apos;da yağış hep &quot;Yağmurlu&quot; görünür. O saatteki yağışın en az yarısı kar ise aynı ayrımla
+          JMA&apos;da yağış hep &quot;Yağmurlu&quot; görünür. AIFS de CAPE vermez; AIFS&apos;te ayrımı sağanak payı yapar
+          (yağışın en az yarısı sağanaksa &quot;Sağanak Yağış&quot;), gök gürültülü ifadesi kullanılmaz. Ortak tahminde
+          AIFS&apos;in yağış miktarı sayılır, türü ise ECMWF&apos;ye göre alınır. O saatteki yağışın en az yarısı kar ise aynı ayrımla
           &quot;Kar Yağışlı&quot;, &quot;Kar Sağanağı&quot; ya da &quot;Gök Gürültülü Kar Sağanağı&quot; yazılır.
         </p>
         <p style={{ margin: "0 0 12px" }}>
@@ -187,7 +189,7 @@ const FAQS = [
   {
     num: "06",
     q: "Veriler ne sıklıkla güncelleniyor?",
-    a: "Modelden modele değişir: ECMWF, GFS, ICON, UKMO, ARPEGE ve JMA günde 4 kez, GEM günde 2 kez güncellenir. havameridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır.",
+    a: "Modelden modele değişir: ECMWF, AIFS, GFS, ICON, UKMO, ARPEGE ve JMA günde 4 kez, GEM günde 2 kez güncellenir. havameridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır.",
   },
   {
     num: "07",

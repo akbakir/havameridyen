@@ -196,7 +196,7 @@ export default function Loc({ place, favorites, onPick, onRemove, onRename, onSh
       <h2>
         Türkiye için çoklu model, <em>tek ekran.</em>
       </h2>
-      <p>ECMWF, GFS, ICON, UKMO, ARPEGE, GEM ve JMA tahminlerini yan yana karşılaştır.</p>
+      <p>ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA ve AIFS tahminlerini yan yana karşılaştır.</p>
       <form className="search" role="search" onSubmit={search}>
         <input type="search" placeholder="Şehir veya ilçe ara" aria-label="Konum ara" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} />
         <button type="submit">Ara</button>

@@ -8,7 +8,7 @@ import { pad } from "../format";
 import { sourceOf } from "../data";
 
 export const MENU = [
-  ["modeller", "Modeller", "7 model, kurum, çözünürlük, güncelleme", "M"],
+  ["modeller", "Modeller", "8 model, kurum, çözünürlük, güncelleme", "M"],
   ["terimler", "Terimler", "CAPE, CIN, Lifted Index, uyum…", "T"],
   ["sss", "SSS", "Sık sorulan sorular", "?"],
   ["hakkinda", "Hakkında", "Proje ve veri kaynağı", "i"],
@@ -23,6 +23,7 @@ const MINFO = {
   meteofrance_seamless: ["FRANSA", "Météo-France ARPEGE / AROME modeli", "~25 km (Avrupa'da ~11 km)", "Günde 4 kez", "Avrupa ve Kuzey Afrika'da yüksek çözünürlüklü AROME verisiyle desteklenir; konuma göre en uygun çözünürlük otomatik seçilir."],
   gem_seamless: ["KANADA", "Environment Canada küresel modeli", "~15 km", "Günde 2 kez", "Bağımsız bir veri asimilasyon sistemi kullanır — diğer modellerden farklı bir \"ikinci görüş\" sağlar."],
   jma_gsm: ["JAPONYA", "Japon Meteoroloji Ajansı Küresel Spektral Modeli (GSM)", "~55 km", "Günde 4 kez", "Diğer modellere göre daha düşük çözünürlüklü, ancak Asya-Pasifik bölgesinde uzun yıllardır kullanılan, kanıtlanmış bir model."],
+  ecmwf_aifs025_single: ["AVRUPA · YAPAY ZEKÂ", "ECMWF Yapay Zekâ Tahmin Sistemi (AIFS)", "~28 km", "Günde 4 kez · 6 saatlik veri · 15 gün", "ECMWF'nin makine öğrenmesiyle çalışan küresel modeli. Yalnız 6 saatlik adım üretir; aradaki saatler hesaplanır, yağış 6 saate eşit bölünür. Hamle, CAPE, CIN, kar kalınlığı ve görüş vermez. Ortak tahminde yağış türü ECMWF'ye göre alınır."],
 };
 const TAGTX = { own: "modelin", calc: "hesaplanan", no: "yok" };
 
@@ -30,7 +31,7 @@ const SSS = [
   ["Hangi model en doğru?", 'Kesin bir "en doğru" model yok. ECMWF genelde 3-7 gün arası orta vadede güçlü kabul edilir, GFS sık güncellendiği için kısa vadede hızlı tepki verir, ICON Avrupa\'da yüksek çözünürlük sunar. Her modelin güçlü olduğu koşullar farklıdır — bu yüzden karşılaştırma yapıyoruz.'],
   ["Modeller arasındaki uyum nasıl hesaplanıyor?", 'Ortalama ya da ortanca üzerinden bir "genel tahmin" üretilmez; her parametrede modellerin ne kadar ayrıştığına bakılır. Ayrıntısı Terimler › Uyum\'da.'],
   ["Basınç ve nem değerleri nereden geliyor?", "Basınç deniz seviyesine indirgenmiş değerdir; yüzey basıncı modelin yükselti haritasına bağlı olduğu için karşılaştırmayı bozar. Nem bağıl nemdir; ECMWF'de modelin sıcaklık ve çiy noktasından hesaplanır."],
-  ["Veriler ne sıklıkla güncelleniyor?", "ECMWF, GFS, ICON, UKMO, ARPEGE ve JMA günde 4 kez, GEM günde 2 kez güncellenir. havameridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır."],
+  ["Veriler ne sıklıkla güncelleniyor?", "ECMWF, AIFS, GFS, ICON, UKMO, ARPEGE ve JMA günde 4 kez, GEM günde 2 kez güncellenir. havameridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır."],
   ["Bu MGM'nin resmi uygulaması mı?", "Hayır. havameridyen bağımsız, kişisel bir karşılaştırma aracıdır — Meteoroloji Genel Müdürlüğü ile bir bağlantısı yoktur. Afet veya acil durum kararları için MGM'nin resmi uyarılarını takip et."],
   ["Favorilerim nerede saklanıyor?", "Yalnız kendi cihazında saklanır. Hesap oluşturmana gerek yok."],
 ];
@@ -125,7 +126,7 @@ function Body({ page, allModels, loaded, onPage }) {
       <>
         <h4>Bağımsız bir model karşılaştırma aracı</h4>
         <p>
-          havameridyen ECMWF, GFS, ICON, UKMO, ARPEGE, GEM ve JMA tahminlerini yan yana gösterir. Amaç tek bir "genel tahmin" üretmek değil, modellerin nerede aynı
+          havameridyen ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA ve AIFS tahminlerini yan yana gösterir. Amaç tek bir "genel tahmin" üretmek değil, modellerin nerede aynı
           şeyi söyleyip nerede ayrıştığını göstermektir.
         </p>
         <p>Veri: Open-Meteo (CC BY 4.0). Meteoroloji Genel Müdürlüğü'nün (MGM) resmi bir kanalı değildir.</p>

@@ -15,6 +15,7 @@ const MODEL_KAYNAKLARI = [
   { model: "ARPEGE", kurum: "Météo-France (Fransa)" },
   { model: "GEM", kurum: "Environment and Climate Change Canada" },
   { model: "JMA", kurum: "Japon Meteoroloji Ajansı" },
+  { model: "AIFS", kurum: "Avrupa Orta Vadeli Hava Tahminleri Merkezi (yapay zekâ modeli)" },
 ];
 
 export default function Yasal() {
@@ -160,7 +161,7 @@ export default function Yasal() {
         <h3>2.2 Hizmetin Tanımı</h3>
         <p>
           havameridyen, Türkiye&apos;deki kullanıcılar için birden fazla küresel sayısal hava tahmin modelini
-          (ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA) tek ekranda karşılaştırmalı olarak sunan bağımsız, ücretsiz
+          (ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA, AIFS) tek ekranda karşılaştırmalı olarak sunan bağımsız, ücretsiz
           bir web uygulamasıdır.
         </p>
 

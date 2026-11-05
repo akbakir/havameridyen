@@ -1,7 +1,7 @@
 // Tahmin kaynağı (29 Ekim 2026, Ali Kemal: "B'yi tüm sayfalarda kullanalım, günlük dahil"): dört tahmin sayfasının
 // üstünde aynı çubuk (renkli noktalar + "Ortak tahmin · N modelin ortancası ve uyumu" ya da tek model). Dokununca
 // alttan sekmeli pencere açılır:
-//   Ortak tahmin — 7 model kutucuklu; en az 2 model; "Önerilen 5'e dön"; değişiklik "Uygula" ile işlenir (her
+//   Ortak tahmin — 8 model kutucuklu; en az 2 model; "Önerilen 5'e dön"; değişiklik "Uygula" ile işlenir (her
 //                  dokunuşta sayfa yeniden hesaplanmasın diye).
 //   Tek model    — yuvarlak seçim; dokununca hemen geçer (uyum işaretleri gizlenir).
 // Eski üstteki model çiplerinin yerini aldı. Seçim tüm sayfalarda ortaktır (prefs.selected).
@@ -16,6 +16,7 @@ const REGION = {
   meteofrance_seamless: "Fransa",
   gem_seamless: "Kanada",
   jma_gsm: "Japonya",
+  ecmwf_aifs025_single: "Avrupa · yapay zekâ",
 };
 
 const same = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
