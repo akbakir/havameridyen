@@ -54,3 +54,10 @@ export const tsuf = (n) => ({ 0: "ı", 1: "i", 2: "si", 3: "ü", 4: "ü", 5: "i"
 
 export const speed = (kmh, unit) => (kmh == null ? null : unit === "kt" ? kmh * KT : kmh);
 export const unitLabel = (unit) => (unit === "kt" ? "kt" : "km/s");
+
+// Yağış metni (sayı kısmı; birim çağıran yerde " mm" olarak eklenir): 10 mm altı tek ondalık, üstü tam sayı;
+// 0,05 altı yazılmaz. 5 Kas: Günlük'ten buraya taşındı (saat şeritleri de kullanıyor).
+export function mmTxt(v) {
+  if (v == null || v < 0.05) return null;
+  return v < 9.95 ? fmt(v, 1) : fmt(v, 0);
+}

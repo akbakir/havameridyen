@@ -199,6 +199,30 @@ const FAQS = [
     q: "Favorilerim nerede saklanıyor?",
     a: "Yalnızca kendi cihazında, tarayıcının yerel deposunda (localStorage) saklanır. Hesap oluşturmana gerek yok, hiçbir veri sunucuya gönderilmez. Tarayıcı verilerini temizlersen favorilerin de silinir.",
   },
+  // 5 Kas 2026 (Ali Kemal onaylı metin)
+  {
+    num: "09",
+    q: "Saatlik yağış miktarlarını topladığımda neden günlük toplam yağışı elde edemiyorum?",
+    a: (
+      <>
+        <p style={{ margin: "0 0 12px" }}>
+          Ortak tahminde günlük toplam yağış, saatlik değerlerin toplamı değildir; ikisi ayrı hesaplanır. Günlük toplam
+          yağış için önce her modelin o günkü toplam yağışı bulunur, sonra bu toplamların ortancası alınır. Saatlik
+          yağışta ise her saat için modellerin o saatteki yağış miktarlarının ortancası alınır. Modeller yağışın
+          başlama, bitme ve ara verme saatlerinde çoğu zaman ayrıştığı için bu iki yol farklı sonuç verir.
+        </p>
+        <p style={{ margin: "0 0 12px" }}>
+          Örnek: Üç model de günde 10 mm yağış veriyor, ama biri sabah, biri öğlen, biri akşam. Günlük toplamın
+          ortancası 10 mm&apos;dir. Her saatte ise yalnızca bir model yağış verdiği için saatlik ortancalar 0 çıkar.
+        </p>
+        <p style={{ margin: 0 }}>
+          Ayrıca saatlik yağış yalnızca modellerin en az yarısı o saatte yağış veriyorsa gösterilir ve değerler bir
+          ondalığa yuvarlanır. Tek model seçtiğinde saatlik değerlerin toplamı, yuvarlama farkı dışında, günlük toplama
+          eşittir.
+        </p>
+      </>
+    ),
+  },
 ];
 
 export default function SSS() {

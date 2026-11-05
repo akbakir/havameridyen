@@ -136,9 +136,23 @@
                 android:orientation="horizontal">
 
                 <TextView
+                    android:id="@+id/w_d0_min"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="@color/hm_w_min"
+                    android:textSize="10dp" />
+
+                <TextView
                     android:id="@+id/w_d0_max"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
                     android:shadowColor="@color/hm_w_halo"
                     android:shadowDx="0"
                     android:shadowDy="0"
@@ -147,20 +161,6 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="@color/hm_w_max"
-                    android:textSize="10dp" />
-
-                <TextView
-                    android:id="@+id/w_d0_min"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:shadowColor="@color/hm_w_halo"
-                    android:shadowDx="0"
-                    android:shadowDy="0"
-                    android:shadowRadius="7"
-                    android:includeFontPadding="false"
-                    android:maxLines="1"
-                    android:textColor="@color/hm_w_min"
                     android:textSize="10dp" />
             </LinearLayout>
 
@@ -224,9 +224,23 @@
                 android:orientation="horizontal">
 
                 <TextView
+                    android:id="@+id/w_d1_min"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="@color/hm_w_min"
+                    android:textSize="10dp" />
+
+                <TextView
                     android:id="@+id/w_d1_max"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
                     android:shadowColor="@color/hm_w_halo"
                     android:shadowDx="0"
                     android:shadowDy="0"
@@ -235,20 +249,6 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="@color/hm_w_max"
-                    android:textSize="10dp" />
-
-                <TextView
-                    android:id="@+id/w_d1_min"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:shadowColor="@color/hm_w_halo"
-                    android:shadowDx="0"
-                    android:shadowDy="0"
-                    android:shadowRadius="7"
-                    android:includeFontPadding="false"
-                    android:maxLines="1"
-                    android:textColor="@color/hm_w_min"
                     android:textSize="10dp" />
             </LinearLayout>
 
@@ -312,9 +312,23 @@
                 android:orientation="horizontal">
 
                 <TextView
+                    android:id="@+id/w_d2_min"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="@color/hm_w_min"
+                    android:textSize="10dp" />
+
+                <TextView
                     android:id="@+id/w_d2_max"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
                     android:shadowColor="@color/hm_w_halo"
                     android:shadowDx="0"
                     android:shadowDy="0"
@@ -323,20 +337,6 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="@color/hm_w_max"
-                    android:textSize="10dp" />
-
-                <TextView
-                    android:id="@+id/w_d2_min"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:shadowColor="@color/hm_w_halo"
-                    android:shadowDx="0"
-                    android:shadowDy="0"
-                    android:shadowRadius="7"
-                    android:includeFontPadding="false"
-                    android:maxLines="1"
-                    android:textColor="@color/hm_w_min"
                     android:textSize="10dp" />
             </LinearLayout>
 
@@ -400,9 +400,23 @@
                 android:orientation="horizontal">
 
                 <TextView
+                    android:id="@+id/w_d3_min"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:shadowColor="@color/hm_w_halo"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="7"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="@color/hm_w_min"
+                    android:textSize="10dp" />
+
+                <TextView
                     android:id="@+id/w_d3_max"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
                     android:shadowColor="@color/hm_w_halo"
                     android:shadowDx="0"
                     android:shadowDy="0"
@@ -411,20 +425,6 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="@color/hm_w_max"
-                    android:textSize="10dp" />
-
-                <TextView
-                    android:id="@+id/w_d3_min"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:shadowColor="@color/hm_w_halo"
-                    android:shadowDx="0"
-                    android:shadowDy="0"
-                    android:shadowRadius="7"
-                    android:includeFontPadding="false"
-                    android:maxLines="1"
-                    android:textColor="@color/hm_w_min"
                     android:textSize="10dp" />
             </LinearLayout>
 

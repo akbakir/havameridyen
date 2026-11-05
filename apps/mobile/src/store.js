@@ -13,6 +13,7 @@ const DEFAULTS = {
   selected: ["ecmwf_ifs", "gfs_seamless", "icon_seamless", "ukmo_seamless", "meteofrance_seamless"],
   unit: "kmh",
   listOpen: false, // günlük sayfadaki 16 günlük liste (son tercih hatırlanır)
+  listSeen: false, // liste en az bir kez açıldı mı (5 Kas: açılınca "aşağı ok" animasyonu bir daha oynamaz)
 };
 
 export function loadPrefs() {
@@ -25,6 +26,7 @@ export function loadPrefs() {
       selected: Array.isArray(raw.selected) && raw.selected.length ? raw.selected : DEFAULTS.selected,
       unit: raw.unit === "kt" ? "kt" : "kmh",
       listOpen: raw.listOpen === true,
+      listSeen: raw.listSeen === true || raw.listOpen === true,
     };
   } catch {
     return { ...DEFAULTS };

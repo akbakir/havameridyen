@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { median } from "@lib/agreement";
 import { CLS_RNG, CLS_TXT, SKY, WxIcon, condView } from "../icons";
-import { dir16, fmt, heroTitle, pad, parseT, speed, tsuf, unitLabel } from "../format";
+import { dir16, fmt, heroTitle, mmTxt, pad, parseT, speed, tsuf, unitLabel } from "../format";
 import { dayIndexOf, gust, val } from "../data";
 import { HourStrip, UnitToggle, useDaySwipe } from "./common";
 
@@ -170,7 +170,9 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
   const hours = [];
   for (let j = day.h0; j < day.h1 && j < hz; j++) {
     const h = parseT(times[j]).h;
-    hours.push({ i: j, h, temp: cons.hourly[j].temp.v, view: condView(cons.hourly[j].cond, h) });
+    // Saatlik ortanca yağış (5 Kas): yalnız ortak durum yağışlıysa (modellerin en az yarısı yağış veriyor)
+    const mm = cons.hourly[j].cond?.wet ? mmTxt(cons.hourly[j].precip?.v) : null;
+    hours.push({ i: j, h, temp: cons.hourly[j].temp.v, view: condView(cons.hourly[j].cond, h), mm });
   }
 
   return (

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
-import { fmt, windDir, fmtS, heroTitle, parseT, speed, unitLabel } from "../format";
+import { fmt, windDir, fmtS, heroTitle, mmTxt, parseT, speed, unitLabel } from "../format";
 import { dayIndexOf, dayMax, dayMin, dayTotal, gust, sourceOf, val } from "../data";
 import { HourStrip, UnitToggle, useDaySwipe } from "./common";
 import { PrecipGrid } from "./precip";
@@ -76,7 +76,14 @@ function Gauges({ m, i, unit, onUnit }) {
         </svg>
         <span className="gl">Rüzgar</span>
         <span className="gv">{ww == null ? "—" : `${windDir(wd, ww)} ${Math.round(speed(ww, unit))} ${unitLabel(unit)}`}</span>
-        <span className="gs">{ww == null ? "" : wg == null ? "hamle —" : "hamle " + Math.round(speed(wg, unit))}</span>
+        {/* Hamle (5 Kas): "hamle" soluk kalır, değer + birim kalın turuncu ve koyu konturlu (.gustv) */}
+        <span className="gs gst">
+          {ww == null ? "" : (
+            <>
+              <span className="gustl">hamle</span> {wg == null ? <span className="gustl">—</span> : <span className="gustv">{`${Math.round(speed(wg, unit))} ${unitLabel(unit)}`}</span>}
+            </>
+          )}
+        </span>
         <UnitToggle unit={unit} onUnit={onUnit} ghost />
       </div>
       <div className="g">
@@ -186,7 +193,9 @@ export default function Single({ m, times, days, idx, nowIdx, unit, onUnit, onId
 
   const hours = [];
   for (let j = day.h0; j < day.h1 && j < m.hz; j++) {
-    hours.push({ i: j, h: parseT(times[j]).h, temp: val(m, "temp", j), view: condView(condAt(m, j), parseT(times[j]).h) });
+    // Saatlik yağış (5 Kas): modelin kendi değeri, yalnız o saat yağışlı durumdaysa
+    const cj = condAt(m, j);
+    hours.push({ i: j, h: parseT(times[j]).h, temp: val(m, "temp", j), view: condView(cj, parseT(times[j]).h), mm: cj?.wet ? mmTxt(val(m, "precip_amount", j)) : null });
   }
   const rd = dayTotal(m, day);
   const cape = val(m, "cape", i);

@@ -81,7 +81,8 @@ nav a {
 nav a:hover { color: var(--ink); border-color: var(--ink); }
 
 /* home hero */
-.hero { position: relative; z-index: 2; padding: 88px 0 56px; text-align: center; }
+/* z-index 3 (5 Kas): konum listesi alttaki "Nasıl çalışır" bölümünün (z-index 2) üstünde açılsın */
+.hero { position: relative; z-index: 3; padding: 88px 0 56px; text-align: center; }
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -129,6 +130,7 @@ nav a:hover { color: var(--ink); border-color: var(--ink); }
   max-width: 520px;
   margin: 0 auto;
   position: relative;
+  z-index: 20; /* 5 Kas: animasyonun bıraktığı transform ayrı katman açıyor; liste şehir kısayollarının üstünde kalsın */
   opacity: 0;
   animation: rise .7s ease .24s forwards;
 }

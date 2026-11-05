@@ -7,7 +7,7 @@ import { WxIcon } from "../components/WeatherCond";
 import AgreeMark from "../components/AgreeMark";
 
 // Kartlar küçük widget (K) gibi: beş modelin ortak tahmini (/api/v1, ortanca + uyum). Widget'la aynı istek,
-// aynı önbellek: şimdiki saatin ortak durumu, ikonu ve sıcaklığı; bugünün en yüksek / en düşüğü; gün kuralıyla
+// aynı önbellek: şimdiki saatin ortak durumu, ikonu ve sıcaklığı; bugünün en düşük / en yükseği (5 Kas: önce min); gün kuralıyla
 // yağışlıysa bugünün toplam yağışı (modellerin ortancası); şimdiki saatin uyumu.
 const FAV_MODELS = "ecmwf_ifs,gfs_seamless,icon_seamless,ukmo_seamless,meteofrance_seamless";
 const FAV_DAYS = 5;
@@ -161,7 +161,7 @@ export default function Favoriler() {
                     </div>
                     <div className="fav-card-bottom">
                       <span className="fav-temp-range">
-                        <span className="fav-max">{deg(t.max)}</span> / <span className="fav-min">{deg(t.min)}</span>
+                        <span className="fav-min">{deg(t.min)}</span> / <span className="fav-max">{deg(t.max)}</span>
                       </span>
                       {AGREE[t.level] && (
                         <span
@@ -188,7 +188,7 @@ export default function Favoriler() {
         >
           ⓘ Kartlardaki değerler <strong>beş modelin (ECMWF, GFS, ICON, UKMO, ARPEGE) ortak tahminidir</strong>:
           her değer modellerin ortancası olup ölçüm değildir. Sıcaklık ve hava durumu ikonu şu anki saatin (TSİ)
-          tahminidir. Altta bugünün en yüksek / en düşük sıcaklığı ile modellerin şimdiki saatte ne kadar hemfikir
+          tahminidir. Altta bugünün en düşük / en yüksek sıcaklığı ile modellerin şimdiki saatte ne kadar hemfikir
           olduğu yazmaktadır. Bugün yağışlıysa (modellerin en az yarısı yağış veriyorsa) bugünün toplam yağışı da
           karta işlenir. Modelleri tek tek karşılaştırmak için karta dokunup şehir sayfasını açabilirsiniz.
         </p>

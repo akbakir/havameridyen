@@ -445,13 +445,14 @@ public final class HmWidgets {
     private static CharSequence minmaxText(JSONObject day, String suffix) {
         SpannableStringBuilder b = new SpannableStringBuilder();
         if (day != null) {
+            // Önce en düşük, sonra en yüksek (5 Kas, Ali Kemal; gün sütunlarında da aynı sıra)
             int a = b.length();
-            b.append(deg(day, "max"));
-            b.setSpan(new ForegroundColorSpan(COL_MAX), a, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            b.append(" / ");
-            a = b.length();
             b.append(deg(day, "min"));
             b.setSpan(new ForegroundColorSpan(COL_MIN), a, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            b.append(" / ");
+            a = b.length();
+            b.append(deg(day, "max"));
+            b.setSpan(new ForegroundColorSpan(COL_MAX), a, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         if (suffix != null) b.append(b.length() > 0 ? " · " : "").append(suffix);
         return b;

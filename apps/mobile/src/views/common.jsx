@@ -6,8 +6,10 @@ import { pad, parseT } from "../format";
 
 // V09 P1–P3: şeride dokununca ortalanmaz, kaydırma yeri korunur; yeni gün / ekran açılınca seçili saat ortalanır,
 // seçili saat görünmüyorsa yalnız görünecek kadar kayar.
+// hours[]: { i, h, temp, view, mm? } — mm verilirse (Saatlik, tek model, Modeller) ikonun altında yağış satırı çıkar
 export function HourStrip({ hours, idx, nowIdx, onPick, stripKey }) {
   const ref = useRef(null);
+  const withMm = hours.some((h) => "mm" in h);
   const last = useRef(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -37,6 +39,8 @@ export function HourStrip({ hours, idx, nowIdx, onPick, stripKey }) {
         >
           {pad(h.h)}
           <HourIcon view={h.view} />
+          {/* Saatlik yağış (5 Kas): ikonun altında "mm" ile; yalnız yağışlı saatte yazılır, satır yeri hep ayrılır */}
+          {withMm && <small className="hmm">{h.mm ? `${h.mm} mm` : ""}</small>}
           <b>{h.temp == null ? "—" : Math.round(h.temp) + "°"}</b>
         </button>
       ))}

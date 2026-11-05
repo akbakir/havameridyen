@@ -1,4 +1,4 @@
-// Sayfa 3 — grafikler (Prototip 9): Saatlik / 3 / 7 / 16 gün; aralık 1 / 3 / 6 / 12 saat (16 günde 1 saat yok).
+// Sayfa 3 — grafikler (Prototip 9): Saatlik / 3 / 7 / 16 gün; aralık 1 / 3 / 6 / 12 saat (3 ve 7 günde 1 saat, 16 günde 1 ve 3 saat yok).
 // Paneller: hava durumu (her model, dilimdeki en belirgin durumun ikonu — web'deki tablo gibi; 20 Ekim), sıcaklık, toplam yağış (+ uzlaşı şeridi), karlı dönemde taze kar ve kar kalınlığı, rüzgar hızı ve yönü,
 // hamle, nem, CAPE, basınç (+ eğilim), bulutluluk; her birinin altında uyum şeridi. Uyum ve eğilim kuralları web ile
 // aynı dosyadan (lib/agreement.js). Grafiğe dokununca seçili dilim, yanında o dilimdeki model değerleri ve altta
@@ -36,7 +36,10 @@ const PER = {
 };
 const SLOTS = [1, 3, 6, 12];
 const RAIN_TH = [0.2, 0.5, 1, 2, 5];
-const slotOK = (period, s) => period !== "16d" || s !== 1; // V05 P2: 16 günde 1 saat seçilemez
+// En kısa aralık (5 Kas, Ali Kemal: sıkışma): Saatlik 1 · 3 ve 7 gün 3 · 16 gün 6 saat (V05 P2'de 16 günde yalnız 1 saat kapalıydı)
+const SLOT_MIN = { hourly: 1, "3d": 3, "7d": 3, "16d": 6 };
+const slotOK = (period, s) => s >= (SLOT_MIN[period] || 1);
+const slotOff = (period) => (period === "16d" ? "16 günde 1 ve 3 saat seçilemez" : "3 ve 7 günde 1 saat seçilemez");
 const DAY3 = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
 const DASHED = Object.fromEntries(MODELS.map((m) => [m.id, !!m.dashed]));
 
@@ -887,7 +890,7 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
       </div>
       <div className="periods sm" role="group" aria-label="Aralık">
         {SLOTS.map((s) => (
-          <button key={s} type="button" aria-pressed={s === step} disabled={!slotOK(period, s)} title={slotOK(period, s) ? undefined : "16 günde 1 saat seçilemez"} onClick={() => setSlot(s)}>
+          <button key={s} type="button" aria-pressed={s === step} disabled={!slotOK(period, s)} title={slotOK(period, s) ? undefined : slotOff(period)} onClick={() => setSlot(s)}>
             {s} saat
           </button>
         ))}

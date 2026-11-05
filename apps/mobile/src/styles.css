@@ -107,6 +107,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--s-teal);outline
 .g .gl{font-size:10.5px;opacity:.78}
 .g .gv{font-family:var(--f-mono);font-size:12px;font-weight:600}
 .g .gs{font-family:var(--f-mono);font-size:10px;opacity:.75}
+/* Hamle (5 Kas, Günlük + tek model): satır soluklaşmaz, yalnız "hamle" soluk; değer + birim kalın turuncu, koyu kontur +
+   maks / min'deki gölge. Zemin havaya göre değişir (orta-koyu tonlar) — kontur her zeminde ayırır. */
+.gst{opacity:1!important}
+.g .gs.gst{display:block}
+.gustl{opacity:.75}
+.gustv{color:#FF9533;font-weight:700;text-shadow:0 0 1px rgba(0,0,0,.9),0 0 1px rgba(0,0,0,.9),0 1px 2px rgba(0,0,0,.45)}
 .dial .track{fill:none;stroke:rgba(255,255,255,.2);stroke-width:4.5}
 .dial .prog{fill:none;stroke:#fff;stroke-width:4.5;stroke-linecap:round}
 .dial .tick{stroke:rgba(255,255,255,.4);stroke-width:1.6;stroke-linecap:round}
@@ -119,6 +125,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--s-teal);outline
 .hchip b{display:block;font-weight:600;font-size:12px;color:var(--s-ink)}
 .hchip .hic{display:block;width:26px;height:24px;border-radius:7px;margin:3px auto 2px;padding:2px 3px}
 .hchip .hic svg{width:20px;height:20px;display:block}
+.hchip .hmm{display:block;min-height:11px;margin:-1px 0 1px;font:500 9px/1.2 var(--f-mono);color:var(--min);white-space:nowrap} /* 5 Kas: saatlik yağış (mm) */
+.hchip[aria-pressed="true"] .hmm{color:#9CCBFF}
 .hchip[aria-pressed="true"]{background:var(--s-ink);color:#D5DDD7}
 .hchip[aria-pressed="true"] b{color:#fff}
 .hchip.now::after{content:"şimdi";display:block;font-size:8.5px;color:var(--s-teal)}
@@ -418,8 +426,21 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 .glist-t small{margin-left:auto;font:400 11px var(--f-mono);color:var(--s-soft)}
 .glist-t .li{width:20px;height:20px;fill:none;stroke:#2C4A6E;stroke-width:2;stroke-linecap:round;flex:none}.glist-t .li circle{fill:#2C4A6E;stroke:none}
 .glist-t .ch{width:18px;height:18px;fill:none;stroke:var(--s-ink);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* 5 Kas: kapalı listede alt alta iki aşağı ok; liste hiç açılmadıysa 3 tur aşağı akar (üstteki önce), sonra durur.
+   "Hareketi azalt" açıkken genel kural (prefers-reduced-motion) animasyonu kapatır. */
+.glist-t .ch2{width:18px;height:22px;stroke-width:2.2}
+.glist-t .ch2 .c2{opacity:.55}
+.glist-t .ch2.anim .c1,.glist-t .ch2.anim .c2{animation:chflow 1.4s ease-in-out 3}
+.glist-t .ch2.anim .c2{animation-delay:.2s}
+@keyframes chflow{0%,100%{transform:translateY(0);opacity:1}50%{transform:translateY(3px);opacity:.35}}
 .glist{border-radius:16px;background:var(--s-card);border:1px solid var(--s-line);padding:4px 12px 6px;margin-top:-4px}
-.gl-h{display:flex;justify-content:space-between;font:400 10.5px var(--f-mono);color:var(--s-soft);padding:6px 0 2px}
+.gl-h{display:flex;align-items:flex-end;gap:8px;font:400 10.5px var(--f-mono);color:var(--s-soft);padding:6px 0 2px}
+.gl-h+.gl-h{padding-top:0}
+/* 5 Kas: başlık satır sütunlarıyla hizalı — sol = gün 48 + ikon 30 + yağış 46 + 2 boşluk; orta = en düşük + çubuk + en
+   yüksek (iki uç 28 px, ortası çubuğun ortası); sağ = uyum 20 (yazı sola taşabilir) */
+.glh-l{width:140px;flex:none;white-space:nowrap}
+.glh-c{flex:1;min-width:0;text-align:center;white-space:nowrap}
+.glh-u{width:20px;flex:none;display:flex;justify-content:flex-end;white-space:nowrap}
 .gl-r{display:flex;align-items:center;gap:8px;width:100%;height:48px;border:0;border-top:1px solid var(--s-line);background:none;padding:0;cursor:pointer;color:var(--s-ink);text-align:left}
 .gl-r:first-of-type{border-top:0}
 .gl-r.on{background:#EEF3F0;margin:0 -12px;padding:0 12px;width:calc(100% + 24px)}
@@ -433,11 +454,20 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 .gl-bar i{position:absolute;top:0;bottom:0;border-radius:3px}
 .gl-r .gdot{width:20px;height:20px}.gl-r .gdot svg{width:11px;height:11px}
 .gl-n{margin:6px 0 2px;font:400 11px var(--f-mono);color:var(--s-soft)}
+/* Uyum açıklaması (5 Kas): Liste Görünümü düğmesinin altında; liste açılınca listenin altına kayar */
+.glegend{margin-top:8px;padding:8px 14px 10px;border-radius:14px;border:1px solid var(--s-line);background:var(--s-card)}
+.glegend p{margin:0 0 6px;font:400 10.5px/1.4 var(--f-mono);color:var(--s-soft)}
+.glegend p b{color:var(--s-ink);font-weight:600}
+.glegend ul{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.glegend li{display:flex;align-items:center;gap:8px;font:400 11.5px var(--f-mono);color:var(--s-soft)}
+.glegend li b{width:72px;flex:none;font:600 12px var(--f-body);color:var(--s-ink)}
+.glegend .gdot{width:18px;height:18px}.glegend .gdot svg{width:10px;height:10px}
+.glist+.glegend{margin-top:10px}
 
 /* Stil birliği (29 Ekim): dört sayfada aynı tahmin kaynağı çubuğu; Saatlik / Modeller / tek modelde basık gün şeridi */
 .srcw{padding:2px 12px 0;margin-bottom:10px}
 .stripw{padding:0 12px;margin-bottom:10px}
-.gstrip-w.cmp .gchip{width:52px;height:96px}
+.gstrip-w.cmp .gchip{width:52px;height:108px} /* 5 Kas: yağış (mm) satırı için 96 → 108 */
 .p1title + .miss{text-align:center;margin-top:4px}
 /* Tahmin kaynağı penceresi (sekmeli, "B") */
 .segm{display:flex;background:#E6EAE4;border-radius:12px;padding:3px;margin:6px 2px 4px}

@@ -6,17 +6,11 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { Mark, SKY, WxIcon, condView } from "../icons";
-import { DAYN, MON, dir16, fmt, parseT, speed, unitLabel } from "../format";
+import { DAYN, MON, dir16, mmTxt, parseT, speed, unitLabel } from "../format";
 import { UnitToggle } from "./common";
 
 const GUN = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
 const pv = (p) => (p && p.v != null ? p.v : null);
-
-// Yağış: 10 mm altı tek ondalık, üstü tam sayı; 0,05 altı yazılmaz
-function mmTxt(v) {
-  if (v == null || v < 0.05) return null;
-  return v < 9.95 ? fmt(v, 1) : fmt(v, 0);
-}
 
 // Uyum dairesi (gün kartında): hemfikir ✓ · kısmen ~ · ayrışıyor ≠; karşılaştıracak model yoksa kesik çizgili boş daire
 function AgreeDot({ cond, single }) {
@@ -26,6 +20,31 @@ function AgreeDot({ cond, single }) {
     <span className={`gdot p-${cond.level}`} title={`${cond.in}/${cond.n} model`}>
       <Mark level={cond.level} />
     </span>
+  );
+}
+
+// Uyum açıklaması (5 Kas, Ali Kemal: ilk kullanıcılar ✓ ~ ≠ işaretlerini anlamıyordu). Eşikler lib/agreement.js
+// AGREE_OK (% 75) ve AGREE_PARTIAL (% 50) ile aynı — biri değişirse metin de değişmeli.
+function AgreeLegend() {
+  const row = (level, name, txt) => (
+    <li>
+      <span className={level === "na" ? "gdot na" : `gdot p-${level}`}>{level !== "na" && <Mark level={level} />}</span>
+      <b>{name}</b>
+      <span>{txt}</span>
+    </li>
+  );
+  return (
+    <div className="glegend">
+      <p>
+        <b>uyum</b> · modeller o gün aynı havayı mı söylüyor? Yağışlı günde yağış verenlerin, kuru günde aynı bulut sınıfındakilerin oranı.
+      </p>
+      <ul>
+        {row("ok", "hemfikir", "en az % 75'i aynı")}
+        {row("partial", "kısmen", "% 50–75'i aynı")}
+        {row("split", "ayrışıyor", "yarıdan azı aynı")}
+        {row("na", "tek model", "karşılaştırma yok")}
+      </ul>
+    </div>
   );
 }
 
@@ -93,9 +112,17 @@ function DayList({ daily, k, single, onPick }) {
   const pc = (v) => (HI > LO ? ((v - LO) / (HI - LO)) * 100 : 50);
   return (
     <div className="glist">
+      {/* Başlık (5 Kas): satırlarla aynı sütunlar — sol gün + ikon + yağış, orta en düşük + çubuk + en yüksek (iki uç eşit
+          genişlikte, orta = çubuğun ortası), sağ uyum. "sıcaklık" ve altında "en düşük — en yüksek" çubuğun ortasında. */}
       <div className="gl-h">
-        <span>gün · yağış · en düşük — en yüksek</span>
-        <span>{single ? "" : "uyum"}</span>
+        <span className="glh-l" />
+        <span className="glh-c">sıcaklık</span>
+        <span className="glh-u" />
+      </div>
+      <div className="gl-h">
+        <span className="glh-l">gün · yağış</span>
+        <span className="glh-c">en düşük — en yüksek</span>
+        <span className="glh-u">{single ? "" : "uyum"}</span>
       </div>
       {daily.map((d, i) => {
         const p = parseT(d.date + "T12:00");
@@ -136,8 +163,9 @@ const Arrow = ({ dir, onClick, disabled }) => (
   </button>
 );
 
-// Gün şeridi (Günlük sayfa; 29 Ekim'den beri Saatlik, Modeller ve tek model ekranında da, orada "compact": yağış ve uyum
-// dairesi yok, kartlar daha basık). daily: lib/consensus günlük dizisi. onAgain: seçili güne ikinci dokunuş.
+// Gün şeridi (Günlük sayfa; 29 Ekim'den beri Saatlik, Modeller ve tek model ekranında da, orada "compact": uyum
+// dairesi yok, kartlar daha basık; yağış 5 Kas'tan beri orada da "mm" ile). daily: lib/consensus günlük dizisi.
+// onAgain: seçili güne ikinci dokunuş.
 export function DayStrip({ daily, k, single, onPick, onAgain, compact }) {
   const strip = useRef(null);
   // Seçili gün kartı şeritte görünür kalsın (ilk açılışta ve gün değişince)
@@ -174,11 +202,13 @@ export function DayStrip({ daily, k, single, onPick, onAgain, compact }) {
                 </small>
               </span>
               <WxIcon name={condView(d.cond, 12).icon} className="gc-ic" />
-              {!compact && <span className="gc-mm">{mm || ""}</span>}
+              {/* Yağış "mm" birimiyle (5 Kas); Saatlik / Modeller'deki sıkışık şeritte de görünür */}
+              <span className="gc-mm">{mm ? `${mm} mm` : ""}</span>
               <span className="gc-t">
-                <b className="mx">{pv(d.temp_max) == null ? "—" : Math.round(pv(d.temp_max))}</b>
-                <span className="sl">/</span>
+                {/* Önce en düşük, sonra en yüksek (5 Kas): maks / min sırası "maksimumdan sonraki minimum" gibi okunuyordu */}
                 <span className="mn">{pv(d.temp_min) == null ? "—" : Math.round(pv(d.temp_min))}</span>
+                <span className="sl">/</span>
+                <b className="mx">{pv(d.temp_max) == null ? "—" : Math.round(pv(d.temp_max))}</b>
               </span>
               {!compact && <AgreeDot cond={d.cond} single={single} />}
             </button>
@@ -192,7 +222,7 @@ export function DayStrip({ daily, k, single, onPick, onAgain, compact }) {
 
 export const dailyOf = (cons) => (cons.daily || []).filter((d) => pv(d.temp_max) != null || d.cond);
 
-export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHourly, unit, onUnit, loading16, beyond, listOpen, onListOpen }) {
+export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHourly, unit, onUnit, loading16, beyond, listOpen, listSeen, onListOpen }) {
   const daily = dailyOf(cons);
   const k = Math.max(0, daily.findIndex((d) => d.date === dayKey));
   const D = daily[k];
@@ -231,9 +261,9 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
           <span>
             <b>{view.text}</b>
             <span className="gd-t">
-              <span className="mx">{pv(D.temp_max) == null ? "—" : `${Math.round(pv(D.temp_max))}°`}</span>
-              <span className="sl"> / </span>
               <span className="mn">{pv(D.temp_min) == null ? "—" : `${Math.round(pv(D.temp_min))}°`}</span>
+              <span className="sl"> / </span>
+              <span className="mx">{pv(D.temp_max) == null ? "—" : `${Math.round(pv(D.temp_max))}°`}</span>
             </span>
           </span>
         </div>
@@ -250,7 +280,10 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
             <span>
               <small>Rüzgar {W.max == null ? "—" : W.dir == null ? "VRB" : dir16(W.dir)}</small>
               <b>{W.max == null ? "—" : `${Math.round(speed(W.min, unit))}–${Math.round(speed(W.max, unit))} ${unitLabel(unit)}`}</b>
-              <small className="mono">{pv(D.gust_max) == null ? "hamle —" : `hamle ${Math.round(speed(pv(D.gust_max), unit))} ${unitLabel(unit)}`}</small>
+              {/* Hamle (5 Kas): "hamle" soluk kalır, değer + birim kalın turuncu ve koyu konturlu (.gustv) */}
+              <small className="mono gst">
+                <span className="gustl">hamle</span> {pv(D.gust_max) == null ? <span className="gustl">—</span> : <span className="gustv">{`${Math.round(speed(pv(D.gust_max), unit))} ${unitLabel(unit)}`}</span>}
+              </small>
             </span>
             <span className="gg-u">
               <UnitToggle unit={unit} onUnit={onUnit} ghost />
@@ -271,7 +304,7 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
                     <small>{String(h).padStart(2, "0")}</small>
                     <WxIcon name={condView(s.cond, h + 1).icon} className="gs-ic" />
                     <b>{t == null ? "—" : `${Math.round(t)}°`}</b>
-                    <small className="gs-mm">{mm || ""}</small>
+                    <small className="gs-mm">{mm ? `${mm} mm` : ""}</small>
                   </span>
                 );
               })}
@@ -294,11 +327,22 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
         {/* 29 Ekim (Ali Kemal): "16 günü liste olarak gör" yerine "Liste Görünümü"; tarih aralığı ve ok kalır */}
         <b>Liste Görünümü</b>
         <small>{`${parseT(daily[0].date + "T12:00").d} ${MON[parseT(daily[0].date + "T12:00").m].slice(0, 3)} – ${parseT(daily[daily.length - 1].date + "T12:00").d} ${MON[parseT(daily[daily.length - 1].date + "T12:00").m].slice(0, 3)}`}</small>
-        <svg viewBox="0 0 24 24" className="ch">
-          <path d={listOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"} />
-        </svg>
+        {/* 5 Kas: kapalıyken alt alta iki aşağı ok (listenin açılabildiği anlaşılsın); liste hiç açılmadıysa sayfa
+            açılınca 3 tur aşağı akar, sonra durur. Açıkken tek yukarı ok, animasyonsuz. */}
+        {listOpen ? (
+          <svg viewBox="0 0 24 24" className="ch">
+            <path d="M6 15l6-6 6 6" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" className={"ch ch2" + (listSeen ? "" : " anim")}>
+            <path className="c1" d="M7 5l5 5 5-5" />
+            <path className="c2" d="M7 12l5 5 5-5" />
+          </svg>
+        )}
       </button>
       {listOpen && <DayList daily={daily} k={k} single={single} onPick={(date) => { onDay(date); window.scrollTo({ top: 0, behavior: "smooth" }); }} />}
+      {/* Uyum açıklaması (5 Kas): liste kapalıyken düğmenin altında, açılınca listenin altına kayar; tek modelde yok */}
+      {!single && <AgreeLegend />}
     </div>
   );
 }

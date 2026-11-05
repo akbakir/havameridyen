@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
-import { MON, fmt, pad, parseT, speed, unitLabel } from "../format";
+import { MON, fmt, mmTxt, pad, parseT, speed, unitLabel } from "../format";
 import { avg, dayGust, dayIndexOf, dayMax, dayMin, dayVals, hakim, hasDay, val } from "../data";
 import { HourStrip, UnitToggle } from "./common";
 import { PrecipGrid } from "./precip";
@@ -131,7 +131,9 @@ export default function P2({ models, cons, times, days, idx, nowIdx, unit, onUni
   const hours = [];
   for (let j = day.h0; j < day.h1 && j < hz; j++) {
     const h = parseT(times[j]).h;
-    hours.push({ i: j, h, temp: cons.hourly[j].temp.v, view: condView(cons.hourly[j].cond, h) });
+    // Saatlik ortanca yağış (5 Kas): Saatlik sayfasıyla aynı kural
+    const mm = cons.hourly[j].cond?.wet ? mmTxt(cons.hourly[j].precip?.v) : null;
+    hours.push({ i: j, h, temp: cons.hourly[j].temp.v, view: condView(cons.hourly[j].cond, h), mm });
   }
 
   return (

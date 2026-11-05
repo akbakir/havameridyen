@@ -289,7 +289,8 @@ export default function App() {
               unit={unit}
               onUnit={(u) => update({ unit: u })}
               listOpen={prefs.listOpen}
-              onListOpen={(v) => update({ listOpen: v })}
+              listSeen={prefs.listSeen}
+              onListOpen={(v) => update(v ? { listOpen: true, listSeen: true } : { listOpen: false })}
               loading16={long.key === placeKey(place) && long.status === "loading"}
               beyond={beyond}
             />
