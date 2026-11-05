@@ -36,7 +36,7 @@ function AgreeLegend() {
   return (
     <div className="glegend">
       <p>
-        <b>uyum</b> · modeller o gün aynı havayı mı söylüyor? Yağışlı günde yağış verenlerin, kuru günde aynı bulut sınıfındakilerin oranı.
+        <b>uyum</b> · modeller o gün aynı havayı mı söylüyor? Yağışlı günde yağış verenlerin, yağışsız günde aynı bulut sınıfındakilerin oranı.
       </p>
       <ul>
         {row("ok", "hemfikir", "en az % 75'i aynı")}
