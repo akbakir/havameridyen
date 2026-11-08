@@ -71,7 +71,7 @@ export default function App() {
         const models = toModels(resp);
         const times = resp.time || [];
         const now = nowIndex(times, tsiNowHour());
-        setData((d) => (d.key === key ? { status: "ok", key, models, times, days: daysOf(times), nowIdx: now, stale: resp._stale || null } : d));
+        setData((d) => (d.key === key ? { status: "ok", key, models, times, days: daysOf(times), nowIdx: now, stale: resp._stale || null, at: Date.now() } : d));
         setIdx(now);
         liP.then((li) => li && setData((d) => (d.key === key && d.status === "ok" ? { ...d, models: mergeLi(d.models, li, d.times) } : d)));
       })
@@ -98,6 +98,125 @@ export default function App() {
       })
       .catch(() => setLong((d) => (d.key === key ? { status: "error", key } : d)));
   }, [place, long.key, long.status]);
+
+  // Alttaki kısa bildirim (favori ekle / çıkar · Geri al)
+  const notify = useCallback((text, undo) => {
+    clearTimeout(snackT.current);
+    setSnack({ text, undo });
+    snackT.current = setTimeout(() => setSnack(null), 4000);
+  }, []);
+  useEffect(() => () => clearTimeout(snackT.current), []);
+
+  // Yenileme (8 Kas 2026, Ali Kemal: "saatlik güncellemeyle ek kullanıcı aşağı indirerek de güncelleme yapabilsin"):
+  // ekran boşaltılmadan aynı konumun verisi yeniden alınır (uygulama içi 10 dk'lık kopya atlanır; sunucunun 1 saatlik
+  // önbelleği aynen geçerli). Seçili saat korunur; yalnız "şimdi" güncellenir. 16 günlük veri yüklüyse o da yenilenir
+  // (aynı adres; ikinci istek gitmez). manual: aşağı çekme — bağlantı yoksa kısa uyarı.
+  const refreshing = useRef(false);
+  const refresh = useCallback(
+    (manual = false) => {
+      const key = placeKey(place);
+      if (refreshing.current || data.key !== key || data.status !== "ok") {
+        if (data.status === "error") load();
+        return Promise.resolve();
+      }
+      refreshing.current = true;
+      const liP = fetchLi(place.lat, place.lon, undefined, true).catch(() => null);
+      return fetchForecast(place.lat, place.lon, true)
+        .then((resp) => {
+          if (resp._stale) {
+            if (manual) notify("Bağlantı yok, son veri gösteriliyor");
+            return;
+          }
+          const models = toModels(resp);
+          const times = resp.time || [];
+          const now = nowIndex(times, tsiNowHour());
+          setData((d) => (d.key === key ? { ...d, models, times, days: daysOf(times), nowIdx: now, stale: null, at: Date.now() } : d));
+          liP.then((li) => li && setData((d) => (d.key === key && d.status === "ok" ? { ...d, models: mergeLi(d.models, li, d.times) } : d)));
+          if (long.key === key && long.status === "ok") {
+            setLong((d) => (d.key === key ? { ...d, models: toModels(resp), times } : d));
+            liP.then((li) => li && setLong((d) => (d.key === key && d.status === "ok" ? { ...d, models: mergeLi(d.models, li, d.times) } : d)));
+          }
+        })
+        .catch(() => {
+          if (manual) notify("Bağlantı yok, son veri gösteriliyor");
+        })
+        .finally(() => {
+          refreshing.current = false;
+        });
+    },
+    [place, data.key, data.status, long.key, long.status, load, notify]
+  );
+
+  // Otomatik yenileme: veri 1 saatten eskiyse uygulama ön plana gelince ve açık dururken (5 dakikada bir bakılır)
+  const REFRESH_AGE = 3600e3;
+  const auto = useRef(null);
+  auto.current = () => {
+    if (view === "fc" && data.status === "ok" && data.at && Date.now() - data.at > REFRESH_AGE && document.visibilityState !== "hidden") refresh(false);
+  };
+  useEffect(() => {
+    const h = CapApp.addListener("appStateChange", ({ isActive }) => isActive && auto.current());
+    const onVis = () => document.visibilityState === "visible" && auto.current();
+    document.addEventListener("visibilitychange", onVis);
+    const t = setInterval(() => auto.current(), 5 * 60e3);
+    return () => {
+      h.then((x) => x.remove()).catch(() => {});
+      document.removeEventListener("visibilitychange", onVis);
+      clearInterval(t);
+    };
+  }, []);
+
+  // Aşağı çekip yenileme: sayfanın en üstündeyken parmak aşağı ~70 px çekilip bırakılınca. Yatay kaydırmalar
+  // (saat şeridi, model kartları, grafikler) tetiklemez. pull: gösterge için çekme miktarı (px) · ptr: yenileniyor.
+  const [pull, setPull] = useState(0);
+  const [ptr, setPtr] = useState(false);
+  const pullRef = useRef({ y: null, x: 0, d: 0 });
+  const canPull = view === "fc" && !sheet && !srcOpen && data.status === "ok";
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+  useEffect(() => {
+    if (!canPull) return undefined;
+    const P = pullRef.current;
+    const start = (e) => {
+      if (window.scrollY > 0 || e.touches.length !== 1) return;
+      P.y = e.touches[0].clientY;
+      P.x = e.touches[0].clientX;
+      P.d = 0;
+    };
+    const move = (e) => {
+      if (P.y == null) return;
+      const dy = e.touches[0].clientY - P.y;
+      const dx = Math.abs(e.touches[0].clientX - P.x);
+      if (dy <= 0 || dx > dy) {
+        if (P.d) setPull(0);
+        P.d = 0;
+        if (dx > 12) P.y = null; // yatay kaydırma: bu dokunuşta çekme yok
+        return;
+      }
+      P.d = Math.min(110, dy * 0.55);
+      setPull(P.d);
+    };
+    const end = () => {
+      if (P.y == null) return;
+      const go = P.d >= 60;
+      P.y = null;
+      P.d = 0;
+      setPull(0);
+      if (go) {
+        setPtr(true);
+        refreshRef.current(true).finally(() => setPtr(false));
+      }
+    };
+    window.addEventListener("touchstart", start, { passive: true });
+    window.addEventListener("touchmove", move, { passive: true });
+    window.addEventListener("touchend", end);
+    window.addEventListener("touchcancel", end);
+    return () => {
+      window.removeEventListener("touchstart", start);
+      window.removeEventListener("touchmove", move);
+      window.removeEventListener("touchend", end);
+      window.removeEventListener("touchcancel", end);
+    };
+  }, [canPull]);
 
   const multi = selected.length > 1;
   // Günlük sayfa açılınca 16 günlük veri istenir (gelene kadar 7 günlük veriyle çizilir)
@@ -130,13 +249,6 @@ export default function App() {
   const dayTimes = has16 ? long.times : data.times;
   const dayCons = useMemo(() => (page === "day" && dayModels.length ? buildConsensus(dayModels) : null), [page, dayModels]);
 
-  // Alttaki kısa bildirim (favori ekle / çıkar · Geri al)
-  const notify = useCallback((text, undo) => {
-    clearTimeout(snackT.current);
-    setSnack({ text, undo });
-    snackT.current = setTimeout(() => setSnack(null), 4000);
-  }, []);
-  useEffect(() => () => clearTimeout(snackT.current), []);
 
   // Favori: tahmin sayfalarının üst çubuğundaki yıldız ve ana sayfadaki × (28 Ekim, Ali Kemal)
   const isFav = favorites.some((f) => placeKey(f) === placeKey(place));
@@ -255,6 +367,14 @@ export default function App() {
 
       {view === "fc" && (
         <>
+          {(pull > 0 || ptr) && (
+            <div className="ptr" style={{ height: ptr ? 44 : pull }} aria-live="polite">
+              <span className={"ptr-ic" + (ptr ? " spin" : pull >= 60 ? " ready" : "")} style={ptr ? undefined : { transform: `rotate(${Math.round(pull * 3)}deg)`, opacity: Math.min(1, pull / 60) }}>
+                ↻
+              </span>
+              {ptr && <span className="sr">Yenileniyor</span>}
+            </div>
+          )}
           <div className="srcw">
             <SrcBar models={ALL.filter((m) => selected.includes(m.id))} single={!multi} onOpen={() => setSrcOpen(true)} />
           </div>

@@ -5,6 +5,7 @@
 // GET /api/v1/locations?q=izmit → { results: [{ name, admin1, country, lat, lon }] } (en çok 8 sonuç)
 
 import { cors } from "../../../lib/apiCors";
+import { countCall } from "../../../lib/usage";
 
 export default async function handler(req, res) {
   cors(req, res);
@@ -22,7 +23,9 @@ export default async function handler(req, res) {
 
   try {
     const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=tr&format=json`;
+    const counted = countCall(url, "geocoding"); // kullanım sayacı (lib/usage.js)
     const r = await fetch(url);
+    await counted;
     if (!r.ok) throw new Error(`geocoding ${r.status}`);
     const raw = await r.json();
     const results = (raw.results || []).map((loc) => ({

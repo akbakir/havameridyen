@@ -42,10 +42,12 @@ function offLoad(path) {
   return null;
 }
 
-async function getJson(path) {
+// fresh (8 Kas 2026, yenileme): uygulama içi 10 dakikalık kopya atlanır ve tarayıcı önbelleğine bakılmaz; yeni yanıt
+// yine memo'ya yazılır (aynı adresi hemen isteyen 16 günlük görünüm ikinci istek atmasın)
+async function getJson(path, fresh = false) {
   const hit = memo.get(path);
-  if (hit && Date.now() - hit.at < TTL) return hit.p;
-  const p = fetch(API_BASE + path)
+  if (!fresh && hit && Date.now() - hit.at < TTL) return hit.p;
+  const p = fetch(API_BASE + path, fresh ? { cache: "no-store" } : undefined)
     .then((r) => {
       if (!r.ok) throw new Error(`${r.status}`);
       return r.json();
@@ -75,13 +77,13 @@ export function forecastPath(lat, lon, days = FORECAST_DAYS, ids = ALL_MODEL_IDS
 }
 
 // Bütün modeller bir kerede istenir; model seçimi ve ortanca + uyum uygulamada hesaplanır (lib/consensus.js).
-export const fetchForecast = (lat, lon) => getJson(forecastPath(lat, lon));
+export const fetchForecast = (lat, lon, fresh = false) => getJson(forecastPath(lat, lon), fresh);
 
 // Sayfa 3 "16 gün": yalnız o görünüm açılınca, bütün modeller 16 gün
-export const fetchForecast16 = (lat, lon) => getJson(forecastPath(lat, lon, 16));
+export const fetchForecast16 = (lat, lon, fresh = false) => getJson(forecastPath(lat, lon, 16), fresh);
 
 // Hesaplanan LI (5 Kas, hız): temel tahminle aynı anda istenir, gelince modellere eklenir (data.js mergeLi)
-export const fetchLi = (lat, lon, days = FORECAST_DAYS) => getJson(forecastPath(lat, lon, days) + "&part=li");
+export const fetchLi = (lat, lon, days = FORECAST_DAYS, fresh = false) => getJson(forecastPath(lat, lon, days) + "&part=li", fresh);
 
 // Favori kartı: beş modelin ortak tahmini (site favorileri ve widget'la aynı adres: 5 gün, varsayılan 5 model)
 export const FAV_MODEL_IDS = ["ecmwf_ifs", "gfs_seamless", "icon_seamless", "ukmo_seamless", "meteofrance_seamless"];

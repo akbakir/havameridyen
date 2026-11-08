@@ -1,3 +1,5 @@
+import { countCall } from "../../lib/usage";
+
 export default async function handler(req, res) {
   const { q } = req.query;
   if (!q || q.trim().length < 2) {
@@ -8,7 +10,9 @@ export default async function handler(req, res) {
     const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
       q
     )}&count=5&language=tr&format=json`;
+    const counted = countCall(url, "geocoding"); // kullanım sayacı (lib/usage.js)
     const r = await fetch(url);
+    await counted;
     const raw = await r.json();
 
     const results = (raw.results || []).map((loc) => ({
