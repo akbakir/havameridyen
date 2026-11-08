@@ -620,13 +620,26 @@ public final class HmWidgets {
         if (c.optBoolean("wet", false)) {
             int icon;
             switch (ic) {
-                case "rainL": icon = R.drawable.wx_rain_light; break; // Hafif Yağmurlu (yalnız gün, ≤ 0,5 mm)
-                case "showerL": icon = R.drawable.wx_shower_light; break; // Hafif Sağanak Yağış (yalnız gün)
+                // Yağış 4 şiddet kademeli (8 Kas 2026): T < 1 · L hafif · normal · H kuvvetli (lib/agreement.js INTENSITY)
+                case "rainT": icon = R.drawable.wx_rain_trace; break;
+                case "rainL": icon = R.drawable.wx_rain_light; break;
+                case "rainH": icon = R.drawable.wx_rain_strong; break;
+                case "showerT": icon = R.drawable.wx_shower_trace; break;
+                case "showerL": icon = R.drawable.wx_shower_light; break;
                 case "shower": icon = R.drawable.wx_rain_heavy; break;
+                case "showerH": icon = R.drawable.wx_shower_strong; break;
                 case "storm": icon = R.drawable.wx_storm; break;
+                case "stormH": icon = R.drawable.wx_storm_strong; break;
+                case "snowT": icon = R.drawable.wx_snow_trace; break;
+                case "snowL": icon = R.drawable.wx_snow_light; break;
                 case "snow": icon = R.drawable.wx_snow; break;
+                case "snowH": icon = R.drawable.wx_snow_strong; break;
+                case "snowshowerT": icon = R.drawable.wx_snowshower_trace; break;
+                case "snowshowerL": icon = R.drawable.wx_snowshower_light; break;
                 case "snowshower": icon = R.drawable.wx_snow_heavy; break;
+                case "snowshowerH": icon = R.drawable.wx_snowshower_strong; break;
                 case "snowstorm": icon = R.drawable.wx_snow_storm; break;
+                case "snowstormH": icon = R.drawable.wx_snow_storm_strong; break;
                 default: icon = R.drawable.wx_rain;
             }
             return new Look(icon, ic.startsWith("snow") ? R.drawable.wsky_snow : R.drawable.wsky_rain);

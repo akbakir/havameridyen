@@ -18,7 +18,8 @@
 //     consensus: { hourly: [...], daily: [...] } }   ← ortanca + uyum (lib/consensus.js)
 //     daily[].cond: günün ortak durumu (önce her modelin günü — 00–24 yağış, yoksa 07–21 bulut —, sonra modeller;
 //     yağış tek aile, ikon en etkili tür; widget "günler" görünümü, lib/consensus.js dayCond)
-//     günün ortanca toplam yağışı ≤ 0,5 mm ise yağmur / sağanak yağış "Hafif …" (ic rainL / showerL, light: true)
+//     yağışlı ikon ve ifade 4 şiddet kademeli (8 Kas 2026): ic + T (< 1) / L (hafif) / — (normal) / H (kuvvetli),
+//     ör. rainL "Hafif Yağmurlu", showerH "Kuvvetli Sağanak Yağış", snowH "Yoğun Kar Yağışlı" (lib/agreement.js INTENSITY)
 //     slots3[]: 3 saatlik dilimler (00, 03 … 21 TSİ) — { start, cond (gün kuralıyla aynı), precip (modellerin 3 saatlik
 //     toplamlarının ortancası) }; widget saat dilimleri
 // Uyum seviyeleri: ok (hemfikir) · partial (kısmen) · split (ayrışıyor) · na (karşılaştıracak model yok) ·

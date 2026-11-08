@@ -8,7 +8,7 @@ import { WX_ICONS, pathDataOf } from "../../../lib/wxicons.js";
 const OUT = process.argv[2];
 const HDR = '<?xml version="1.0" encoding="utf-8"?>\n<!-- havameridyen: üretildi (scripts/gen_widget_icons.mjs, lib/wxicons.js). Elle düzenlemeyin. -->\n';
 
-// lib/wxicons.js adı → widget drawable adı (eski adlar korunur; dört yeni ad)
+// lib/wxicons.js adı → widget drawable adı (eski adlar korunur)
 const NAMES = {
   clear: "wx_sun",
   clearN: "wx_moon",
@@ -18,14 +18,27 @@ const NAMES = {
   partN: "wx_moon_cloud",
   cloud: "wx_cloud",
   over: "wx_overcast",
+  // Yağış 4 şiddet kademeli (8 Kas 2026): T < 1 · L hafif · normal · H kuvvetli (eski adlar normal ve hafifte korunur)
+  rainT: "wx_rain_trace",
   rainL: "wx_rain_light",
   rain: "wx_rain",
+  rainH: "wx_rain_strong",
+  showerT: "wx_shower_trace",
   showerL: "wx_shower_light",
   shower: "wx_rain_heavy",
+  showerH: "wx_shower_strong",
   storm: "wx_storm",
+  stormH: "wx_storm_strong",
+  snowT: "wx_snow_trace",
+  snowL: "wx_snow_light",
   snow: "wx_snow",
+  snowH: "wx_snow_strong",
+  snowshowerT: "wx_snowshower_trace",
+  snowshowerL: "wx_snowshower_light",
   snowshower: "wx_snow_heavy",
+  snowshowerH: "wx_snowshower_strong",
   snowstorm: "wx_snow_storm",
+  snowstormH: "wx_snow_storm_strong",
   fog: "wx_fog", // 30 Ekim: Sisli
   haze: "wx_haze", // Puslu (gündüz)
   hazeN: "wx_haze_night", // Puslu (gece)

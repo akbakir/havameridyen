@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Layout from "../components/Layout";
 import AgreeMark from "../components/AgreeMark";
+import IntensityFaq from "../components/IntensityFaq";
+import { FAQ_INTENSITY, FAQ_THRESHOLDS } from "../lib/intensityFaq";
 
 const FOOTER = [
   { href: "/hakkinda", label: "Hakkında" },
@@ -209,13 +211,15 @@ const FAQS = [
       <>
         <p style={{ margin: "0 0 12px" }}>
           Ortak tahminde günlük toplam yağış, saatlik değerlerin toplamı değildir; ikisi ayrı hesaplanır. Günlük toplam
-          yağış için önce her modelin o günkü toplam yağışı bulunur, sonra bu toplamların ortancası alınır. Saatlik
-          yağışta ise her saat için modellerin o saatteki yağış miktarlarının ortancası alınır. Modeller yağışın
-          başlama, bitme ve ara verme saatlerinde çoğu zaman ayrıştığı için bu iki yol farklı sonuç verir.
+          yağış için önce her modelin o günkü toplam yağışı bulunur, sonra yağış veren modellerin toplamlarının
+          ortancası alınır. Saatlik yağışta ise her saat için o saatte yağış veren modellerin miktarlarının ortancası
+          alınır. Modeller yağışın başlama, bitme ve ara verme saatlerinde çoğu zaman ayrıştığı için bu iki yol farklı
+          sonuç verir.
         </p>
         <p style={{ margin: "0 0 12px" }}>
           Örnek: Üç model de günde 10 mm yağış veriyor, ama biri sabah, biri öğlen, biri akşam. Günlük toplamın
-          ortancası 10 mm&apos;dir. Her saatte ise yalnızca bir model yağış verdiği için saatlik ortancalar 0 çıkar.
+          ortancası 10 mm&apos;dir. Her saatte ise yalnızca bir model yağış verdiği için o saatler yağışlı sayılmaz ve
+          saatlik miktar gösterilmez.
         </p>
         <p style={{ margin: 0 }}>
           Ayrıca saatlik yağış yalnızca modellerin en az yarısı o saatte yağış veriyorsa gösterilir ve değerler bir
@@ -225,6 +229,9 @@ const FAQS = [
       </>
     ),
   },
+  // 8 Kas 2026 (Ali Kemal onaylı metin; içerik mobil ile ortak, lib/intensityFaq.js)
+  { num: "10", q: FAQ_INTENSITY.q, a: <IntensityFaq blocks={FAQ_INTENSITY.blocks} /> },
+  { num: "11", q: FAQ_THRESHOLDS.q, a: <IntensityFaq blocks={FAQ_THRESHOLDS.blocks} /> },
 ];
 
 export default function SSS() {

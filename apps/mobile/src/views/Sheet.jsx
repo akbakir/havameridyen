@@ -6,6 +6,8 @@ import { App as CapApp } from "@capacitor/app";
 import { TERMS } from "@lib/terms";
 import { pad } from "../format";
 import { sourceOf } from "../data";
+import IntensityFaq from "./IntensityFaq";
+import { FAQ_INTENSITY, FAQ_THRESHOLDS } from "@lib/intensityFaq";
 
 export const MENU = [
   ["modeller", "Modeller", "8 model, kurum, çözünürlük, güncelleme", "M"],
@@ -34,6 +36,9 @@ const SSS = [
   ["Veriler ne sıklıkla güncelleniyor?", "ECMWF, AIFS, GFS, ICON, UKMO, ARPEGE ve JMA günde 4 kez, GEM günde 2 kez güncellenir. havameridyen bu güncellemeleri Open-Meteo üzerinden otomatik olarak yansıtır."],
   ["Bu MGM'nin resmi uygulaması mı?", "Hayır. havameridyen bağımsız, kişisel bir karşılaştırma aracıdır — Meteoroloji Genel Müdürlüğü ile bir bağlantısı yoktur. Afet veya acil durum kararları için MGM'nin resmi uyarılarını takip et."],
   ["Favorilerim nerede saklanıyor?", "Yalnız kendi cihazında saklanır. Hesap oluşturmana gerek yok."],
+  // 8 Kas 2026: yağış / kar şiddeti — web SSS 10 ve 11 ile aynı içerik (lib/intensityFaq.js)
+  [FAQ_INTENSITY.q, FAQ_INTENSITY],
+  [FAQ_THRESHOLDS.q, FAQ_THRESHOLDS],
 ];
 
 // <b>…</b> parçalarını kalın yazar (web /terimler ile aynı)
@@ -118,7 +123,7 @@ function Body({ page, allModels, loaded, onPage }) {
         <h4>
           {pad(i + 1)} · {q}
         </h4>
-        <p>{a}</p>
+        {typeof a === "string" ? <p>{a}</p> : <IntensityFaq blocks={a.blocks} />}
       </div>
     ));
   if (page === "hakkinda")
