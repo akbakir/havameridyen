@@ -554,14 +554,10 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 .titles .tt.off .ttb{color:var(--s-faint);background:#EEF1EC}
 .titles .tt.off .eye{stroke:var(--s-faint)}
 
-/* 12 Kas 2026 (Ali Kemal: "gün ve saat seçim menülerini biraz daha yakınlaştır, hero'da hamle de görünsün; Modeller'de de
-   aynı oranda, çok yapışık olmasın"): Saatlik / tek model / Modeller'de gün şeridi, saat şeridi ve aralar ~40 px kısaldı */
+/* 12 Kas 2026 (Ali Kemal: "yalnız menü aralarını biraz kısalt; gün seçimi eski boyutunda, hero'nun duruşu bozulmasın"):
+   Saatlik / tek model / Modeller'de yalnız aralıklar kısaldı. Gün şeridi → saat şeridi ile saat şeridi → hero arası eşit (10 px). */
 .srcw{margin-bottom:6px}
-.stripw{margin-bottom:2px}
-.gstrip-w.cmp .gchip{height:92px;padding:5px 0}
-.gstrip-w.cmp .gc-ic{width:26px;height:26px}
-.hours{padding:4px 12px 4px}
+.stripw{margin-bottom:6px}
+.hours{padding:4px 12px}
 .hchip{padding:4px 3px}
-.hchip .hic{margin:2px auto 1px}
-.hours + .hero{margin-top:2px;padding-top:10px}
-.hours + .hero .grid1{row-gap:5px;margin-top:6px}
+.hours + .hero{margin-top:6px}
