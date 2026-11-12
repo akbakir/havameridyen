@@ -2,7 +2,7 @@
 // uyum çubuğu. Ortanca + uyum kuralları web ve /api/v1 ile ortak: lib/consensus.js (buildConsensus).
 
 import { useEffect, useRef, useState } from "react";
-import { median } from "@lib/agreement";
+import { median, snowNeeded } from "@lib/agreement";
 import { CLS_RNG, CLS_TXT, SKY, WxIcon, condView } from "../icons";
 import { dir16, fmt, heroTitle, mmTxt, pad, parseT, speed, tsuf, unitLabel, visTxt } from "../format";
 import { dayIndexOf, gust, val } from "../data";
@@ -161,7 +161,12 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
   // beraberlikte yağış). Yarıdan azı veriyorsa ortanca 0 çıkıp "yağış yok" ile "% 43 yağış veriyor" çelişiyordu
   // (Ali Kemal, 25 Ekim: satır gizlensin; model bazında yağış Sayfa 2'de).
   const rainAny = D.precip_total.n > 0 && D.precip_total.in * 2 >= D.precip_total.n;
-  const snowAny = D.snowfall_total.in > 0;
+  // Taze kar (12 Kas 2026, Ali Kemal): ortak tahmindeki kar kuralıyla aynı — satır yalnız o gün en az 2 model kar
+  // veriyorsa (tek model seçili değilken); saatlik miktar da o saatte en az 2 model kar veriyorsa, yoksa "kar yok".
+  // Tek modelin karı Modeller kartında ve Grafikler'deki Taze kar grafiğinde görünür.
+  const snowNeed = snowNeeded(models.length);
+  const snowAny = D.snowfall_total.in >= snowNeed;
+  const snowHour = H.snowfall.in >= snowNeed ? H.snowfall.v : 0;
   const sdAny = models.some((m) => (val(m, "snow_depth", i) ?? 0) >= 0.05);
   const gb = GustBar({ models, i, unit });
 
@@ -209,9 +214,9 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
             <>
               <div className="v">
                 <span className="k">Taze kar · {hh}:00</span>
-                <span className="mid lbv">{medTxt(H.snowfall.v, "cm", "kar yok")}</span>
+                <span className="mid lbv">{medTxt(snowHour, "cm", "kar yok")}</span>
               </div>
-              <Bar p={H.snowfall} title={`Taze kar · saat ${hh}:00 · eşik ≥ 0,1 cm`} what="kar veriyor" onInfo={showInfo} />
+              <Bar p={H.snowfall} title={`Taze kar · saat ${hh}:00 · eşik ≥ 0,07 cm · en az 2 model`} what="kar veriyor" onInfo={showInfo} />
             </>
           )}
           {sdAny && (
