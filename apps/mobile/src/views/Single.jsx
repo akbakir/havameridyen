@@ -200,7 +200,8 @@ export default function Single({ m, times, days, idx, nowIdx, unit, onUnit, onId
   const rd = dayTotal(m, day);
   const cape = val(m, "cape", i);
 
-  const vis = hasField(m, "visibility") ? val(m, "visibility", i) : null;
+  // Görüş (12 Kas 2026, Ali Kemal: "pus veya sis varsa görüş görünsün"): yalnız o saatte modelin durumu sis ya da pus iken
+  const vis = view.obs && hasField(m, "visibility") ? val(m, "visibility", i) : null;
 
   return (
     <>
@@ -227,7 +228,7 @@ export default function Single({ m, times, days, idx, nowIdx, unit, onUnit, onId
         <div className="sub hs">
           Hissedilen<span className="lbv">{fmt(val(m, "feels_like", i), 1)} °C</span>
         </div>
-        {/* Görüş (12 Kas 2026, Ali Kemal): görüş veren modelde her saat; AIFS görüş vermez, satır yok */}
+        {/* Görüş: sis / pus saatinde; AIFS görüş vermez, satır yok */}
         {vis != null && (
           <div className="sub hs">
             Görüş<span className="lbv">{visTxt(vis)}</span>

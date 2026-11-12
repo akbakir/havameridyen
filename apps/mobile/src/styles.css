@@ -553,3 +553,15 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 .titles .tt .eye{width:14px;height:14px;flex:none;fill:none;stroke:var(--s-teal);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .titles .tt.off .ttb{color:var(--s-faint);background:#EEF1EC}
 .titles .tt.off .eye{stroke:var(--s-faint)}
+
+/* 12 Kas 2026 (Ali Kemal: "gün ve saat seçim menülerini biraz daha yakınlaştır, hero'da hamle de görünsün; Modeller'de de
+   aynı oranda, çok yapışık olmasın"): Saatlik / tek model / Modeller'de gün şeridi, saat şeridi ve aralar ~40 px kısaldı */
+.srcw{margin-bottom:6px}
+.stripw{margin-bottom:2px}
+.gstrip-w.cmp .gchip{height:92px;padding:5px 0}
+.gstrip-w.cmp .gc-ic{width:26px;height:26px}
+.hours{padding:4px 12px 4px}
+.hchip{padding:4px 3px}
+.hchip .hic{margin:2px auto 1px}
+.hours + .hero{margin-top:2px;padding-top:10px}
+.hours + .hero .grid1{row-gap:5px;margin-top:6px}
