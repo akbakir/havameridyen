@@ -537,9 +537,9 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 .f4-mm{font:500 11px var(--f-mono);white-space:nowrap}.f4-mm .mn{color:#A9D4FF}.f4-mm .mx{color:#FFB09F}
 .f4-p{font:400 9.5px var(--f-mono)!important;opacity:.95;min-height:13px}
 .search.after{margin-top:10px}
-.loc .intro{margin-top:18px}
-.loc .intro h2{font-size:min(22px,5.2vw);white-space:nowrap;letter-spacing:-.025em;margin:0 0 4px} /* 12 Kas 2026: her telefonda tek satır (Ali Kemal) */
-.loc .intro p{margin:0 0 6px}
+.loc .intro{margin-top:22px}
+.loc .intro h2{font-size:min(19px,4.5vw);white-space:nowrap;letter-spacing:-.02em;margin:0 0 8px} /* 12 Kas 2026: her telefonda tek satır; telefonun yazı boyutu büyük olsa da sığsın diye pay bırakıldı (Ali Kemal) */
+.loc .intro p{margin:0 0 10px;line-height:1.6} /* "Üç adımda" listesi kadar ferah */
 .cities{flex-wrap:nowrap}
 .cities button{flex:1 1 auto;padding:6px 8px}
 /* Favori ipucu: üst çubuktaki ☆ birkaç saniye belirginleşir */
