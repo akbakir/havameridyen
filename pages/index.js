@@ -155,7 +155,7 @@ export default function Home() {
           <div className="step">
             <div className="step-num">3</div>
             <div className="step-title">Modelleri karşılaştır</div>
-            <div className="step-desc">4 modelin tahminini tek grafikte incele, uyum skorunu gör.</div>
+            <div className="step-desc">8 modelin tahminini yan yana incele, nerede hemfikir nerede ayrıştıklarını gör.</div>
           </div>
         </div>
       </section>
