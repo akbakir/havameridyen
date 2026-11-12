@@ -979,7 +979,7 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
                   {!tt.off && tt.ctl === "rain" && (
                     <span className="ctl">
                       <span className="lab">
-                        <span className="lw">eşik </span>≥
+                        <span className="lw">uzlaşı eşiği </span>≥
                       </span>
                       {RAIN_TH.map((v) => (
                         <button key={v} type="button" className="thr" aria-pressed={v === rainTh} onClick={() => setRainTh(v)}>

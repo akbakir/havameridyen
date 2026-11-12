@@ -319,7 +319,9 @@ body::after{bottom:0;height:env(safe-area-inset-bottom,0px)}
 /* Bulutluluk başlığında yağış noktası (grafikteki mavi nokta); dar ekranda eşik düğmeleri sıkışır, "eşik" sözcüğü
    yalnız "≥" olarak kalır — "Toplam yağış" ve "Bulutluluk" başlıkları 360 dp'de de tek satır (Ali Kemal, 20 Ekim) */
 .titles .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3F83BF;vertical-align:0}
-@media (max-width:400px){.thr{padding:1px 4px}.ctl .lw{display:none}}
+@media (max-width:400px){.thr{padding:1px 4px}}
+/* 12 Kas 2026: "uzlaşı eşiği ≥" dar ekranda da görünür (eşiğin yalnız uzlaşı şeridini değiştirdiği anlaşılsın) */
+@media (max-width:370px){.ctl .lab{font-size:8px}.thr{padding:1px 3px}}
 /* Sayfa 2 kartı (20 Ekim): satırlar bağımsız (etiket solda, değer sağda), yağış ızgarası iki sütun, MGM etiketi
    "Son 12 saat" satırında miktarın hemen solunda, miktarlar alt alta; kart biraz genişledi (yandaki kart görünür) */
 .mcard{flex-basis:calc(100% - 44px)}
