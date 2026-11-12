@@ -35,8 +35,8 @@ const FAQS = [
       <>
         <p style={{ margin: "0 0 12px" }}>
           Sıcaklık, nem ve basınçta aynı soru sorulur: o saatte en düşük ve en yüksek değeri veren modeller arasındaki
-          fark ne kadar? Ortalama ya da ortanca alınmaz — amaç tek bir "genel tahmin" üretmek değil, modellerin nerede
-          ayrıştığını göstermektir.
+          fark ne kadar? Ortak tahminde gösterilen değer seçili modellerin ortancasıdır (yağışta yağış veren modellerin
+          ortancası); uyum ise bu değerin arkasındaki modellerin ne kadar hemfikir olduğunu, nerede ayrıştığını gösterir.
         </p>
         <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 13, margin: "0 0 12px" }}>
           <thead>
@@ -135,7 +135,7 @@ const FAQS = [
     a: (
       <>
         <p style={{ margin: "0 0 12px" }}>
-          Açık renkli bant 06:00–18:00 TSİ gündüz saatleridir; 06, 12 ve 18 dikmeleri saati okumayı kolaylaştırır.
+          Açık renkli bant gündüz saatleridir (bakılan konumun gün doğumundan gün batımına); 06, 12 ve 18 dikmeleri saati okumayı kolaylaştırır.
           Teal dikey çizgi ve tablolardaki koyu turkuaz çerçeve şu anki saati gösterir. Bir grafiğe ya da tabloya
           tıklayınca sayfanın altındaki Model detayları o zamana gider; seçtiğin dilim bütün grafiklerde kesikli koyu
           bir çerçeveyle gösterilir. Tablodaki ← Şimdi → düğmeleri bu çerçeveyi her yerde birlikte kaydırır.
@@ -172,11 +172,13 @@ const FAQS = [
           (yağışın en az yarısı sağanaksa &quot;Sağanak Yağış&quot;), gök gürültülü ifadesi kullanılmaz. Ortak tahminde
           AIFS&apos;in yağış miktarı sayılır, türü ise ECMWF&apos;ye göre alınır. O saatteki yağışın en az yarısı kar ise aynı ayrımla
           &quot;Kar Yağışlı&quot;, &quot;Kar Sağanağı&quot; ya da &quot;Gök Gürültülü Kar Sağanağı&quot; yazılır.
+          Yağışın şiddeti (hafif, normal, kuvvetli) ifadeye ve ikona ayrıca yansır; ayrıntısı 10. soruda. Ortak tahminde
+          kar ifadesi için en az 2 modelin kar vermesi gerekir.
         </p>
         <p style={{ margin: "0 0 12px" }}>
           Yağış yoksa bulutluluk sınıfı yazılır: Açık (%0–10), Az Bulutlu (%10–30), Parçalı Bulutlu (%30–50), Çok
-          Bulutlu (%50–90) ya da Kapalı (%90–100). 20:00–06:00 arasında açık, az ve parçalı bulutlu ikonlarında güneş
-          yerine ay çizilir. 3 ve 6 saatlik görünümde dilimdeki en belirgin durum gösterilir: yağış bulut sınıfından
+          Bulutlu (%50–90) ya da Kapalı (%90–100). Bakılan konumda gün batımından gün doğumuna kadar açık, az bulutlu,
+          parçalı bulutlu ve puslu ikonlarında güneş yerine ay çizilir. 3 ve 6 saatlik görünümde dilimdeki en belirgin durum gösterilir: yağış bulut sınıfından
           önce gelir (aynı türde kar yağmurdan önce), bulutta daha kapalı olanı seçilir.
         </p>
         <p style={{ margin: 0 }}>
