@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
-import { MON, fmt, mmTxt, pad, parseT, speed, unitLabel } from "../format";
+import { MON, fmt, mmTxt, pad, parseT, speed, unitLabel, visTxt } from "../format";
 import { avg, dayGust, dayIndexOf, dayMax, dayMin, dayVals, hakim, hasDay, hasField, val } from "../data";
 import { HourStrip, UnitToggle } from "./common";
 import { PrecipGrid } from "./precip";
@@ -64,6 +64,13 @@ function Card({ m, day, i, times, unit, vrbOpen, onVrb }) {
       {/* 20 Ekim: her satır kendi genişliğini kullanır (etiket solda, değer sağda); ortak değer sütunu en uzun değere
           ("45 km/s · 16:00 TSİ") göre daralıp "Hakim rüzgar yönü" gibi kısa değerli satırları da alt satıra itiyordu */}
       <dl className="kv2">
+        {/* Görüş (12 Kas 2026, Ali Kemal): seçili saatte modelin durumu sis ya da pus iken */}
+        {view.obs && val(m, "visibility", i) != null && (
+          <div className="r">
+            <dt>Görüş · {pad(q.h)}:00</dt>
+            <dd>{visTxt(val(m, "visibility", i))}</dd>
+          </div>
+        )}
         <div className="r">
           <dt>Min</dt>
           <dd className="tmin">{fmt(dayMin(m, day))} °C</dd>

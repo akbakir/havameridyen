@@ -14,6 +14,8 @@ const DEFAULTS = {
   unit: "kmh",
   listOpen: false, // günlük sayfadaki 16 günlük liste (son tercih hatırlanır)
   listSeen: false, // liste en az bir kez açıldı mı (5 Kas: açılınca "aşağı ok" animasyonu bir daha oynamaz)
+  chartsOff: [], // Grafikler'de kapatılan grafikler (12 Kas 2026; panel kimlikleri: x, t, r, sn, sd, w, d, g, h, e, p, c)
+  favTips: 0, // "☆ ile favorilere ekle" ipucunun kaç kez gösterildiği (12 Kas 2026; en çok 3)
 };
 
 export function loadPrefs() {
@@ -27,6 +29,8 @@ export function loadPrefs() {
       unit: raw.unit === "kt" ? "kt" : "kmh",
       listOpen: raw.listOpen === true,
       listSeen: raw.listSeen === true || raw.listOpen === true,
+      chartsOff: Array.isArray(raw.chartsOff) ? raw.chartsOff.filter((x) => typeof x === "string") : [],
+      favTips: Number.isFinite(raw.favTips) ? raw.favTips : 0,
     };
   } catch {
     return { ...DEFAULTS };

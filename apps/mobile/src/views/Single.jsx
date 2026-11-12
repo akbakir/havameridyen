@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { condAt } from "@lib/agreement";
 import { SKY, WxIcon, condView } from "../icons";
-import { fmt, windDir, fmtS, heroTitle, mmTxt, parseT, speed, unitLabel } from "../format";
+import { fmt, windDir, fmtS, heroTitle, mmTxt, parseT, speed, unitLabel, visTxt } from "../format";
 import { dayIndexOf, dayMax, dayMin, dayTotal, gust, hasField, sourceOf, val } from "../data";
 import { HourStrip, UnitToggle, useDaySwipe } from "./common";
 import { PrecipGrid } from "./precip";
@@ -200,8 +200,12 @@ export default function Single({ m, times, days, idx, nowIdx, unit, onUnit, onId
   const rd = dayTotal(m, day);
   const cape = val(m, "cape", i);
 
+  const vis = hasField(m, "visibility") ? val(m, "visibility", i) : null;
+
   return (
     <>
+      {/* 12 Kas 2026: saat şeridi gün şeridinin hemen altında (Saatlik ve Modeller ile aynı düzen) */}
+      <HourStrip hours={hours} idx={i} nowIdx={nowIdx} onPick={onIdx} stripKey={`single|${m.id}|${d}`} />
       <div className="hero" style={{ background: SKY[view.sky] }} {...swipe}>
         {/* 29 Ekim (stil birliği): Sayfa 1 ile aynı başlık; yer adı üst çubukta, gün seçimi gün şeridinde (App) */}
         <div className="p1title">
@@ -223,9 +227,14 @@ export default function Single({ m, times, days, idx, nowIdx, unit, onUnit, onId
         <div className="sub hs">
           Hissedilen<span className="lbv">{fmt(val(m, "feels_like", i), 1)} °C</span>
         </div>
+        {/* Görüş (12 Kas 2026, Ali Kemal): görüş veren modelde her saat; AIFS görüş vermez, satır yok */}
+        {vis != null && (
+          <div className="sub hs">
+            Görüş<span className="lbv">{visTxt(vis)}</span>
+          </div>
+        )}
         <Gauges m={m} i={i} unit={unit} onUnit={onUnit} />
       </div>
-      <HourStrip hours={hours} idx={i} nowIdx={nowIdx} onPick={onIdx} stripKey={`single|${m.id}|${d}`} />
       <div className="wrap">
         <div className="sec">
           <span>Yağış</span>

@@ -61,3 +61,6 @@ export function mmTxt(v) {
   if (v == null || v < 0.05) return null;
   return v < 9.95 ? fmt(v, 1) : fmt(v, 0);
 }
+
+// Görüş: 1 km altı metre (10 m'ye yuvarlı), 10 km'ye kadar tek ondalık km, üstü tam km (Saatlik, tek model, Modeller)
+export const visTxt = (v) => (v == null ? "—" : v < 1000 ? `${Math.round(v / 10) * 10} m` : v < 10000 ? `${fmt(v / 1000, 1)} km` : `${Math.round(v / 1000)} km`);

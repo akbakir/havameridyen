@@ -129,10 +129,17 @@ function classInfo(ms, key, i) {
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 // Bütün grafikler tek SVG (yatay kaydırılır); eksen, başlık ve zaman şeridi ayrı katmanlarda sabit kalır
-function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
+// Grafik aç / kapa (12 Kas 2026, Ali Kemal: "kullanıcı her bir grafiği isterse kapatıp açabilsin"): kapalı grafiğin
+// yalnız başlığı kalır, uyum / eğilim / uzlaşı şeritleri de gizlenir. Şerit → ait olduğu grafik:
+const STRIP_OF = { xs: "x", ts: "t", rs: "r", ws: "w", hs: "h", es: "e", pt: "p", ps: "p", cs: "c" };
+// Tek model (12 Kas 2026): modeller arası uyum / uzlaşı şeritleri ve ortanca çizgisi anlamsız, çizilmez (eğilim kalır)
+const AGREE_IDS = new Set(["xs", "ts", "rs", "ws", "hs", "es", "ps", "cs"]);
+
+function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx, off = new Set() }) {
   const W = n * px;
   const x = (i) => i * px + px / 2;
-  const cnt = `${ms.length} model`;
+  const one = ms.length === 1;
+  const cnt = one ? ms[0].label : `${ms.length} model`;
   const U = unitLabel(unit);
   const spd = (v) => speed(v, unit);
   const days = groupDays(times.slice(0, n));
@@ -145,7 +152,7 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
   const sfOn = anyOf("snowfall");
   const sdOn = anyOf("snow_depth");
   const WX_ROW = 22;
-  const panels = [
+  const panels0 = [
     { id: "x", h: ms.length * WX_ROW + 4, title: "Hava durumu", unit: `dilimde en belirgin · ${cnt}` },
     { id: "xs", h: 13 },
     { id: "t", h: 104, title: "Sıcaklık", unit: "°C · " + cnt },
@@ -168,6 +175,9 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
     { id: "c", h: ms.length * 12 + 6, title: "Bulutluluk", unit: "% · " + cnt + " · ", rainDot: true },
     { id: "cs", h: 13 },
   ];
+  const panels = panels0
+    .filter((p) => !(one && AGREE_IDS.has(p.id)) && !(STRIP_OF[p.id] && off.has(STRIP_OF[p.id])))
+    .map((p) => (p.title && off.has(p.id) ? { ...p, h: 0, off: true } : p));
   let y = 4;
   for (const p of panels) {
     if (p.title) y += 18;
@@ -224,7 +234,7 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
       }
       svg += `<path d="${d}" fill="none" stroke="${m.color}" stroke-width="1.4" ${DASHED[m.id] ? 'stroke-dasharray="3 2"' : ""} opacity=".9"/>`;
     }
-    if (withMed) {
+    if (withMed && !one) {
       let d = "";
       let pen = false;
       for (let i = 0; i < n; i++) {
@@ -378,7 +388,8 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
   };
 
   for (const p of panels) {
-    if (p.title) titles.push({ y: p.y - 17, title: p.title, unit: p.unit, ctl: p.ctl, rainDot: p.rainDot });
+    if (p.title) titles.push({ id: p.id, y: p.y - 17, title: p.title, unit: p.unit, ctl: p.ctl, rainDot: p.rainDot, off: !!p.off });
+    if (p.off) continue;
     if (p.id === "x") {
       const cw = step * px;
       const sz = Math.max(9, Math.min(cw - 2, WX_ROW - 4));
@@ -510,7 +521,7 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
       const { sums, yy, top } = bars(p, "precip_amount", null, null);
       if (rainTh <= top) svg += `<line x1="0" x2="${W}" y1="${yy(rainTh)}" y2="${yy(rainTh)}" stroke="#2C5E8C" stroke-dasharray="1 2" opacity=".6"/>`;
       const rs = panels.find((q) => q.id === "rs");
-      sums.forEach((row, si) => {
+      if (rs) sums.forEach((row, si) => {
         const got = row.filter((v) => v != null);
         const wet = got.filter((v) => v >= rainTh).length;
         const sh = got.length ? wet / got.length : 0;
@@ -519,7 +530,7 @@ function buildChart({ ms, times, n, px, step, rainTh, unit, nowIdx }) {
           svg += `<rect x="${si * step * px + 0.5}" y="${rs.y + 1}" width="${step * px - 1}" height="${rs.h - 2}" rx="2" fill="${col}"><title>${got.length} modelin ${wet}'${tsuf(wet)} ≥ ${String(rainTh).replace(".", ",")} mm</title></rect>`;
         }
       });
-      axes.push(`<text x="32" y="${rs.y + 8}" text-anchor="end" font-size="7.5" fill="#8B948B">uzlaşı</text>`);
+      if (rs) axes.push(`<text x="32" y="${rs.y + 8}" text-anchor="end" font-size="7.5" fill="#8B948B">uzlaşı</text>`);
     }
     if (p.id === "sn") bars(p, "snowfall", ".85", (m, v) => `${m.label}: ${fmt(v, 2)} cm`, { min: 0.5 });
     if (p.id === "sd") {
@@ -701,6 +712,7 @@ function Table({ ms, times, a, z, slot, unit }) {
             </tr>
           );
         })}
+        {ms.length > 1 && (
         <tr>
           <td style={{ color: "var(--s-soft)" }}>uyum</td>
           {ag.map((l, k) => (
@@ -713,12 +725,24 @@ function Table({ ms, times, a, z, slot, unit }) {
             </td>
           ))}
         </tr>
+        )}
       </tbody>
     </table>
   );
 }
 
-export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx, unit, onUnit, onIdx, onGo }) {
+// Grafik başlığındaki göz: açık grafik / kapalı grafik (üstü çizili)
+function Eye({ off }) {
+  return (
+    <svg className="eye" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z" />
+      <circle cx="12" cy="12" r="2.6" />
+      {off && <path d="M4 20L20 4" />}
+    </svg>
+  );
+}
+
+export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx, unit, onUnit, onIdx, onGo, chartsOff = [], onToggleChart }) {
   const [period, setPeriod] = useState(saved.period);
   const [slot, setSlot] = useState(saved.slot);
   const [rainTh, setRainTh] = useState(saved.rainTh);
@@ -745,9 +769,10 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
   const n = Math.min(P.n, times.length);
   const step = slotOK(period, slot) ? slot : P.def;
 
+  const offKey = chartsOff.join(",");
   const chart = useMemo(
-    () => (ready && ms.length && n ? buildChart({ ms, times, n, px: P.px, step, rainTh, unit, nowIdx }) : null),
-    [ready, ms, times, n, P.px, step, rainTh, unit, nowIdx]
+    () => (ready && ms.length && n ? buildChart({ ms, times, n, px: P.px, step, rainTh, unit, nowIdx, off: new Set(offKey ? offKey.split(",") : []) }) : null),
+    [ready, ms, times, n, P.px, step, rainTh, unit, nowIdx, offKey]
   );
 
   const cur = Math.min(idx, Math.max(0, n - 1));
@@ -844,7 +869,7 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
     const na = i - (i % step);
     onIdx(na);
     const yy = e.clientY - r.top;
-    const pnl = chart.panels.find((p) => VP_IDS.has(p.id) && yy >= p.y - 3 && yy <= p.y + p.h + 3);
+    const pnl = chart.panels.find((p) => VP_IDS.has(p.id) && !p.off && yy >= p.y - 3 && yy <= p.y + p.h + 3);
     const box = chartsRef.current;
     if (!pnl || !box) return;
     const nz = Math.min(n - 1, na + step - 1);
@@ -935,9 +960,11 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
             <div className="axes" style={{ height: chart.H }} dangerouslySetInnerHTML={{ __html: chart.axes }} />
             <div className="titles">
               {chart.titles.map((tt) => (
-                <div key={tt.title} className="tt" style={{ top: tt.y }}>
-                  <span>
+                <div key={tt.title} className={"tt" + (tt.off ? " off" : "")} style={{ top: tt.y }}>
+                  <button type="button" className="ttb" aria-expanded={!tt.off} aria-label={`${tt.title} grafiğini ${tt.off ? "aç" : "kapat"}`} onClick={() => onToggleChart && onToggleChart(tt.id)}>
+                    <Eye off={tt.off} />
                     {tt.title}{" "}
+                    {!tt.off && (
                     <small>
                       {tt.unit}
                       {tt.rainDot && (
@@ -946,8 +973,10 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
                         </>
                       )}
                     </small>
-                  </span>
-                  {tt.ctl === "rain" && (
+                    )}
+                    {tt.off && <small>kapalı · aç</small>}
+                  </button>
+                  {!tt.off && tt.ctl === "rain" && (
                     <span className="ctl">
                       <span className="lab">
                         <span className="lw">eşik </span>≥
@@ -959,7 +988,7 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
                       ))}
                     </span>
                   )}
-                  {tt.ctl === "unit" && (
+                  {!tt.off && tt.ctl === "unit" && (
                     <span className="ctl">
                       <UnitToggle unit={unit} onUnit={onUnit} />
                     </span>
@@ -997,7 +1026,13 @@ export default function P3({ models, times: times7, long, onNeed16, idx, nowIdx,
       <div className="foot">
         Değerler model tahminidir, ölçüm değildir.
         <br />
-        Siyah-beyaz kesik çizgi: ortanca; modellerin yerine geçmez.
+        {ms.length > 1 && (
+          <>
+            Siyah-beyaz kesik çizgi: ortanca; modellerin yerine geçmez.
+            <br />
+          </>
+        )}
+        Grafik başlığına dokununca grafik kapanır / açılır.
         <br />
         Veri: Open-Meteo (CC BY 4.0)
       </div>

@@ -254,6 +254,7 @@ export default function App() {
   const isFav = favorites.some((f) => placeKey(f) === placeKey(place));
   const setFavs = (f) => update({ favorites: f });
   const toggleFav = () => {
+    setFavPulse(false);
     const before = favorites;
     if (isFav) {
       setFavs(favorites.filter((f) => placeKey(f) !== placeKey(place)));
@@ -273,6 +274,22 @@ export default function App() {
       return n;
     });
   };
+  // Son bakılan kartındaki "☆ Favorilere ekle" (12 Kas 2026)
+  const addFav = (p) => {
+    if (favorites.some((f) => placeKey(f) === placeKey(p))) return;
+    const before = favorites;
+    setFavs([...favorites, { name: p.name, admin1: p.admin1 || null, lat: p.lat, lon: p.lon }]);
+    notify(`★ ${p.name} favorilere eklendi`, () => setFavs(before));
+  };
+  // "Konumumu kullan" arka planda daha yeni bir konum bulursa: kullanıcı hâlâ eski konumdaysa yeni konuma geçilir
+  const movePlace = (from, to) => {
+    setPrefs((p) => {
+      if (placeKey(p.place) !== placeKey(from)) return p;
+      const n = { ...p, place: to };
+      savePrefs(n);
+      return n;
+    });
+  };
   const removeFav = (f) => {
     const before = favorites;
     setFavs(favorites.filter((x) => placeKey(x) !== placeKey(f)));
@@ -280,11 +297,12 @@ export default function App() {
   };
 
   // Tahmin kaynağı penceresi (Kaynak.jsx): Ortak tahmin → işaretli modeller (en az 2, "Uygula"), Tek model → [id].
-  // Tek modele geçilirken Modeller / Grafikler'deysek Saatlik'e (tek model ekranı) geçilir; o iki sayfa tek modelde kapalı.
+  // Tek modele geçilirken Modeller'deysek Saatlik'e (tek model ekranı) geçilir; Modeller tek modelde kapalı. Grafikler
+  // 12 Kas 2026'dan beri tek modelde de açık (yalnız o modelin çizgileri; Ali Kemal).
   const applySrc = (ids) => {
     setSrcOpen(false);
     update({ selected: ids });
-    if (ids.length === 1 && (page === "p2" || page === "p3")) goPage("p1");
+    if (ids.length === 1 && page === "p2") goPage("p1");
   };
 
   // Gün şeridi (Saatlik, Modeller, tek model ekranı): 7 günlük veriden, en uzun modelin menziline kadar. Güne
@@ -325,13 +343,26 @@ export default function App() {
     goPage(p);
   };
 
+  // Favori ipucu (12 Kas 2026, Ali Kemal: "kullanıcı tekrar tekrar arama yapmayayım diyor"): favori olmayan bir konum
+  // açılınca üst çubuktaki ☆ birkaç saniye belirginleşir; ilk 3 seferde altta kısa bir ipucu da çıkar.
+  const [favPulse, setFavPulse] = useState(false);
+  const pulseT = useRef(null);
+  useEffect(() => () => clearTimeout(pulseT.current), []);
   const pick = (p, note) => {
     update({ place: { name: p.name, admin1: p.admin1 || null, lat: p.lat, lon: p.lon } });
     setView("fc");
     setPage("day");
     setDayKey(null);
     window.scrollTo(0, 0);
+    const fav = favorites.some((f) => placeKey(f) === placeKey(p));
+    clearTimeout(pulseT.current);
+    setFavPulse(!fav);
+    if (!fav) pulseT.current = setTimeout(() => setFavPulse(false), 6000);
     if (note) notify(note);
+    else if (!fav && (prefs.favTips || 0) < 3) {
+      update({ favTips: (prefs.favTips || 0) + 1 });
+      notify("☆ ile favorilere ekle; bir dahaki sefere aramadan açılır");
+    }
   };
   const goPage = (p) => {
     setPage(p);
@@ -354,7 +385,7 @@ export default function App() {
             <button type="button" className="placebtn" onClick={() => setView("loc")}>
               📍 {place.name} <small>değiştir</small>
             </button>
-            <button type="button" className="favstar" aria-pressed={isFav} aria-label={isFav ? `${place.name} favorilerden çıkar` : `${place.name} favorilere ekle`} onClick={toggleFav}>
+            <button type="button" className={"favstar" + (favPulse && !isFav ? " pulse" : "")} aria-pressed={isFav} aria-label={isFav ? `${place.name} favorilerden çıkar` : `${place.name} favorilere ekle`} onClick={toggleFav}>
               <svg viewBox="0 0 24 24">
                 <path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z" />
               </svg>
@@ -363,7 +394,18 @@ export default function App() {
         )}
       </div>
 
-      {view === "loc" && <Loc place={place} favorites={favorites} onPick={pick} onRemove={removeFav} onRename={renamePlace} onSheet={(p) => setSheet({ page: p })} />}
+      {view === "loc" && (
+        <Loc
+          place={place}
+          favorites={favorites}
+          onPick={pick}
+          onMove={movePlace}
+          onRemove={removeFav}
+          onAddFav={addFav}
+          onRename={renamePlace}
+          onSheet={(p) => setSheet({ page: p })}
+        />
+      )}
 
       {view === "fc" && (
         <>
@@ -422,7 +464,7 @@ export default function App() {
               beyond={beyond}
             />
           )}
-          {data.status === "ok" && page !== "day" && selModels.length === 1 && (
+          {data.status === "ok" && page !== "day" && page !== "p3" && selModels.length === 1 && (
             <Single
               m={selModels[0]}
               times={data.times}
@@ -463,7 +505,7 @@ export default function App() {
               onGo={goPage}
             />
           )}
-          {data.status === "ok" && selModels.length > 1 && page === "p3" && (
+          {data.status === "ok" && selModels.length > 0 && page === "p3" && (
             <P3
               models={selModels}
               times={data.times}
@@ -475,18 +517,24 @@ export default function App() {
               onUnit={(u) => update({ unit: u })}
               onIdx={setIdx}
               onGo={goPage}
+              chartsOff={prefs.chartsOff || []}
+              onToggleChart={(id) => {
+                const cur = prefs.chartsOff || [];
+                update({ chartsOff: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] });
+              }}
             />
           )}
         </>
       )}
 
-      {/* Alt sekme çubuğu: Günlük · Saatlik · Modeller · Grafikler (tek model seçiliyken Modeller / Grafikler soluk) */}
+      {/* Alt sekme çubuğu: Günlük · Saatlik · Modeller · Grafikler (tek model seçiliyken Modeller soluk; Grafikler 12 Kas
+          2026'dan beri tek modelde de açık) */}
       {view === "fc" && data.status === "ok" && (
         <TabBar
           current={page}
-          off={multi ? [] : ["p2", "p3"]}
+          off={multi ? [] : ["p2"]}
           onGo={(p) => {
-            if (!multi && (p === "p2" || p === "p3")) return notify("Modeller ve Grafikler birden çok modelle çalışır: üstten Ortak tahmin'i seç.");
+            if (!multi && p === "p2") return notify("Modeller birden çok modelle çalışır: üstten Ortak tahmin'i seç.");
             if (p === "day") return goPage("day");
             if (page === "day" && p !== "p3") return openAt(selDay, p);
             goPage(p);

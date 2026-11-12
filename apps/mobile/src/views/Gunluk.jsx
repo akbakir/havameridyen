@@ -330,14 +330,15 @@ export default function Gunluk({ src, cons, times, models, dayKey, onDay, onHour
         {/* 29 Ekim (Ali Kemal): "16 günü liste olarak gör" yerine "Liste Görünümü"; tarih aralığı ve ok kalır */}
         <b>Liste Görünümü</b>
         <small>{`${parseT(daily[0].date + "T12:00").d} ${MON[parseT(daily[0].date + "T12:00").m].slice(0, 3)} – ${parseT(daily[daily.length - 1].date + "T12:00").d} ${MON[parseT(daily[daily.length - 1].date + "T12:00").m].slice(0, 3)}`}</small>
-        {/* 5 Kas: kapalıyken alt alta iki aşağı ok (listenin açılabildiği anlaşılsın); liste hiç açılmadıysa sayfa
-            açılınca 3 tur aşağı akar, sonra durur. Açıkken tek yukarı ok, animasyonsuz. */}
+        {/* 5 Kas: kapalıyken alt alta iki aşağı ok (listenin açılabildiği anlaşılsın). 12 Kas 2026: liste kapalıyken
+            sayfa her açıldığında 4 tur aşağı akar, sonra durur (önceden yalnız liste hiç açılmadıysa). Açıkken tek yukarı
+            ok, animasyonsuz. */}
         {listOpen ? (
           <svg viewBox="0 0 24 24" className="ch">
             <path d="M6 15l6-6 6 6" />
           </svg>
         ) : (
-          <svg viewBox="0 0 24 24" className={"ch ch2" + (listSeen ? "" : " anim")}>
+          <svg viewBox="0 0 24 24" className="ch ch2 anim">
             <path className="c1" d="M7 5l5 5 5-5" />
             <path className="c2" d="M7 12l5 5 5-5" />
           </svg>

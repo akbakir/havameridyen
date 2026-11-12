@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { median } from "@lib/agreement";
 import { CLS_RNG, CLS_TXT, SKY, WxIcon, condView } from "../icons";
-import { dir16, fmt, heroTitle, mmTxt, pad, parseT, speed, tsuf, unitLabel } from "../format";
+import { dir16, fmt, heroTitle, mmTxt, pad, parseT, speed, tsuf, unitLabel, visTxt } from "../format";
 import { dayIndexOf, gust, val } from "../data";
 import { HourStrip, UnitToggle, useDaySwipe } from "./common";
 
@@ -118,8 +118,6 @@ function GustBar({ models, i, unit }) {
   return { node, med };
 }
 
-// Görüş: 1 km altı metre (10 m'ye yuvarlı), 10 km'ye kadar tek ondalık km, üstü tam km
-const visTxt = (v) => (v < 1000 ? `${Math.round(v / 10) * 10} m` : v < 10000 ? `${fmt(v / 1000, 1)} km` : `${Math.round(v / 1000)} km`);
 const medTxt = (v, u, none) => (v == null ? "—" : v < 0.05 ? none : `${fmt(v, 1)} ${u}`);
 
 export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUnit, onIdx, onGo }) {
@@ -177,6 +175,9 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
 
   return (
     <>
+      {/* 12 Kas 2026 (Ali Kemal: "kullanıcı hero'daki saati fark etmiyor"): saat şeridi Modeller'deki gibi gün şeridinin
+          hemen altında; hero'daki saat başlığı da kalır */}
+      <HourStrip hours={hours} idx={i} nowIdx={nowIdx} onPick={onIdx} stripKey={`p1|${d}`} />
       <div className="hero" style={{ background: SKY[view.sky] }} {...swipe}>
         {/* 29 Ekim (stil birliği): Günlük karttaki başlık düzeni; gün seçimi kartın üstündeki gün şeridinde (App),
             kartta sağa / sola kaydırma da gün değiştirir */}
@@ -288,7 +289,6 @@ export default function P1({ models, cons, times, days, idx, nowIdx, unit, onUni
           )}
         </div>
       </div>
-      <HourStrip hours={hours} idx={i} nowIdx={nowIdx} onPick={onIdx} stripKey={`p1|${d}`} />
       <div className="foot">
         Değerler seçili modellerin ortancasıdır, tahmindir, ölçüm değildir.
         <br />
