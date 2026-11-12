@@ -335,7 +335,7 @@ export default function Loc({ place, favorites, onPick, onMove, onRemove, onAddF
         </h2>
         <p>ECMWF, GFS, ICON, UKMO, ARPEGE, GEM, JMA ve AIFS tahminlerini yan yana karşılaştır.</p>
       </div>
-      <div className="sec" style={{ marginTop: 4 }}>
+      <div className="sec" style={{ marginTop: 12 }}>
         <span>Üç adımda karşılaştır</span>
         <span />
       </div>
