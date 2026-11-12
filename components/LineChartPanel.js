@@ -19,6 +19,7 @@
 //   grafiğin aralığını alır; seçili dilim tüm grafiklerde kesikli koyu çerçeveyle gösterilir.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ClosedPanel, PanelTitle } from "./ChartEye";
 import Link from "next/link";
 import AgreeMark from "./AgreeMark";
 import {
@@ -350,7 +351,7 @@ export function Chip({ bg, ink, level, children }) {
   );
 }
 
-export default function LineChartPanel({ cfg, models, period, status, extraTitle, selection, onSelect, sun }) {
+export default function LineChartPanel({ cfg, models, period, status, extraTitle, selection, onSelect, sun, off = false, onToggle }) {
   const [step, setStep] = useState(defaultStepFor(period));
   useEffect(() => setStep(defaultStepFor(period)), [period]);
 
@@ -822,11 +823,13 @@ export default function LineChartPanel({ cfg, models, period, status, extraTitle
     ? `${cfg.unit} · ${step} saatlik nokta · ${models.length} model${scrollable ? " · yatay kaydırılabilir" : ""}`
     : cfg.unit;
 
+  if (off) return <ClosedPanel title={cfg.title} onToggle={onToggle} />;
+
   return (
     <div className="panel">
       <div className="panel-head">
         <div className="panel-head-left">
-          <div className="panel-title">{cfg.title}</div>
+          <PanelTitle title={cfg.title} onToggle={onToggle} />
           <div className="panel-sub" title={sub}>
             {sub}
             {extraTitle || ""}

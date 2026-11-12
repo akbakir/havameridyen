@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useChartsOff } from "../components/ChartEye";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Layout from "../components/Layout";
@@ -33,6 +34,8 @@ export default function SehirPage() {
     () => new Set(MODELS.filter((m) => m.defaultActive).map((m) => m.id))
   );
   const searchTimer = useRef(null);
+  const [chartsOff, toggleChart] = useChartsOff();
+  const eye = (id) => ({ off: chartsOff.has(id), onToggle: () => toggleChart(id) });
   const activeModelsKey = Array.from(activeModels).sort().join(",");
 
   useEffect(() => {
@@ -273,25 +276,25 @@ export default function SehirPage() {
         />
         <div className="charts-stack">
           {/* Paket 4: Hava durumu matrisi en üstte; tüm panellerde ortak seçili zaman */}
-          <MatrixPanel cfg={MATRICES.wx} {...panelProps} />
+          <MatrixPanel cfg={MATRICES.wx} {...panelProps} {...eye("wx")} />
 
-          <LineChartPanel cfg={LINE_CHARTS.temp} {...panelProps} />
+          <LineChartPanel cfg={LINE_CHARTS.temp} {...panelProps} {...eye("temp")} />
 
-          <PrecipPanel {...panelProps} />
+          <PrecipPanel {...panelProps} {...eye("precip")} />
 
-          {hasSnowfall && <PrecipPanel kind="snow" {...panelProps} />}
+          {hasSnowfall && <PrecipPanel kind="snow" {...panelProps} {...eye("snow")} />}
 
-          {hasSnowDepth && <LineChartPanel cfg={LINE_CHARTS.snowDepth} {...panelProps} />}
+          {hasSnowDepth && <LineChartPanel cfg={LINE_CHARTS.snowDepth} {...panelProps} {...eye("snowDepth")} />}
 
-          <MatrixPanel cfg={MATRICES.cloud} {...panelProps} />
+          <MatrixPanel cfg={MATRICES.cloud} {...panelProps} {...eye("cloud")} />
 
-          <MatrixPanel cfg={MATRICES.wind} {...panelProps} />
+          <MatrixPanel cfg={MATRICES.wind} {...panelProps} {...eye("wind")} />
 
-          <LineChartPanel cfg={LINE_CHARTS.humidity} {...panelProps} />
+          <LineChartPanel cfg={LINE_CHARTS.humidity} {...panelProps} {...eye("humidity")} />
 
-          <LineChartPanel cfg={LINE_CHARTS.cape} {...panelProps} />
+          <LineChartPanel cfg={LINE_CHARTS.cape} {...panelProps} {...eye("cape")} />
 
-          <LineChartPanel cfg={LINE_CHARTS.pressure} {...panelProps} />
+          <LineChartPanel cfg={LINE_CHARTS.pressure} {...panelProps} {...eye("pressure")} />
         </div>
       </div>
 

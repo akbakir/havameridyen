@@ -12,6 +12,7 @@
 //   tepe en az 0.5 cm. Sayfa paneli yalnız seçili modellerden biri kar verirken gösterir.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ClosedPanel, PanelTitle } from "./ChartEye";
 import { RAIN_DAY_DEFAULT, groupDays, rainDayAgreement } from "../lib/agreement";
 import {
   Chip,
@@ -65,7 +66,7 @@ function slotText(times, s0, step) {
   return `${day} ${pad2(p.hour)}:00–${pad2(e ? e.hour : p.hour)}:59 TSİ`;
 }
 
-export default function PrecipPanel({ models, period, status, selection, onSelect, kind = "rain", sun }) {
+export default function PrecipPanel({ models, period, status, selection, onSelect, kind = "rain", sun, off = false, onToggle }) {
   const K = KIND[kind] || KIND.rain;
   const snow = kind === "snow";
   const [step, setStep] = useState(defaultStepFor(period));
@@ -357,11 +358,13 @@ export default function PrecipPanel({ models, period, status, selection, onSelec
     ? `${K.unit} / ${step} saat (dilim toplamı) · ${models.length} model${scrollable ? " · yatay kaydırılabilir" : ""}`
     : K.unit;
 
+  if (off) return <ClosedPanel title={K.title} onToggle={onToggle} />;
+
   return (
     <div className="panel">
       <div className="panel-head">
         <div className="panel-head-left">
-          <div className="panel-title">{K.title}</div>
+          <PanelTitle title={K.title} onToggle={onToggle} />
           <div className="panel-sub" title={sub}>
             {sub}
           </div>

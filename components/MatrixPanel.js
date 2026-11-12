@@ -11,6 +11,7 @@
 // - Hücreye ya da sütuna tıklayınca Model detayları o dilime gider (ortak seçili zaman, kesikli çerçeve).
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ClosedPanel, PanelTitle } from "./ChartEye";
 import Link from "next/link";
 import AgreeMark from "./AgreeMark";
 import { WX_KEY, WX_KEY_OBS, WX_KEY_SNOW, WxIcon } from "./WeatherCond";
@@ -396,7 +397,7 @@ const WX = {
 
 export const MATRICES = { wx: WX, wind: WIND, cloud: CLOUD };
 
-export default function MatrixPanel({ cfg, models, period, status, selection, onSelect, sun }) {
+export default function MatrixPanel({ cfg, models, period, status, selection, onSelect, sun, off = false, onToggle }) {
   const [step, setStep] = useState(defaultStepFor(period));
   useEffect(() => setStep(defaultStepFor(period)), [period]);
   const [unitId, setUnitId] = useState(cfg.units ? cfg.units[0].id : null);
@@ -656,11 +657,13 @@ export default function MatrixPanel({ cfg, models, period, status, selection, on
   const scrollable = geo && scRef.current ? geo.W > scRef.current.clientWidth + 4 : false;
   const sub = ok ? `${cfg.sub(step, models, unit)}${scrollable ? " · yatay kaydırılabilir" : ""}` : "";
 
+  if (off) return <ClosedPanel title={cfg.title} onToggle={onToggle} />;
+
   return (
     <div className="panel">
       <div className="panel-head">
         <div className="panel-head-left">
-          <div className="panel-title">{cfg.title}</div>
+          <PanelTitle title={cfg.title} onToggle={onToggle} />
           <div className="panel-sub" title={sub}>
             {sub}
           </div>
