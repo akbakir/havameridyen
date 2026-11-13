@@ -171,9 +171,11 @@ const FAQS = [
           JMA&apos;da yağış hep &quot;Yağmurlu&quot; görünür. AIFS de CAPE vermez; AIFS&apos;te ayrımı sağanak payı yapar
           (yağışın en az yarısı sağanaksa &quot;Sağanak Yağış&quot;), gök gürültülü ifadesi kullanılmaz. Ortak tahminde
           AIFS&apos;in yağış miktarı sayılır, türü ise ECMWF&apos;ye göre alınır. O saatteki yağışın en az yarısı kar ise aynı ayrımla
-          &quot;Kar Yağışlı&quot;, &quot;Kar Sağanağı&quot; ya da &quot;Gök Gürültülü Kar Sağanağı&quot; yazılır.
+          &quot;Kar Yağışlı&quot;, &quot;Kar Sağanağı&quot; ya da &quot;Gök Gürültülü Kar Sağanağı&quot; yazılır;
+          karın payı %20 ile %50 arasındaysa &quot;Karla Karışık Yağmurlu&quot; ya da &quot;Karla Karışık Sağanak&quot;. Kar
+          payı, taze kar kalınlığının su karşılığının (1 cm ≈ 1,4 mm) o saatin toplam yağışına oranıdır.
           Yağışın şiddeti (hafif, normal, kuvvetli) ifadeye ve ikona ayrıca yansır; ayrıntısı 10. soruda. Ortak tahminde
-          kar ifadesi için en az 2 modelin kar vermesi gerekir.
+          kar ifadesi için en az 2 modelin kar vermesi gerekir; karla karışık için kar ya da karla karışık veren en az 2 model.
         </p>
         <p style={{ margin: "0 0 12px" }}>
           Yağış yoksa bulutluluk sınıfı yazılır: Açık (%0–10), Az Bulutlu (%10–30), Parçalı Bulutlu (%30–50), Çok

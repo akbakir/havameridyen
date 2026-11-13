@@ -638,6 +638,15 @@ public final class HmWidgets {
                 case "snowshowerL": icon = R.drawable.wx_snowshower_light; break;
                 case "snowshower": icon = R.drawable.wx_snow_heavy; break;
                 case "snowshowerH": icon = R.drawable.wx_snowshower_strong; break;
+                // Karla karışık (13 Kas 2026)
+                case "mixT": icon = R.drawable.wx_mix_trace; break;
+                case "mixL": icon = R.drawable.wx_mix_light; break;
+                case "mix": icon = R.drawable.wx_mix; break;
+                case "mixH": icon = R.drawable.wx_mix_strong; break;
+                case "mixshowerT": icon = R.drawable.wx_mixshower_trace; break;
+                case "mixshowerL": icon = R.drawable.wx_mixshower_light; break;
+                case "mixshower": icon = R.drawable.wx_mixshower; break;
+                case "mixshowerH": icon = R.drawable.wx_mixshower_strong; break;
                 case "snowstorm": icon = R.drawable.wx_snow_storm; break;
                 case "snowstormH": icon = R.drawable.wx_snow_storm_strong; break;
                 default: icon = R.drawable.wx_rain;

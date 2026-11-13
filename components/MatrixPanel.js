@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ClosedPanel, PanelTitle } from "./ChartEye";
 import Link from "next/link";
 import AgreeMark from "./AgreeMark";
-import { WX_KEY, WX_KEY_OBS, WX_KEY_SNOW, WxIcon } from "./WeatherCond";
+import { WX_KEY, WX_KEY_MIX, WX_KEY_OBS, WX_KEY_SNOW, WxIcon } from "./WeatherCond";
 import {
   KN_PER_KMH,
   LEVEL_ORDER,
@@ -386,6 +386,7 @@ const WX = {
     [
       ...WX_KEY,
       ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.obs)) ? WX_KEY_OBS : []),
+      ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.mix)) ? WX_KEY_MIX : []),
       ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.snow)) ? WX_KEY_SNOW : []),
     ].map(([ic, t]) => (
       <span key={ic} className="lc-ik">

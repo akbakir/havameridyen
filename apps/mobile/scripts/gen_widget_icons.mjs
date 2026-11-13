@@ -37,6 +37,15 @@ const NAMES = {
   snowshowerL: "wx_snowshower_light",
   snowshower: "wx_snow_heavy",
   snowshowerH: "wx_snowshower_strong",
+  // Karla karışık (13 Kas 2026)
+  mixT: "wx_mix_trace",
+  mixL: "wx_mix_light",
+  mix: "wx_mix",
+  mixH: "wx_mix_strong",
+  mixshowerT: "wx_mixshower_trace",
+  mixshowerL: "wx_mixshower_light",
+  mixshower: "wx_mixshower",
+  mixshowerH: "wx_mixshower_strong",
   snowstorm: "wx_snow_storm",
   snowstormH: "wx_snow_storm_strong",
   fog: "wx_fog", // 30 Ekim: Sisli

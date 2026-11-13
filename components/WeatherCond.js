@@ -48,6 +48,15 @@ export const WX_KEY_OBS = [
   ["hazeC", "Puslu, kapalı"],
 ];
 
+// Karla karışık (13 Kas 2026): yalnız dönemde karışık ya da kar varsa (MatrixPanel)
+export const WX_KEY_MIX = [
+  ["mixL", "Hafif Karla Karışık Yağmurlu"],
+  ["mix", "Karla Karışık Yağmurlu"],
+  ["mixH", "Kuvvetli Karla Karışık Yağmurlu"],
+  ["mixshowerL", "Hafif Karla Karışık Sağanak"],
+  ["mixshower", "Karla Karışık Sağanak"],
+  ["mixshowerH", "Kuvvetli Karla Karışık Sağanak"],
+];
 export const WX_KEY_SNOW = [
   ["snowL", "Hafif Kar"],
   ["snow", "Kar Yağışlı"],
