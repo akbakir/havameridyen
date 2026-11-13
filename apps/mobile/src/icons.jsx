@@ -48,6 +48,12 @@ export const CLS_RNG = ["% 0–10", "% 10–30", "% 30–50", "% 50–90", "% 90
 export function condView(cond, h, sun = SUN) {
   if (!cond) return { text: "Veri yok", icon: "cloud", sky: "nodata", wet: false, cls: null };
   if (cond.wet) return { text: cond.text, icon: cond.ic || "rain", sky: cond.snow ? "snow" : "rain", wet: true, snow: !!cond.snow, cls: null };
+  // Rüzgar (13 Kas): Fırtınamsı Rüzgar / Fırtına; zemin bulut sınıfının gökyüzü
+  if (cond.wind) {
+    const kw = cond.cls ?? 3;
+    const phw = skyPhase(h, sun);
+    return { text: cond.text, icon: cond.ic, sky: kw === 4 ? "overcast" : kw <= 1 ? `${phw}-clear` : `${phw}-cloud`, wet: false, cls: kw, wind: cond.wind };
+  }
   // Sis / pus (30 Ekim): ikon kuraldan (fog · haze · gece hazeN)
   if (cond.obs) return { text: cond.text, icon: cond.ic, sky: "fog", wet: false, cls: null, obs: cond.obs };
   const base = String(cond.ic).replace(/N$/, "");

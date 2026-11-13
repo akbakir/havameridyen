@@ -48,6 +48,8 @@ const NAMES = {
   mixshowerH: "wx_mixshower_strong",
   snowstorm: "wx_snow_storm",
   snowstormH: "wx_snow_storm_strong",
+  windy: "wx_windy", // 13 Kas 2026: Fırtınamsı Rüzgar
+  gale: "wx_gale", // Fırtına
   fog: "wx_fog", // 30 Ekim: Sisli
   haze: "wx_haze", // Puslu (gündüz)
   hazeN: "wx_haze_night", // Puslu (gece)

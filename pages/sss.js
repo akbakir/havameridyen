@@ -178,7 +178,12 @@ const FAQS = [
           kar ifadesi için en az 2 modelin kar vermesi gerekir; karla karışık için kar ya da karla karışık veren en az 2 model.
         </p>
         <p style={{ margin: "0 0 12px" }}>
-          Yağış yoksa bulutluluk sınıfı yazılır: Açık (%0–10), Az Bulutlu (%10–30), Parçalı Bulutlu (%30–50), Çok
+          Yağış yoksa önce rüzgara bakılır: ortalama rüzgar en az 50 km/s ya da hamle en az 62 km/s ise &quot;Fırtınamsı
+          Rüzgar&quot; (7 Bofor), ortalama en az 62 km/s ya da hamle en az 89 km/s ise &quot;Fırtına&quot; (8 Bofor ve
+          üstü). Ortak tahminde modellerin en az yarısı gerekir; gün için en az 3 saat. Rüzgar sis ve pusun önüne geçer.
+        </p>
+        <p style={{ margin: "0 0 12px" }}>
+          Rüzgar hadisesi de yoksa bulutluluk sınıfı yazılır: Açık (%0–10), Az Bulutlu (%10–30), Parçalı Bulutlu (%30–50), Çok
           Bulutlu (%50–90) ya da Kapalı (%90–100). Bakılan konumda gün batımından gün doğumuna kadar açık, az bulutlu,
           parçalı bulutlu ve puslu ikonlarında güneş yerine ay çizilir. 3 ve 6 saatlik görünümde dilimdeki en belirgin durum gösterilir: yağış bulut sınıfından
           önce gelir (aynı türde kar yağmurdan önce), bulutta daha kapalı olanı seçilir.

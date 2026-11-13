@@ -654,6 +654,13 @@ public final class HmWidgets {
             return new Look(icon, ic.startsWith("snow") ? R.drawable.wsky_snow : R.drawable.wsky_rain);
         }
         String base = ic.endsWith("N") ? ic.substring(0, ic.length() - 1) : ic;
+        // Rüzgar (13 Kas 2026): Fırtınamsı Rüzgar / Fırtına; zemin bulutlu gökyüzü
+        if (base.equals("windy") || base.equals("gale")) {
+            String phw = phase(h);
+            int skyw = phw.equals("day") ? R.drawable.wsky_day_cloud : phw.equals("dawn") ? R.drawable.wsky_dawn_cloud
+                : phw.equals("dusk") ? R.drawable.wsky_dusk_cloud : R.drawable.wsky_night_cloud;
+            return new Look(base.equals("gale") ? R.drawable.wx_gale : R.drawable.wx_windy, skyw);
+        }
         // Sis / pus (30 Ekim): yağış yokken görüş veren modellerin en az yarısı ≤ 1 km Sisli, 1–5 km Puslu; zemin kapalı gökyüzü
         if (base.equals("fog")) return new Look(R.drawable.wx_fog, R.drawable.wsky_overcast);
         if (base.equals("hazeC")) return new Look(R.drawable.wx_haze_cloud, R.drawable.wsky_overcast); // Puslu + Kapalı (31 Ekim)

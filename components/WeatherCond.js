@@ -42,6 +42,11 @@ export const WX_KEY = [
 
 // Kar ikonları açıklamada yalnız gösterilen dönemde en az bir modelde kar ifadesi varsa görünür
 // Sis ve pus ikonları (30 Ekim) açıklamada yalnız gösterilen dönemde en az bir modelde görünüyorsa
+// Rüzgar (13 Kas 2026): yalnız dönemde rüzgar hadisesi varsa
+export const WX_KEY_WIND = [
+  ["windy", "Fırtınamsı Rüzgar (ort. ≥ 50 ya da hamle ≥ 62 km/s)"],
+  ["gale", "Fırtına (ort. ≥ 62 ya da hamle ≥ 89 km/s)"],
+];
 export const WX_KEY_OBS = [
   ["fog", "Sisli (görüş ≤ 1 km)"],
   ["haze", "Puslu (1–5 km)"],

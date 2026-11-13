@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ClosedPanel, PanelTitle } from "./ChartEye";
 import Link from "next/link";
 import AgreeMark from "./AgreeMark";
-import { WX_KEY, WX_KEY_MIX, WX_KEY_OBS, WX_KEY_SNOW, WxIcon } from "./WeatherCond";
+import { WX_KEY, WX_KEY_MIX, WX_KEY_OBS, WX_KEY_SNOW, WX_KEY_WIND, WxIcon } from "./WeatherCond";
 import {
   KN_PER_KMH,
   LEVEL_ORDER,
@@ -370,12 +370,15 @@ const WX = {
         {whereText(times, pk)} · {pk.n} modelin {pk.inClass}&apos;{trPossessive(pk.inClass)}{" "}
         {pk.mode === "yağış"
           ? "yağış veriyor"
+          : pk.wind
+          ? `${pk.mode.toLocaleLowerCase("tr")} veriyor`
           : pk.obs
           ? `görüş veren modeller içinde ${pk.mode.toLocaleLowerCase("tr")}`
           : `aynı sınıfta: ${pk.mode}`}
       </div>
       <div className="lc-mono lc-rule">
-        Modellerin en az yarısı yağış veriyorsa yağış verenlerin oranı; değilse görüş veren modellerin (ECMWF, GFS, UKMO,
+        Modellerin en az yarısı yağış veriyorsa yağış verenlerin oranı; değilse en az yarısı fırtınamsı rüzgar ya da
+        fırtına veriyorsa onların oranı; değilse görüş veren modellerin (ECMWF, GFS, UKMO,
         ICON) en az yarısı sisli (≤ 1 km) ya da puslu (1–5 km) ise onların oranı; değilse ortanca bulut sınıfındaki
         modellerin oranı (yağış veren azınlık da bulut sınıfıyla sayılır): % 75 ve üstü hemfikir, % 50–75 kısmen, altı
         ayrışıyor. 3 / 6 / 12 saatlik görünümde sütundaki ikonlar, yani her modelin dilim durumu karşılaştırılır.
@@ -385,6 +388,7 @@ const WX = {
   key: (models) =>
     [
       ...WX_KEY,
+      ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.wind)) ? WX_KEY_WIND : []),
       ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.obs)) ? WX_KEY_OBS : []),
       ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.mix)) ? WX_KEY_MIX : []),
       ...(models.some((m) => m.series.some((_, i) => condAt(m, i)?.snow)) ? WX_KEY_SNOW : []),
