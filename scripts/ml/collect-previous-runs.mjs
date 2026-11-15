@@ -7,7 +7,7 @@
 //   node scripts/ml/collect-previous-runs.mjs --check-ifs           # canlı IFS = arşiv IFS mi? (~10 çağrı)
 //   node scripts/ml/collect-previous-runs.mjs                       # 1. grup (sıcaklık + rüzgâr)
 //   node scripts/ml/collect-previous-runs.mjs --group hava          # 2. grup (yağış, kar, bulut, görüş, CAPE)
-//   Seçenekler: --daily 6000  --from 2024-01  --to 2026-10  --stations LTAC0,17128  --models ecmwf_ifs
+//   Seçenekler: --daily 6000  --from 2024-01  --to 2026-10  --stations LTAC,LTCE  --models ecmwf_ifs
 //
 // Bütçe (15 Kas sayaç verisi): günlük sınır 10.000; sitenin en yüksek günü ~2.900 (13 Kas);
 // %10 pay (1.000) bırakılınca toplayıcıya günde ~6.000 ağırlıklı çağrı kalır. Aylık: site ≤ ~87 bin +
@@ -129,7 +129,7 @@ if (flag("plan")) process.exit(0);
 // Aynıysa arşiv ile canlı aynı IFS ürünü; farklıysa eğitim verisi canlıdan farklı çözünürlükte olabilir.
 if (flag("check-ifs")) {
   const ledger = loadLedger();
-  const pick = stations.filter((s) => ["17128", "17060", "17098", "17300", "17096"].includes(s.id));
+  const pick = stations.filter((s) => ["LTAC", "LTBA", "LTCF", "LTAI", "LTCE"].includes(s.id));
   for (const s of pick) {
     if (!(await spend(ledger, 2))) { console.log("Günlük bütçe dolu."); break; }
     const q = `latitude=${s.lat}&longitude=${s.lon}&hourly=temperature_2m,wind_speed_10m&models=ecmwf_ifs&past_days=2&forecast_days=1&timezone=GMT`;
