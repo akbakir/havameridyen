@@ -26,9 +26,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const OUT = path.join(ROOT, "ml-data");
 const LEDGER = path.join(OUT, "ledger.json");
 
+// ecmwf_ifs en sonda: --check-ifs canlı ile arşivin farklı çıktığını gösterirse IFS'e kota harcanmadan durdurulabilir
 const MODELS = [
-  "ecmwf_ifs", "gfs_seamless", "icon_seamless", "ukmo_seamless",
-  "meteofrance_seamless", "gem_seamless", "jma_gsm", "ecmwf_aifs025_single",
+  "gfs_seamless", "icon_seamless", "ukmo_seamless", "meteofrance_seamless",
+  "gem_seamless", "jma_gsm", "ecmwf_aifs025_single", "ecmwf_ifs",
 ];
 const GROUPS = {
   // Sıcaklık + rüzgâr (ilk hedef; gözlemi bol): 3 değişken × 8 öncü = 24 → ağırlık 2,4
