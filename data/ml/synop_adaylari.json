@@ -1,0 +1,482 @@
+[
+{
+"ghcn": "TUM00017015",
+"wmo": "17015",
+"name": "NAME UNKN",
+"lat": 41.1333,
+"lon": 31.2167,
+"elev": 10.0
+},
+{
+"ghcn": "TUM00017030",
+"wmo": "17030",
+"name": "SAMSUN",
+"lat": 41.2833,
+"lon": 36.3,
+"elev": 4.0
+},
+{
+"ghcn": "TUM00017033",
+"wmo": "17033",
+"name": "ORDU",
+"lat": 40.9833,
+"lon": 37.9,
+"elev": 4.0
+},
+{
+"ghcn": "TUM00017034",
+"wmo": "17034",
+"name": "GIRESUN",
+"lat": 40.9167,
+"lon": 38.3833,
+"elev": 37.0
+},
+{
+"ghcn": "TUM00017040",
+"wmo": "17040",
+"name": "RIZE",
+"lat": 41.0333,
+"lon": 40.5167,
+"elev": 9.0
+},
+{
+"ghcn": "TUM00017045",
+"wmo": "17045",
+"name": "ARTVIN",
+"lat": 41.1833,
+"lon": 41.8167,
+"elev": 628.0
+},
+{
+"ghcn": "TUM00017052",
+"wmo": "17052",
+"name": "KIRKLARELI",
+"lat": 41.7333,
+"lon": 27.2333,
+"elev": 232.0
+},
+{
+"ghcn": "TUM00017059",
+"wmo": "17059",
+"name": "KUMKOY",
+"lat": 41.25,
+"lon": 29.0333,
+"elev": 30.0
+},
+{
+"ghcn": "TUM00017068",
+"wmo": "17068",
+"name": "CENGIZTOPEL",
+"lat": 40.85,
+"lon": 29.9,
+"elev": 70.0
+},
+{
+"ghcn": "TUM00017069",
+"wmo": "17069",
+"name": "ADAPAZARI",
+"lat": 40.7833,
+"lon": 30.4167,
+"elev": 30.0
+},
+{
+"ghcn": "TUM00017077",
+"wmo": "17077",
+"name": "NAME UNKN",
+"lat": 41.2,
+"lon": 32.6,
+"elev": 278.0
+},
+{
+"ghcn": "TUM00017078",
+"wmo": "17078",
+"name": "KARABUK",
+"lat": 41.2,
+"lon": 32.6333,
+"elev": 259.0
+},
+{
+"ghcn": "TUM00017080",
+"wmo": "17080",
+"name": "CANKIRI",
+"lat": 40.6,
+"lon": 33.6167,
+"elev": 751.0
+},
+{
+"ghcn": "TUM00017084",
+"wmo": "17084",
+"name": "CORUM",
+"lat": 40.55,
+"lon": 34.95,
+"elev": 776.0
+},
+{
+"ghcn": "TUM00017085",
+"wmo": "17085",
+"name": "AMASYA",
+"lat": 40.65,
+"lon": 35.85,
+"elev": 412.0
+},
+{
+"ghcn": "TUM00017095",
+"wmo": "17095",
+"name": "ERZURUM BOLGE",
+"lat": 39.9,
+"lon": 41.2833,
+"elev": 1869.0
+},
+{
+"ghcn": "TUM00017100",
+"wmo": "17100",
+"name": "IGDIR",
+"lat": 39.9167,
+"lon": 44.05,
+"elev": 858.0
+},
+{
+"ghcn": "TUM00017110",
+"wmo": "17110",
+"name": "GOKCEADA",
+"lat": 40.1833,
+"lon": 25.9,
+"elev": 72.0
+},
+{
+"ghcn": "TUM00017120",
+"wmo": "17120",
+"name": "BILECIK",
+"lat": 40.15,
+"lon": 29.9667,
+"elev": 539.0
+},
+{
+"ghcn": "TUM00017130",
+"wmo": "17130",
+"name": "ANKARA/CENTRAL",
+"lat": 39.95,
+"lon": 32.8833,
+"elev": 891.0
+},
+{
+"ghcn": "TUM00017135",
+"wmo": "17135",
+"name": "KIRIKKALE",
+"lat": 39.85,
+"lon": 33.5167,
+"elev": 748.0
+},
+{
+"ghcn": "TUM00017140",
+"wmo": "17140",
+"name": "YOZGAT",
+"lat": 39.8167,
+"lon": 34.8,
+"elev": 1298.0
+},
+{
+"ghcn": "TUM00017155",
+"wmo": "17155",
+"name": "KUTAHYA",
+"lat": 39.4167,
+"lon": 29.9667,
+"elev": 969.0
+},
+{
+"ghcn": "TUM00017162",
+"wmo": "17162",
+"name": "GEMEREK",
+"lat": 39.1833,
+"lon": 36.0667,
+"elev": 1171.0
+},
+{
+"ghcn": "TUM00017165",
+"wmo": "17165",
+"name": "TUNCELI",
+"lat": 39.1167,
+"lon": 39.55,
+"elev": 981.0
+},
+{
+"ghcn": "TUM00017175",
+"wmo": "17175",
+"name": "AYVALIK",
+"lat": 39.3,
+"lon": 26.7,
+"elev": 4.0
+},
+{
+"ghcn": "TUM00017189",
+"wmo": "17189",
+"name": "AFYONKARAHISAR",
+"lat": 38.73,
+"lon": 30.6,
+"elev": 1012.0
+},
+{
+"ghcn": "TUM00017196",
+"wmo": "17196",
+"name": "KAYSERI BOLGE",
+"lat": 38.6833,
+"lon": 35.4833,
+"elev": 1096.0
+},
+{
+"ghcn": "TUM00017203",
+"wmo": "17203",
+"name": "BINGOL",
+"lat": 38.8667,
+"lon": 40.5,
+"elev": 1177.0
+},
+{
+"ghcn": "TUM00017204",
+"wmo": "17204",
+"name": "MUS",
+"lat": 38.7333,
+"lon": 41.5167,
+"elev": 1320.0
+},
+{
+"ghcn": "TUM00017205",
+"wmo": "17205",
+"name": "TATVAN",
+"lat": 38.4833,
+"lon": 42.3,
+"elev": 1665.0
+},
+{
+"ghcn": "TUM00017208",
+"wmo": "17208",
+"name": "NAME UNKN",
+"lat": 38.25,
+"lon": 42.0667,
+"elev": 1573.0
+},
+{
+"ghcn": "TUM00017210",
+"wmo": "17210",
+"name": "SIIRT",
+"lat": 37.9167,
+"lon": 41.95,
+"elev": 896.0
+},
+{
+"ghcn": "TUM00017220",
+"wmo": "17220",
+"name": "IZMIR/GUZELYALI",
+"lat": 38.4333,
+"lon": 27.1667,
+"elev": 29.0
+},
+{
+"ghcn": "TUM00017232",
+"wmo": "17232",
+"name": "KUSADASI",
+"lat": 37.8667,
+"lon": 27.25,
+"elev": 22.0
+},
+{
+"ghcn": "TUM00017238",
+"wmo": "17238",
+"name": "BURDUR",
+"lat": 37.6667,
+"lon": 30.3333,
+"elev": 967.0
+},
+{
+"ghcn": "TUM00017242",
+"wmo": "17242",
+"name": "NAME UNKN",
+"lat": 37.4167,
+"lon": 31.4333,
+"elev": 1148.0
+},
+{
+"ghcn": "TUM00017248",
+"wmo": "17248",
+"name": "EREGLI/KONYA",
+"lat": 37.5,
+"lon": 34.05,
+"elev": 1044.0
+},
+{
+"ghcn": "TUM00017250",
+"wmo": "17250",
+"name": "NIGDE",
+"lat": 37.9667,
+"lon": 34.6833,
+"elev": 1210.0
+},
+{
+"ghcn": "TUM00017255",
+"wmo": "17255",
+"name": "KAHRAMANMARAS",
+"lat": 37.6,
+"lon": 36.9333,
+"elev": 572.0
+},
+{
+"ghcn": "TUM00017261",
+"wmo": "17261",
+"name": "NAME UNKN",
+"lat": 37.0833,
+"lon": 37.5833,
+"elev": 854.0
+},
+{
+"ghcn": "TUM00017265",
+"wmo": "17265",
+"name": "ADIYAMAN",
+"lat": 37.75,
+"lon": 38.2833,
+"elev": 672.0
+},
+{
+"ghcn": "TUM00017270",
+"wmo": "17270",
+"name": "SANLIURFA",
+"lat": 37.1333,
+"lon": 38.7667,
+"elev": 549.0
+},
+{
+"ghcn": "TUM00017275",
+"wmo": "17275",
+"name": "MARDIN",
+"lat": 37.3,
+"lon": 40.7333,
+"elev": 1050.0
+},
+{
+"ghcn": "TUM00017287",
+"wmo": "17287",
+"name": "SIRNAK",
+"lat": 37.3167,
+"lon": 42.2833,
+"elev": 1381.0
+},
+{
+"ghcn": "TUM00017292",
+"wmo": "17292",
+"name": "MUGLA",
+"lat": 37.2167,
+"lon": 28.3667,
+"elev": 646.0
+},
+{
+"ghcn": "TUM00017310",
+"wmo": "17310",
+"name": "ALANYA",
+"lat": 36.55,
+"lon": 32.0,
+"elev": 6.0
+},
+{
+"ghcn": "TUM00017340",
+"wmo": "17340",
+"name": "MERSIN",
+"lat": 36.8,
+"lon": 34.6333,
+"elev": 3.0
+},
+{
+"ghcn": "TUM00017375",
+"wmo": "17375",
+"name": "FINIKE",
+"lat": 36.3,
+"lon": 30.15,
+"elev": 2.0
+},
+{
+"ghcn": "TUMU0017020",
+"wmo": "17020",
+"name": "SILE TURKEY",
+"lat": 41.17,
+"lon": 29.6,
+"elev": 25.0
+},
+{
+"ghcn": "TUMU0017042",
+"wmo": "17042",
+"name": "HOPA TURKEY",
+"lat": 41.38,
+"lon": 41.42,
+"elev": 16.0
+},
+{
+"ghcn": "TUMU0017061",
+"wmo": "17061",
+"name": "SARIYER TURKEY (ISTANBUL)",
+"lat": 41.12,
+"lon": 29.07,
+"elev": 100.0
+},
+{
+"ghcn": "TUMU0017067",
+"wmo": "17067",
+"name": "GOLCUK TURKEY (DUMLUPINAR)",
+"lat": 40.72,
+"lon": 29.82,
+"elev": 19.0
+},
+{
+"ghcn": "TUMU0017160",
+"wmo": "17160",
+"name": "KIRSEHIR TURKEY",
+"lat": 39.13,
+"lon": 34.17,
+"elev": 985.0
+},
+{
+"ghcn": "TUMU0017184",
+"wmo": "17184",
+"name": "AKHISAR TURKEY",
+"lat": 38.92,
+"lon": 27.85,
+"elev": 101.0
+},
+{
+"ghcn": "TUMU0017330",
+"wmo": "17330",
+"name": "SILIFKE TURKEY",
+"lat": 36.37,
+"lon": 33.93,
+"elev": 15.0
+},
+{
+"ghcn": "TUUR0017062",
+"wmo": "17062",
+"name": "ISTAMBULGOZTEPE",
+"lat": 40.97,
+"lon": 29.08,
+"elev": 40.0
+},
+{
+"ghcn": "TUUR0017296",
+"wmo": "17296",
+"name": "FETHIYE",
+"lat": 36.62,
+"lon": 29.12,
+"elev": 3.0
+},
+{
+"ghcn": "TUUR0017320",
+"wmo": "17320",
+"name": "ANAMUR",
+"lat": 36.08,
+"lon": 32.83,
+"elev": 4.0
+},
+{
+"ghcn": "TUUR10XXX00",
+"wmo": "17099",
+"name": "KARAKOSE",
+"lat": 39.75,
+"lon": 43.05,
+"elev": 1632.0
+}
+]
