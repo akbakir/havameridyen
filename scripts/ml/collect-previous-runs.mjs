@@ -44,9 +44,16 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 && args[i + 1] && !args[i + 1].startsWith("--") ? args[i + 1] : d; };
 const flag = (k) => args.includes(`--${k}`);
 const GROUP = opt("group", "sicaklik-ruzgar");
-const DAILY = Number(opt("daily", 6000));
-const HOURLY_CAP = Number(opt("hourly", 4000));
-const MINUTE_CAP = Number(opt("minute", 450));
+// Open-Meteo deneme/ücretli anahtarı (ortam değişkeni; asla depoya ya da sohbete yazılmaz).
+// Anahtar varsa customer- sunucuları kullanılır, ücretsiz katmanın günlük/saatlik/dakikalık sınırları uygulanmaz;
+// anahtarla yapılan toplam harcama ml-data/key-usage.json'da tutulur ve --total (varsayılan 900.000) aşılmaz.
+const KEY = (process.env.OPEN_METEO_API_KEY || "").trim();
+const DAILY = Number(opt("daily", KEY ? 1e9 : 6000));
+const HOURLY_CAP = Number(opt("hourly", KEY ? 1e9 : 4000));
+const MINUTE_CAP = Number(opt("minute", KEY ? 1e9 : 450));
+const TOTAL_CAP = Number(opt("total", 900000));
+const host = (h) => (KEY ? `https://customer-${h}` : `https://${h}`);
+const keyQ = () => (KEY ? `&apikey=${encodeURIComponent(KEY)}` : "");
 const today = new Date();
 const lastFull = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1)); // geçen ay
 const FROM = opt("from", "2024-01");
@@ -81,7 +88,16 @@ function saveLedger(l) { fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSyn
 const spentSince = (l, ms) => { const t = Date.now() - ms; return l.filter((e) => e.t >= t).reduce((a, e) => a + e.w, 0); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const KEY_USAGE = path.join(OUT, "key-usage.json");
+function keyUsage() { try { return JSON.parse(fs.readFileSync(KEY_USAGE, "utf8")).total || 0; } catch { return 0; } }
 async function spend(ledger, w) {
+  if (KEY) {
+    const used = keyUsage();
+    if (used + w > TOTAL_CAP) return false;
+    fs.mkdirSync(OUT, { recursive: true });
+    fs.writeFileSync(KEY_USAGE, JSON.stringify({ total: Math.round((used + w) * 100) / 100, updated: new Date().toISOString() }));
+    return true;
+  }
   for (;;) {
     if (spentSince(ledger, 864e5) + w > DAILY) return false;
     if (spentSince(ledger, 36e5) + w > HOURLY_CAP) { process.stdout.write("  saatlik pay dolu, 5 dk bekleniyor…\n"); await sleep(300e3); continue; }
@@ -107,8 +123,8 @@ async function getJSON(url) {
 }
 
 const prevUrl = (s, model, start, end, vars) =>
-  `https://previous-runs-api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}` +
-  `&hourly=${vars.join(",")}&models=${model}&start_date=${start}&end_date=${end}&timezone=GMT`;
+  `${host("previous-runs-api.open-meteo.com")}/v1/forecast?latitude=${s.lat}&longitude=${s.lon}` +
+  `&hourly=${vars.join(",")}&models=${model}&start_date=${start}&end_date=${end}&timezone=GMT${keyQ()}`;
 
 // ---------- --plan ----------
 const MONTHS = months(FROM, TO);
@@ -121,7 +137,7 @@ const todo = jobs.filter((j) => !fs.existsSync(j.file) && !fs.existsSync(j.file 
 const total = todo.reduce((a, j) => a + j.w, 0);
 console.log(`Grup ${GROUP}: ${GROUPS[GROUP].join(", ")} × öncü 0–7 (${VARS.length} değişken)`);
 console.log(`${stations.length} istasyon × ${models.length} model × ${MONTHS.length} ay (${FROM} … ${TO}) = ${jobs.length} istek`);
-console.log(`Kalan: ${todo.length} istek ≈ ${Math.round(total).toLocaleString("tr-TR")} ağırlıklı çağrı ≈ ${Math.ceil(total / DAILY)} gün (günde ${DAILY})`);
+console.log(`Kalan: ${todo.length} istek ≈ ${Math.round(total).toLocaleString("tr-TR")} ağırlıklı çağrı` + (KEY ? " (anahtarlı erişim; günlük sınır yok)" : ` ≈ ${Math.ceil(total / DAILY)} gün (günde ${DAILY})`));
 
 if (flag("plan")) process.exit(0);
 
@@ -134,8 +150,8 @@ if (flag("check-ifs")) {
   for (const s of pick) {
     if (!(await spend(ledger, 2))) { console.log("Günlük bütçe dolu."); break; }
     const q = `latitude=${s.lat}&longitude=${s.lon}&hourly=temperature_2m,wind_speed_10m&models=ecmwf_ifs&past_days=2&forecast_days=1&timezone=GMT`;
-    const live = await getJSON(`https://api.open-meteo.com/v1/forecast?${q}`);
-    const prev = await getJSON(`https://previous-runs-api.open-meteo.com/v1/forecast?${q}`);
+    const live = await getJSON(`${host("api.open-meteo.com")}/v1/forecast?${q}${keyQ()}`);
+    const prev = await getJSON(`${host("previous-runs-api.open-meteo.com")}/v1/forecast?${q}${keyQ()}`);
     const a = live.hourly, b = prev.hourly;
     let n = 0, same = 0, maxd = 0;
     a.time.forEach((t, i) => {
@@ -151,11 +167,13 @@ if (flag("check-ifs")) {
 
 // ---------- toplama ----------
 const ledger = loadLedger();
-console.log(`Son 24 saatte harcanan: ${Math.round(spentSince(ledger, 864e5))} / ${DAILY}`);
+if (KEY) console.log(`Anahtarlı erişim (customer- sunucuları). Anahtarla toplam harcanan: ${Math.round(keyUsage())} / ${TOTAL_CAP}`);
+else console.log(`Son 24 saatte harcanan: ${Math.round(spentSince(ledger, 864e5))} / ${DAILY}`);
 let done = 0, failed = 0, spentNow = 0;
 for (const j of todo) {
   if (!(await spend(ledger, j.w))) {
-    console.log(`\nGünlük bütçe doldu (${DAILY}). Bugün ${done} istek, ~${Math.round(spentNow)} çağrı. Yarın aynı komutla devam edin.`);
+    console.log(KEY ? `\nAnahtar toplam sınırı doldu (${TOTAL_CAP}). Bu çalışmada ${done} istek, ~${Math.round(spentNow)} çağrı.`
+      : `\nGünlük bütçe doldu (${DAILY}). Bugün ${done} istek, ~${Math.round(spentNow)} çağrı. Yarın aynı komutla devam edin.`);
     break;
   }
   spentNow += j.w;
