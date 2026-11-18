@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""MGM saatlik gözlemleri için kalite kontrolü (18 Kas 2026).
+"""YEREL saatlik gözlemleri için kalite kontrolü (18 Kas 2026).
 
-Girdi : mgm-to-parquet.py çıktısı (ml-data/obs/mgm_saatlik.parquet)
+Girdi : yerel-to-parquet.py çıktısı (ml-data/obs/yerel_saatlik.parquet)
 Çıktı : <çıktı>.parquet  — temizlenmiş değerler + her satır için `qc` bayrak metni
         <çıktı>_rapor.csv — istasyon × kural sayımları
 
@@ -19,9 +19,9 @@ Kurallar (bulunan değer NaN yapılır, satır silinmez):
   YSABIT  ≥12 saat aynı pozitif yağış değeri → yalnız bayrak (zayıf, sürekli yağış gerçek olabilir; değer korunur).
 
 Birimler: sıcaklık °C, nem %, rüzgâr ve hamle m/s, basınç hPa (istasyon seviyesi), yağış mm/saat,
-kar cm, görüş km (MGM görüşü km olarak veriyor; 20 = 20 km ve üstü).
+kar cm, görüş km (YEREL görüşü km olarak veriyor; 20 = 20 km ve üstü).
 
-Kullanım: python scripts/ml/mgm-qc.py ml-data/obs/mgm_saatlik.parquet ml-data/obs/mgm_saatlik_qc
+Kullanım: python scripts/ml/mgm-qc.py ml-data/obs/yerel_saatlik.parquet ml-data/obs/yerel_saatlik_qc
 """
 import json
 import math
@@ -85,7 +85,7 @@ mark(runs(df.t.eq(g.t.shift()), 12, tnot), "TSABIT", ["t"])
 prev, nxt = g.t.shift(1), g.t.shift(-1)
 cand = ((df.t - prev).abs() > 8) & ((df.t - nxt).abs() > 8) & (np.sign(df.t - prev) == np.sign(df.t - nxt)) & contig & g.ts.diff(-1).dt.total_seconds().eq(-3600)
 st = json.load(open(root / "data/ml/stations.json", encoding="utf-8"))
-pos = {int(s["mgm"]): (s["lat"], s["lon"]) for s in st if s.get("mgm")}
+pos = {int(s["yerel"]): (s["lat"], s["lon"]) for s in st if s.get("yerel")}
 jump = (df.t - prev)
 J = df.assign(j=jump).pivot_table(index="ts", columns="no", values="j")
 bad = []

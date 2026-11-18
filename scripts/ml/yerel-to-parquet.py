@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MGM MEVBİS saatlik sunum çıktısını (SUNUM_YER_GOZLEMLERI) Parquet'e çevirir.
+"""YEREL kaynağın saatlik gözlem çıktısını Parquet'e çevirir.
 
 Girdi: noktalı virgülle ayrılmış, başlıksız metin; sütunlar sorgu sırasıyla:
   ISTAD;ISTNO;YIL;AY;GUN;SAAT;SICAKLIK;NEM;ORT_RUZGAR_YON_DER;RUZGAR_HIZI;MAKSIMUM_RUZGAR_YONU_DER;
@@ -15,7 +15,7 @@ Open-Meteo'da precipitation / wind_gusts_10m önceki saati verir (15:00 → 14:0
 Bu yüzden rr ve gff için `ts_model` = ts + 1 saat sütunu yazılır; modelle bu sütun üzerinden eşleştirin.
 Değeri olmayan gelecek saatler atılır.
 
-Kullanım: python scripts/ml/mgm-to-parquet.py mgm/saatlik_sunum.txt ml-data/obs/mgm_saatlik.parquet
+Kullanım: python scripts/ml/yerel-to-parquet.py yerel/saatlik.txt ml-data/obs/yerel_saatlik.parquet
 """
 import sys
 import pandas as pd
