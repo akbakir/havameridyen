@@ -1,0 +1,661 @@
+{
+ "kaynak": "WMO-No. 306, Kod tablosu 4677 (halihazır hava, ww); MGM rasat el kitabı s. 79–82",
+ "notlar": [
+  "Sis = 42–49 (görüş < 1 km). 11–12 sığ sis, 40 uzakta sis, 41 parçalar hâlinde sis sis SAYILMAZ.",
+  "20–29 rasat anında değil, geçen saatte; o saatin hadisesi olarak sayılmaz.",
+  "Rasat saatinde yağış varsa 20–29 kullanılmaz (MGM, VII.4.9.1.1)."
+ ],
+ "ww": {
+  "0": {
+   "aciklama": "Bulutun gelişmesi rasat edilemiyor",
+   "sinif": "hadise_yok",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "1": {
+   "aciklama": "Bulutlar dağılmakta / incelmekte",
+   "sinif": "hadise_yok",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "2": {
+   "aciklama": "Semanın durumu değişmemiş",
+   "sinif": "hadise_yok",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "3": {
+   "aciklama": "Bulutlar gelişiyor",
+   "sinif": "hadise_yok",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "4": {
+   "aciklama": "Görüş duman nedeniyle daralmış",
+   "sinif": "kuru_pus",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "5": {
+   "aciklama": "Kuru duman",
+   "sinif": "kuru_pus",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "6": {
+   "aciklama": "Yaygın toz (rüzgârla kaldırılmamış)",
+   "sinif": "toz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "7": {
+   "aciklama": "Rüzgârın kaldırdığı toz/kum",
+   "sinif": "toz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "8": {
+   "aciklama": "Toz/kum anaforları",
+   "sinif": "toz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "9": {
+   "aciklama": "Toz/kum fırtınası (görüş alanında / son saat)",
+   "sinif": "toz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "10": {
+   "aciklama": "Pus",
+   "sinif": "pus",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "11": {
+   "aciklama": "Sıralar hâlinde sığ sis / buz sisi (karada ≤2 m)",
+   "sinif": "sig_sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "12": {
+   "aciklama": "Aşağı yukarı devamlı sığ sis / buz sisi (karada ≤2 m)",
+   "sinif": "sig_sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "13": {
+   "aciklama": "Şimşek görülüyor, gök gürültüsü yok",
+   "sinif": "oraj_yagissiz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "14": {
+   "aciklama": "Rüyette yağış, yere değmiyor",
+   "sinif": "yakinda_yagis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "15": {
+   "aciklama": "Rüyette yağış, yere değiyor, istasyondan >5 km",
+   "sinif": "yakinda_yagis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "16": {
+   "aciklama": "Rüyette yağış, istasyona yakın ama istasyonda değil",
+   "sinif": "yakinda_yagis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "17": {
+   "aciklama": "Oraj, istasyonda yağış yok",
+   "sinif": "oraj_yagissiz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "18": {
+   "aciklama": "Squall",
+   "sinif": "squall",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "19": {
+   "aciklama": "Hortum",
+   "sinif": "hortum",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "20": {
+   "aciklama": "Geçen saat: çisenti veya kar taneleri",
+   "sinif": "gecen_saat",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "21": {
+   "aciklama": "Geçen saat: yağmur",
+   "sinif": "gecen_saat",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "22": {
+   "aciklama": "Geçen saat: kar",
+   "sinif": "gecen_saat",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "23": {
+   "aciklama": "Geçen saat: karla karışık yağmur / buz paletleri",
+   "sinif": "gecen_saat",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "24": {
+   "aciklama": "Geçen saat: donan çisenti / yağmur",
+   "sinif": "gecen_saat",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "25": {
+   "aciklama": "Geçen saat: yağmur sağanağı",
+   "sinif": "gecen_saat",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "26": {
+   "aciklama": "Geçen saat: kar / karla karışık sağanak",
+   "sinif": "gecen_saat",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "27": {
+   "aciklama": "Geçen saat: dolu sağanağı",
+   "sinif": "gecen_saat",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "28": {
+   "aciklama": "Geçen saat: sis / buz sisi",
+   "sinif": "gecen_saat",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "29": {
+   "aciklama": "Geçen saat: oraj",
+   "sinif": "gecen_saat",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "30": {
+   "aciklama": "Hafif/orta toz-kum fırtınası (azaldı)",
+   "sinif": "toz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "31": {
+   "aciklama": "Hafif/orta toz-kum fırtınası (değişiklik yok)",
+   "sinif": "toz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "32": {
+   "aciklama": "Hafif/orta toz-kum fırtınası (başladı/arttı)",
+   "sinif": "toz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "33": {
+   "aciklama": "Kuvvetli toz-kum fırtınası (azaldı)",
+   "sinif": "toz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "34": {
+   "aciklama": "Kuvvetli toz-kum fırtınası (değişiklik yok)",
+   "sinif": "toz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "35": {
+   "aciklama": "Kuvvetli toz-kum fırtınası (başladı/arttı)",
+   "sinif": "toz",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "36": {
+   "aciklama": "Hafif/orta kar sürülmesi",
+   "sinif": "kar_savrulmasi",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "37": {
+   "aciklama": "Kuvvetli kar sürülmesi",
+   "sinif": "kar_savrulmasi",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "38": {
+   "aciklama": "Hafif/orta kar savrulması",
+   "sinif": "kar_savrulmasi",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "39": {
+   "aciklama": "Kuvvetli kar savrulması",
+   "sinif": "kar_savrulmasi",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "40": {
+   "aciklama": "Uzakta sis (istasyonda yok)",
+   "sinif": "uzakta_sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": false
+  },
+  "41": {
+   "aciklama": "Parçalar hâlinde sis",
+   "sinif": "sis_kumeleri",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "42": {
+   "aciklama": "Sis / buz sisi, gökyüzü görülebiliyor (incelmekte)",
+   "sinif": "sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "43": {
+   "aciklama": "Sis / buz sisi, gökyüzü görülemiyor (incelmekte)",
+   "sinif": "sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "44": {
+   "aciklama": "Sis / buz sisi, gökyüzü görülebiliyor (değişiklik yok)",
+   "sinif": "sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "45": {
+   "aciklama": "Sis / buz sisi, gökyüzü görülemiyor (değişiklik yok)",
+   "sinif": "sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "46": {
+   "aciklama": "Sis / buz sisi, gökyüzü görülebiliyor (başladı / kalınlaşıyor)",
+   "sinif": "sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "47": {
+   "aciklama": "Sis / buz sisi, gökyüzü görülemiyor (başladı / kalınlaşıyor)",
+   "sinif": "sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "48": {
+   "aciklama": "Sis, kırağı birikintisi, gökyüzü görülebiliyor",
+   "sinif": "sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "49": {
+   "aciklama": "Sis, kırağı birikintisi, gökyüzü görülemiyor",
+   "sinif": "sis",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "50": {
+   "aciklama": "Donmayan aralıklı çisenti (hafif)",
+   "sinif": "cisenti",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "51": {
+   "aciklama": "Donmayan devamlı çisenti (hafif)",
+   "sinif": "cisenti",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "52": {
+   "aciklama": "Donmayan aralıklı çisenti (orta)",
+   "sinif": "cisenti",
+   "siddet": "orta",
+   "rasat_aninda_istasyonda": true
+  },
+  "53": {
+   "aciklama": "Donmayan devamlı çisenti (orta)",
+   "sinif": "cisenti",
+   "siddet": "orta",
+   "rasat_aninda_istasyonda": true
+  },
+  "54": {
+   "aciklama": "Donmayan aralıklı çisenti (kuvvetli)",
+   "sinif": "cisenti",
+   "siddet": "kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "55": {
+   "aciklama": "Donmayan devamlı çisenti (kuvvetli)",
+   "sinif": "cisenti",
+   "siddet": "kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "56": {
+   "aciklama": "Donan hafif çisenti",
+   "sinif": "donan_cisenti",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "57": {
+   "aciklama": "Donan orta/kuvvetli çisenti",
+   "sinif": "donan_cisenti",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "58": {
+   "aciklama": "Hafif, yağmurla birlikte çisenti",
+   "sinif": "yagmur",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "59": {
+   "aciklama": "Orta/kuvvetli, yağmurla birlikte çisenti",
+   "sinif": "yagmur",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "60": {
+   "aciklama": "Donmayan aralıklı yağmur (hafif)",
+   "sinif": "yagmur",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "61": {
+   "aciklama": "Donmayan devamlı yağmur (hafif)",
+   "sinif": "yagmur",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "62": {
+   "aciklama": "Donmayan aralıklı yağmur (orta)",
+   "sinif": "yagmur",
+   "siddet": "orta",
+   "rasat_aninda_istasyonda": true
+  },
+  "63": {
+   "aciklama": "Donmayan devamlı yağmur (orta)",
+   "sinif": "yagmur",
+   "siddet": "orta",
+   "rasat_aninda_istasyonda": true
+  },
+  "64": {
+   "aciklama": "Donmayan aralıklı yağmur (kuvvetli)",
+   "sinif": "yagmur",
+   "siddet": "kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "65": {
+   "aciklama": "Donmayan devamlı yağmur (kuvvetli)",
+   "sinif": "yagmur",
+   "siddet": "kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "66": {
+   "aciklama": "Donan hafif yağmur",
+   "sinif": "donan_yagmur",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "67": {
+   "aciklama": "Donan orta/kuvvetli yağmur",
+   "sinif": "donan_yagmur",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "68": {
+   "aciklama": "Hafif, karla birlikte yağmur veya çisenti",
+   "sinif": "karla_karisik_yagmur",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "69": {
+   "aciklama": "Orta/kuvvetli, karla birlikte yağmur veya çisenti",
+   "sinif": "karla_karisik_yagmur",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "70": {
+   "aciklama": "Aralıklı kuşbaşı kar (hafif)",
+   "sinif": "kar",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "71": {
+   "aciklama": "Devamlı kuşbaşı kar (hafif)",
+   "sinif": "kar",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "72": {
+   "aciklama": "Aralıklı kuşbaşı kar (orta)",
+   "sinif": "kar",
+   "siddet": "orta",
+   "rasat_aninda_istasyonda": true
+  },
+  "73": {
+   "aciklama": "Devamlı kuşbaşı kar (orta)",
+   "sinif": "kar",
+   "siddet": "orta",
+   "rasat_aninda_istasyonda": true
+  },
+  "74": {
+   "aciklama": "Aralıklı kuşbaşı kar (kuvvetli)",
+   "sinif": "kar",
+   "siddet": "kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "75": {
+   "aciklama": "Devamlı kuşbaşı kar (kuvvetli)",
+   "sinif": "kar",
+   "siddet": "kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "76": {
+   "aciklama": "Buz prizmaları",
+   "sinif": "diger_kati",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "77": {
+   "aciklama": "Kar grenleri",
+   "sinif": "diger_kati",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "78": {
+   "aciklama": "Yıldızvari ayrık kar kristalleri",
+   "sinif": "diger_kati",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "79": {
+   "aciklama": "Buz paletleri",
+   "sinif": "diger_kati",
+   "siddet": null,
+   "rasat_aninda_istasyonda": true
+  },
+  "80": {
+   "aciklama": "Hafif yağmur sağanağı",
+   "sinif": "saganak",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "81": {
+   "aciklama": "Orta/kuvvetli yağmur sağanağı",
+   "sinif": "saganak",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "82": {
+   "aciklama": "Şiddetli yağmur sağanağı",
+   "sinif": "saganak",
+   "siddet": "siddetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "83": {
+   "aciklama": "Hafif karla karışık yağmur sağanağı",
+   "sinif": "karla_karisik_saganak",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "84": {
+   "aciklama": "Orta/kuvvetli karla karışık yağmur sağanağı",
+   "sinif": "karla_karisik_saganak",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "85": {
+   "aciklama": "Hafif kar sağanağı",
+   "sinif": "kar_saganagi",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "86": {
+   "aciklama": "Orta/kuvvetli kar sağanağı",
+   "sinif": "kar_saganagi",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "87": {
+   "aciklama": "Hafif küçük dolu / kar paletleri sağanağı",
+   "sinif": "dolu",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "88": {
+   "aciklama": "Orta/kuvvetli küçük dolu / kar paletleri sağanağı",
+   "sinif": "dolu",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "89": {
+   "aciklama": "Hafif, orajsız dolu sağanağı",
+   "sinif": "dolu",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "90": {
+   "aciklama": "Orta/kuvvetli, orajsız dolu sağanağı",
+   "sinif": "dolu",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "91": {
+   "aciklama": "Hafif yağmur (geçen saatte oraj)",
+   "sinif": "yagmur",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "92": {
+   "aciklama": "Orta/kuvvetli yağmur (geçen saatte oraj)",
+   "sinif": "yagmur",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "93": {
+   "aciklama": "Hafif kar / karla karışık / dolu (geçen saatte oraj)",
+   "sinif": "kar_karisik_dolu",
+   "siddet": "hafif",
+   "rasat_aninda_istasyonda": true
+  },
+  "94": {
+   "aciklama": "Orta/kuvvetli kar / karla karışık / dolu (geçen saatte oraj)",
+   "sinif": "kar_karisik_dolu",
+   "siddet": "orta_kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "95": {
+   "aciklama": "Dolusuz hafif/orta oraj (yağmurlu, karla karışık veya karlı)",
+   "sinif": "oraj",
+   "siddet": "hafif_orta",
+   "rasat_aninda_istasyonda": true
+  },
+  "96": {
+   "aciklama": "Dolu ile hafif/orta oraj",
+   "sinif": "oraj",
+   "siddet": "hafif_orta",
+   "rasat_aninda_istasyonda": true
+  },
+  "97": {
+   "aciklama": "Dolusuz kuvvetli oraj",
+   "sinif": "oraj",
+   "siddet": "kuvvetli",
+   "rasat_aninda_istasyonda": true
+  },
+  "98": {
+   "aciklama": "Toz/kum fırtınası ile oraj",
+   "sinif": "oraj",
+   "siddet": "hafif_orta",
+   "rasat_aninda_istasyonda": true
+  },
+  "99": {
+   "aciklama": "Dolu ile kuvvetli oraj",
+   "sinif": "oraj",
+   "siddet": "kuvvetli",
+   "rasat_aninda_istasyonda": true
+  }
+ },
+ "metar": {
+  "FG": "sis",
+  "FZFG": "sis",
+  "BR": "pus",
+  "HZ": "kuru_pus",
+  "FU": "kuru_pus",
+  "BCFG": "sis_kumeleri",
+  "PRFG": "sis_kumeleri",
+  "MIFG": "sig_sis",
+  "VCFG": "uzakta_sis",
+  "DZ": "cisenti",
+  "FZDZ": "donan_cisenti",
+  "RA": "yagmur",
+  "FZRA": "donan_yagmur",
+  "RASN": "karla_karisik_yagmur",
+  "SNRA": "karla_karisik_yagmur",
+  "DZSN": "karla_karisik_yagmur",
+  "SN": "kar",
+  "SG": "diger_kati",
+  "PL": "diger_kati",
+  "IC": "diger_kati",
+  "SHRA": "saganak",
+  "SHRASN": "karla_karisik_saganak",
+  "SHSNRA": "karla_karisik_saganak",
+  "SHSN": "kar_saganagi",
+  "SHGR": "dolu",
+  "SHGS": "dolu",
+  "GR": "dolu",
+  "GS": "dolu",
+  "TS": "oraj_yagissiz",
+  "TSRA": "oraj",
+  "TSSN": "oraj",
+  "TSRASN": "oraj",
+  "TSGR": "oraj",
+  "TSGS": "oraj",
+  "VCTS": "oraj_yagissiz",
+  "VCSH": "yakinda_yagis",
+  "SQ": "squall",
+  "FC": "hortum",
+  "DU": "toz",
+  "SA": "toz",
+  "DS": "toz",
+  "SS": "toz",
+  "BLSN": "kar_savrulmasi",
+  "DRSN": "kar_savrulmasi"
+ },
+ "metar_siddet": {
+  "-": "hafif",
+  "": "orta",
+  "+": "kuvvetli"
+ }
+}
