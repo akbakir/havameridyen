@@ -1,10 +1,15 @@
-"""YEREL günlük maks/min boşluklarını Ogimet SYNOP ekstremleriyle tamamlar.
+"""YEREL günlük maks/min boşluklarını Ogimet SYNOP ekstremleriyle, kalanını YEREL saatlik veriden tamamlar.
+
+Öncelik: yerel (günlük, dakikalıktan) → ogimet (aynı istasyon) → ogimet_yakin → saatlik
+(06–18 / 18–06 UTC saat başı değerlerinden; en az 12/13 saat; maks ortalama ~0,4 °C düşük, min ~0,2 °C yüksek).
+Ayıklama her zaman uygulanır: aralık dışı (−40…50), maks < min, saatlikle çelişen, güvensiz istasyon.
 
 Ogimet: no,yyyymmdd,hh,t  (hh=06 → 333 2snTnTnTn, o günün minimumu 18–06 UTC;
                           hh=18 → 333 1snTxTxTx, o günün maksimumu 06–18 UTC)
 Kural:
   1. Aynı numaralı SYNOP önce; yoksa ≤ 10 km ve |Δz| ≤ 100 m olan en yakın SYNOP (kaynak=ogimet_yakin).
-  2. İstasyon güveni: YEREL ile çakışan günlerde |fark| ≤ 0,5 °C oranı ≥ %90 değilse o Ogimet istasyonu kullanılmaz.
+  2. İstasyon güveni: YEREL günlükle çakışan günlerde |fark| ≤ 0,5 °C oranı ≥ %90 olmalı; saatlikle çelişme oranı
+     (maks ve min ayrı) %10'u aşarsa o istasyonun o parametresi tamamen atılır.
   3. Gün kontrolü: hedef istasyonun YEREL saatlik değeriyle — maks ∈ [saatlik maks − 1, + 8], min ∈ [saatlik min − 8, + 1];
      saatlik yoksa yalnız aralık (−40…50) ve maks ≥ min.
 Çıktı: no, date, tmax, tmin, kaynak_max, kaynak_min (yerel / ogimet / ogimet_yakin), og_no
@@ -49,8 +54,16 @@ hx = h[(hr >= 6) & (hr <= 18)].assign(date=lambda x: x.ts.dt.normalize()).groupb
 hn = h[(hr >= 18) | (hr <= 6)].assign(date=lambda x: (x.ts + pd.Timedelta(hours=6)).dt.normalize()).groupby(['no', 'date']).t.agg(hmin='min', nn='count')
 F = M.merge(O.rename(columns={'no': 'og_no'}), on='og_no').drop(columns='og_no').merge(M[['no', 'og_no']], on='no')
 F = F.merge(hx, on=['no', 'date'], how='left').merge(hn, on=['no', 'date'], how='left')
-F.loc[(F.nx >= 10) & ((F.omax < F.hmax - 1) | (F.omax > F.hmax + 8)), 'omax'] = np.nan
-F.loc[(F.nn >= 10) & ((F.omin > F.hmin + 1) | (F.omin < F.hmin - 8)), 'omin'] = np.nan
+rx = (F.nx >= 10) & F.omax.notna() & ((F.omax < F.hmax - 1) | (F.omax > F.hmax + 8))
+rn = (F.nn >= 10) & F.omin.notna() & ((F.omin > F.hmin + 1) | (F.omin < F.hmin - 8))
+# istasyon-parametre güveni: saatlikle çelişme oranı > %10 ise o istasyonun o parametresi tamamen atılır
+for r, o, n in ((rx, 'omax', 'nx'), (rn, 'omin', 'nn')):
+    chk = (F[n] >= 10) & F[o].notna()
+    key = F.no.astype(str) + '<' + F.og_no.astype(str)          # hedef<ogimet çifti
+    rate = r[chk].groupby(key[chk]).agg(['mean', 'count'])
+    drop = rate.index[(rate['count'] >= 30) & (rate['mean'] > 0.10)]
+    if len(drop): print(f'{o}: güvensiz (hedef<ogimet)', {k: round(float(rate.loc[k, "mean"]), 2) for k in drop})
+    F.loc[r | key.isin(drop), o] = np.nan
 F.loc[F.omax < F.omin, ['omax', 'omin']] = np.nan
 # birleştir
 days = pd.date_range('2024-01-01', max(Y.date.max(), O.date.max()))
@@ -60,6 +73,16 @@ for v, o in (('tmax', 'omax'), ('tmin', 'omin')):
     k = 'kaynak_' + v[1:]
     B[k] = np.where(B[v].notna(), 'yerel', np.where(B[o].notna(), B.okaynak, ''))
     B[v] = B[v].fillna(B[o])
+# 4. kaynak: saatlik
+B = B.merge(hx, on=['no', 'date'], how='left').merge(hn, on=['no', 'date'], how='left')
+for v, hv, n in (('tmax', 'hmax', 'nx'), ('tmin', 'hmin', 'nn')):
+    k = 'kaynak_' + v[1:]; m = B[v].isna() & (B[n] >= 12)
+    B.loc[m, v] = B.loc[m, hv]; B.loc[m, k] = 'saatlik'
+B = B.drop(columns=['hmax', 'nx', 'hmin', 'nn'])
+# son ayıklama (bütün kaynaklar)
+bad = (B.tmax > 50) | (B.tmax < -40) | (B.tmin > 50) | (B.tmin < -40) | (B.tmax < B.tmin)
+B.loc[bad, ['tmax', 'tmin']] = np.nan; B.loc[bad, ['kaynak_max', 'kaynak_min']] = ''
+print('son ayıklamada atılan gün:', int(bad.sum()))
 B = B[(B.kaynak_max != '') | (B.kaynak_min != '')].drop(columns=['omax', 'omin', 'okaynak'])
 B.to_parquet(out, index=False)
 n = len(days)
