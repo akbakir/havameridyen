@@ -1,7 +1,6 @@
 [
 {"id": "LTAC", "icao": "LTAC", "wmo": "17128", "name": "Ankara Esenboğa", "lat": 40.1281, "lon": 32.9951, "elev": 952, "src": ["metar"], "hours": "24", "ghcnh": "TUI0000LTAC", "mgm": "17128"},
 {"id": "LTAF", "icao": "LTAF", "wmo": "17352", "name": "Adana Şakirpaşa", "lat": 36.9822, "lon": 35.2804, "elev": 20, "src": ["metar"], "hours": "24", "ghcnh": "TUI0000LTAF", "mgm": "17352"},
-{"id": "LTAG", "icao": "LTAG", "wmo": "17350", "name": "Adana İncirlik", "lat": 37.0021, "lon": 35.4259, "elev": 73, "src": ["metar"], "hours": "24", "ghcnh": "TUI0000LTAG", "mgm": "17350"},
 {"id": "LTAI", "icao": "LTAI", "wmo": "17300", "name": "Antalya", "lat": 36.8987, "lon": 30.8005, "elev": 54, "src": ["metar"], "hours": "24", "ghcnh": "TUI0000LTAI", "mgm": "17300"},
 {"id": "LTAJ", "icao": "LTAJ", "wmo": "17260", "name": "Gaziantep", "lat": 36.9472, "lon": 37.4787, "elev": 706, "src": ["metar"], "hours": "24", "ghcnh": "TUI0000LTAJ", "mgm": "17260"},
 {"id": "LTAL", "icao": "LTAL", "wmo": "17074", "name": "Kastamonu", "lat": 41.3142, "lon": 33.7958, "elev": 1073, "src": ["metar"], "hours": "kısmi", "ghcnh": "TUI0000LTAL", "mgm": "17783"},
@@ -244,20 +243,9 @@
 {"id": "M17716", "icao": null, "wmo": null, "mgm": "17716", "name": "ZARA", "il": "Sivas", "ilce": "Zara", "lat": 39.88391, "lon": 37.73597, "elev": 1350, "src": ["mgm"], "hours": "24"},
 {"id": "M17793", "icao": null, "wmo": null, "mgm": "17793", "name": "ÇAY", "il": "Afyonkarahisar", "ilce": "Çay", "lat": 38.59026, "lon": 31.03171, "elev": 996, "src": ["mgm"], "hours": "24"},
 {"id": "M17694", "icao": null, "wmo": null, "mgm": "17694", "name": "KIBRISCIK", "il": "Bolu", "ilce": "Kıbrıscık", "lat": 40.4191, "lon": 31.85232, "elev": 1191, "src": ["mgm"], "hours": "24"},
-{"id": "M17131", "icao": "LTAB", "wmo": null, "mgm": "17131", "name": "Ankara Güvercinlik Havalimanı", "il": "Ankara", "ilce": "Yenimahalle", "lat": 39.9364, "lon": 32.74877, "elev": 820, "src": ["mgm"], "hours": "24"},
-{"id": "M17129", "icao": "LTAD", "wmo": null, "mgm": "17129", "name": "Etimesgut Havalimanı", "il": "Ankara", "ilce": "Etimesgut", "lat": 39.95399, "lon": 32.67659, "elev": 806, "src": ["mgm"], "hours": "24"},
-{"id": "M17127", "icao": "LTAE", "wmo": null, "mgm": "17127", "name": "Ankara Mürted Havalimanı", "il": "Ankara", "ilce": "Kahramankazan", "lat": 40.06828, "lon": 32.559, "elev": 838, "src": ["mgm"], "hours": "24"},
-{"id": "M17189", "icao": "LTAH", "wmo": null, "mgm": "17189", "name": "Afyonkarahisar Havalimanı", "il": "Afyonkarahisar", "ilce": "Merkez", "lat": 38.7177, "lon": 30.6167, "elev": 995, "src": ["mgm"], "hours": "24"},
-{"id": "M17197", "icao": "LTAO", "wmo": null, "mgm": "17197", "name": "Malatya Tulga Havalimanı", "il": "Malatya", "ilce": "Merkez", "lat": 38.36053, "lon": 38.25948, "elev": 919, "src": ["mgm"], "hours": "24"},
-{"id": "M17125", "icao": "LTAV", "wmo": null, "mgm": "17125", "name": "Sivrihisar Havalimanı", "il": "Eskişehir", "ilce": "Sivrihisar", "lat": 39.44691, "lon": 31.38331, "elev": 968, "src": ["mgm"], "hours": "24"},
-{"id": "M17115", "icao": "LTBG", "wmo": null, "mgm": "17115", "name": "Bandırma Havalimanı", "il": "Balıkesir", "ilce": "Bandırma", "lat": 40.30664, "lon": 27.97376, "elev": 42, "src": ["mgm"], "hours": "24"},
-{"id": "M17124", "icao": "LTBI", "wmo": null, "mgm": "17124", "name": "Eskişehir Havalimanı", "il": "Eskişehir", "ilce": "Tepebaşı", "lat": 39.78138, "lon": 30.59784, "elev": 786, "src": ["mgm"], "hours": "24"},
-{"id": "M17218", "icao": "LTBL", "wmo": null, "mgm": "17218", "name": "Çiğli Havalimanı", "il": "İzmir", "ilce": "Çiğli", "lat": 38.50242, "lon": 27.01336, "elev": 5, "src": ["mgm"], "hours": "24"},
 {"id": "M17122", "icao": "LTBP", "wmo": null, "mgm": "17122", "name": "Yalova Havalimanı", "il": "Yalova", "ilce": "Çiftlikköy", "lat": 40.68585, "lon": 29.37094, "elev": 13, "src": ["mgm"], "hours": "24"},
-{"id": "M17181", "icao": "LTBT", "wmo": null, "mgm": "17181", "name": "Akhisar Havalimanı", "il": "Manisa", "ilce": "Akhisar", "lat": 38.80206, "lon": 27.8453, "elev": 79, "src": ["mgm"], "hours": "24"},
 {"id": "M17154", "icao": "LTBZ", "wmo": null, "mgm": "17154", "name": "Kütahya Zafer Havalimanı", "il": "Kütahya", "ilce": "Altıntaş", "lat": 39.10315, "lon": 30.13856, "elev": 1011, "src": ["mgm"], "hours": "24"},
 {"id": "M17779", "icao": "LTCU", "wmo": null, "mgm": "17779", "name": "Bingöl Havalimanı", "il": "Bingöl", "ilce": "Merkez", "lat": 38.86515, "lon": 40.58699, "elev": 1061, "src": ["mgm"], "hours": "24"},
 {"id": "M17255", "icao": null, "wmo": null, "mgm": "17255", "name": "Kahramanmaraş", "il": "Kahramanmaraş", "ilce": "Onikişubat", "lat": 37.576, "lon": 36.915, "elev": 572, "src": ["mgm"], "hours": "24"},
-{"id": "M17188", "icao": null, "wmo": null, "mgm": "17188", "name": "Uşak", "il": "Uşak", "ilce": "Merkez", "lat": 38.67113, "lon": 29.40395, "elev": 919, "src": ["mgm"], "hours": "24"},
-{"id": "M17065", "icao": "LTBX", "wmo": null, "mgm": "17065", "name": "Samandıra Havalimanı", "il": "İstanbul", "ilce": "Sancaktepe", "lat": 40.98668, "lon": 29.21491, "elev": 123, "src": ["mgm"], "hours": "24"}
+{"id": "M17188", "icao": null, "wmo": null, "mgm": "17188", "name": "Uşak", "il": "Uşak", "ilce": "Merkez", "lat": 38.67113, "lon": 29.40395, "elev": 919, "src": ["mgm"], "hours": "24"}
 ]
