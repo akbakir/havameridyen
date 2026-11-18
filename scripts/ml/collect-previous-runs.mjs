@@ -46,12 +46,12 @@ const flag = (k) => args.includes(`--${k}`);
 const GROUP = opt("group", "sicaklik-ruzgar");
 // Open-Meteo deneme/ücretli anahtarı (ortam değişkeni; asla depoya ya da sohbete yazılmaz).
 // Anahtar varsa customer- sunucuları kullanılır, ücretsiz katmanın günlük/saatlik/dakikalık sınırları uygulanmaz;
-// anahtarla yapılan toplam harcama ml-data/key-usage.json'da tutulur ve --total (varsayılan 1.100.000) aşılmaz.
+// anahtarla yapılan toplam harcama ml-data/key-usage.json'da tutulur ve --total (varsayılan 4.800.000; Single Runs ile ortak sayaç) aşılmaz.
 const KEY = (process.env.OPEN_METEO_API_KEY || "").trim();
 const DAILY = Number(opt("daily", KEY ? 1e9 : 6000));
 const HOURLY_CAP = Number(opt("hourly", KEY ? 1e9 : 4000));
 const MINUTE_CAP = Number(opt("minute", KEY ? 1e9 : 450));
-const TOTAL_CAP = Number(opt("total", 1100000));
+const TOTAL_CAP = Number(opt("total", 4800000));
 const host = (h) => (KEY ? `https://customer-${h}` : `https://${h}`);
 const keyQ = () => (KEY ? `&apikey=${encodeURIComponent(KEY)}` : "");
 const today = new Date();
