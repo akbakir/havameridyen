@@ -21,7 +21,7 @@ Kurallar (bulunan değer NaN yapılır, satır silinmez):
 Birimler: sıcaklık °C, nem %, rüzgâr ve hamle m/s, basınç hPa (istasyon seviyesi), yağış mm/saat,
 kar cm, görüş km (YEREL görüşü km olarak veriyor; 20 = 20 km ve üstü).
 
-Kullanım: python scripts/ml/mgm-qc.py ml-data/obs/yerel_saatlik.parquet ml-data/obs/yerel_saatlik_qc
+Kullanım: python scripts/ml/yerel-qc.py ml-data/obs/yerel_saatlik.parquet ml-data/obs/yerel_saatlik_qc
 """
 import json
 import math
