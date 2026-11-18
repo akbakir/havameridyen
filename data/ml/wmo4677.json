@@ -1,9 +1,9 @@
 {
- "kaynak": "WMO-No. 306, Kod tablosu 4677 (halihazır hava, ww); MGM rasat el kitabı s. 79–82",
+ "kaynak": "WMO-No. 306, Kod tablosu 4677 (halihazır hava, ww); yerel rasat el kitabı s. 79–82",
  "notlar": [
   "Sis = 42–49 (görüş < 1 km). 11–12 sığ sis, 40 uzakta sis, 41 parçalar hâlinde sis sis SAYILMAZ.",
   "20–29 rasat anında değil, geçen saatte; o saatin hadisesi olarak sayılmaz.",
-  "Rasat saatinde yağış varsa 20–29 kullanılmaz (MGM, VII.4.9.1.1)."
+  "Rasat saatinde yağış varsa 20–29 kullanılmaz (rasat el kitabı, VII.4.9.1.1)."
  ],
  "ww": {
   "0": {
