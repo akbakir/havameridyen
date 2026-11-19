@@ -163,21 +163,58 @@ console.log(`${stations.length} istasyon × ${models.length} model, ${TO}'e kada
 console.log(`Anahtarla toplam harcanan: ${Math.round(usage).toLocaleString("tr-TR")} / ${TOTAL_CAP.toLocaleString("tr-TR")}`);
 if (flag("plan")) process.exit(0);
 
+// ---------- --repair: boş (null) run'ları yeniden dene ----------
+// Ağ ya da sunucu hatasıyla (5xx/429, tekrar denemeler tükenince) boş kalan run'lar dosyaya null yazılır ve
+// dosya var olduğu için normal çalıştırmada atlanır. Bu mod bütün dosyaları tarar, null run'ları yeniden ister.
+// Arşivde gerçekten olmayan run'lar (HTTP 400 ya da boş yanıt) yine boş kalır ve "kesin" olarak işaretlenir.
+if (flag("repair")) {
+  const files = jobs.filter((j) => fs.existsSync(j.file));
+  let scanned = 0, nullRuns = 0, fixed = 0, still = 0;
+  const queue = [];
+  for (const j of files) {
+    const meta = JSON.parse(zlib.gunzipSync(fs.readFileSync(j.file)));
+    scanned++;
+    const miss = Object.keys(meta.runs).filter((r) => meta.runs[r] == null && !(meta.final || {})[r]);
+    if (miss.length) { nullRuns += miss.length; queue.push({ j, meta, miss }); }
+  }
+  console.log(`${scanned} dosya tarandı: ${queue.length} dosyada ${nullRuns} boş run.`);
+  if (flag("plan-repair")) process.exit(0);
+  let qi = 0;
+  await Promise.all(Array.from({ length: CONC }, async () => {
+    while (!stop && qi < queue.length) {
+      const { j, meta, miss } = queue[qi++];
+      meta.failed = meta.failed || {}; meta.final = meta.final || {};
+      for (const run of miss) {
+        if (!spend(1)) { stop = true; break; }
+        const r = await get(url(j.s, j.api, run));
+        const filled = r.ok ? (r.data.hourly?.temperature_2m || []).some((v) => v != null) : false;
+        if (filled) { meta.runs[run] = encode(r.data.hourly); delete meta.failed[run]; fixed++; }
+        else { still++; meta.failed[run] = r.ok ? "bos" : r.status; if (!r.ok && r.status === 400 || r.ok) meta.final[run] = true; }
+      }
+      fs.writeFileSync(j.file + ".tmp", zlib.gzipSync(JSON.stringify(meta)));
+      fs.renameSync(j.file + ".tmp", j.file);
+      console.log(`↻ ${j.m} ${j.s.id} ${j.mo.key}: ${miss.length} boş run denendi · düzelen ${fixed}, boş kalan ${still}`);
+    }
+  }));
+  console.log(`Onarım bitti: ${fixed} run düzeldi, ${still} run arşivde yok ya da hâlâ hatalı. Anahtarla toplam harcanan: ${Math.round(usage)}.`);
+  process.exit(0);
+}
+
 // ---------- toplama ----------
 let done = 0, failedRuns = 0, stop = false;
 const t0 = Date.now();
 async function runJob(j) {
-  const runs = {};
+  const runs = {}, failed = {};
   for (const day of j.mo.days) for (const hh of j.hours) {
     if (stop) return false;
     if (!spend(1)) { stop = true; console.log(`\nToplam tavanına (${TOTAL_CAP}) ulaşıldı; durduruldu.`); return false; }
     const run = `${day}T${hh}:00`;
     const r = await get(url(j.s, j.api, run));
     if (r.ok) runs[run] = encode(r.data.hourly || {});
-    else { runs[run] = null; failedRuns++; if (r.status === 401 || r.status === 403) { stop = true; console.log(`Anahtar reddedildi (HTTP ${r.status}).`); return false; } }
+    else { runs[run] = null; failed[run] = r.status; failedRuns++; if (r.status === 401 || r.status === 403) { stop = true; console.log(`Anahtar reddedildi (HTTP ${r.status}).`); return false; } }
   }
   fs.mkdirSync(path.dirname(j.file), { recursive: true });
-  const meta = { model: j.m, api_model: j.api, station: j.s.id, lat: j.s.lat, lon: j.s.lon, elev: j.s.elev, vars: VARS, scale: SCALE, hours: HOURS, runs };
+  const meta = { model: j.m, api_model: j.api, station: j.s.id, lat: j.s.lat, lon: j.s.lon, elev: j.s.elev, vars: VARS, scale: SCALE, hours: HOURS, runs, failed };
   fs.writeFileSync(j.file + ".tmp", zlib.gzipSync(JSON.stringify(meta)));
   fs.renameSync(j.file + ".tmp", j.file); // yarım dosya kalmasın
   done++;
