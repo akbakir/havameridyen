@@ -168,7 +168,11 @@ if (flag("plan")) process.exit(0);
 // dosya var olduğu için normal çalıştırmada atlanır. Bu mod bütün dosyaları tarar, null run'ları yeniden ister.
 // Arşivde gerçekten olmayan run'lar (HTTP 400 ya da boş yanıt) yine boş kalır ve "kesin" olarak işaretlenir.
 if (flag("repair")) {
-  const files = jobs.filter((j) => fs.existsSync(j.file));
+  // İsteğe bağlı süzgeç: --only model:YYYY-MM[,model:YYYY-MM…]  (ör. --only meteofrance_seamless:2026-10)
+  const oi = args.indexOf("--only");
+  const only = oi >= 0 ? new Set(String(args[oi + 1] || "").split(",").filter(Boolean)) : null;
+  const files = jobs.filter((j) => fs.existsSync(j.file) && (!only || only.has(`${j.m}:${j.mo.key}`)));
+  if (only) console.log(`Süzgeç: ${[...only].join(", ")} → ${files.length} dosya`);
   let scanned = 0, nullRuns = 0, fixed = 0, still = 0;
   const queue = [];                       // yalnız dosya + boş run listesi (içerik bellekte tutulmaz)
   const byMonth = {}, byModel = {};
