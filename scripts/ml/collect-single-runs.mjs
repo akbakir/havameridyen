@@ -170,30 +170,41 @@ if (flag("plan")) process.exit(0);
 if (flag("repair")) {
   const files = jobs.filter((j) => fs.existsSync(j.file));
   let scanned = 0, nullRuns = 0, fixed = 0, still = 0;
-  const queue = [];
+  const queue = [];                       // yalnız dosya + boş run listesi (içerik bellekte tutulmaz)
+  const byMonth = {}, byModel = {};
   for (const j of files) {
     const meta = JSON.parse(zlib.gunzipSync(fs.readFileSync(j.file)));
     scanned++;
     const miss = Object.keys(meta.runs).filter((r) => meta.runs[r] == null && !(meta.final || {})[r]);
-    if (miss.length) { nullRuns += miss.length; queue.push({ j, meta, miss }); }
+    if (miss.length) {
+      nullRuns += miss.length; queue.push({ j, miss });
+      byModel[j.m] = (byModel[j.m] || 0) + miss.length;
+      const k = `${j.m} ${j.mo.key}`; byMonth[k] = byMonth[k] || { st: 0, n: 0 }; byMonth[k].st++; byMonth[k].n += miss.length;
+    }
+    if (scanned % 2000 === 0) console.log(`  … ${scanned}/${files.length} dosya tarandı`);
   }
   console.log(`${scanned} dosya tarandı: ${queue.length} dosyada ${nullRuns} boş run.`);
+  console.log("Model başına:", JSON.stringify(byModel));
+  console.log("Model × ay (boş run'ı olan istasyon sayısı / toplam boş run / istasyon başına):");
+  for (const [k, v] of Object.entries(byMonth).sort()) console.log(`  ${k}: ${v.st} istasyon, ${v.n} run, ${(v.n / v.st).toFixed(1)}/istasyon`);
   if (flag("plan-repair")) process.exit(0);
   let qi = 0;
   await Promise.all(Array.from({ length: CONC }, async () => {
     while (!stop && qi < queue.length) {
-      const { j, meta, miss } = queue[qi++];
+      const { j, miss } = queue[qi++];
+      const meta = JSON.parse(zlib.gunzipSync(fs.readFileSync(j.file)));
       meta.failed = meta.failed || {}; meta.final = meta.final || {};
+      let f0 = fixed;
       for (const run of miss) {
         if (!spend(1)) { stop = true; break; }
         const r = await get(url(j.s, j.api, run));
         const filled = r.ok ? (r.data.hourly?.temperature_2m || []).some((v) => v != null) : false;
         if (filled) { meta.runs[run] = encode(r.data.hourly); delete meta.failed[run]; fixed++; }
-        else { still++; meta.failed[run] = r.ok ? "bos" : r.status; if (!r.ok && r.status === 400 || r.ok) meta.final[run] = true; }
+        else { still++; meta.failed[run] = r.ok ? "bos" : r.status; if (r.ok || r.status === 400) meta.final[run] = true; }
       }
       fs.writeFileSync(j.file + ".tmp", zlib.gzipSync(JSON.stringify(meta)));
       fs.renameSync(j.file + ".tmp", j.file);
-      console.log(`↻ ${j.m} ${j.s.id} ${j.mo.key}: ${miss.length} boş run denendi · düzelen ${fixed}, boş kalan ${still}`);
+      console.log(`↻ ${j.m} ${j.s.id} ${j.mo.key}: ${miss.length} boş run denendi, ${fixed - f0} düzeldi · toplam düzelen ${fixed}, boş kalan ${still}`);
     }
   }));
   console.log(`Onarım bitti: ${fixed} run düzeldi, ${still} run arşivde yok ya da hâlâ hatalı. Anahtarla toplam harcanan: ${Math.round(usage)}.`);
