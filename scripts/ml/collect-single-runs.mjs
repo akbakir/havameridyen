@@ -167,6 +167,7 @@ if (flag("plan")) process.exit(0);
 // Ağ ya da sunucu hatasıyla (5xx/429, tekrar denemeler tükenince) boş kalan run'lar dosyaya null yazılır ve
 // dosya var olduğu için normal çalıştırmada atlanır. Bu mod bütün dosyaları tarar, null run'ları yeniden ister.
 // Arşivde gerçekten olmayan run'lar (HTTP 400 ya da boş yanıt) yine boş kalır ve "kesin" olarak işaretlenir.
+let stop = false;
 if (flag("repair")) {
   // İsteğe bağlı süzgeç: --only model:YYYY-MM[,model:YYYY-MM…]  (ör. --only meteofrance_seamless:2026-10)
   const oi = args.indexOf("--only");
@@ -216,7 +217,7 @@ if (flag("repair")) {
 }
 
 // ---------- toplama ----------
-let done = 0, failedRuns = 0, stop = false;
+let done = 0, failedRuns = 0;
 const t0 = Date.now();
 async function runJob(j) {
   const runs = {}, failed = {};
