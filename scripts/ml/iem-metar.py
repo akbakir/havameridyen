@@ -15,7 +15,17 @@ Kullanım:  python scripts/ml/iem-metar.py            (indir + çözümle)
            python scripts/ml/iem-metar.py --cozumle  (yalnız çözümle)
            python scripts/ml/iem-metar.py --yenile   (son yılı yeniden indir)
 """
-import sys, json, re, time, pathlib, urllib.request
+import sys, json, re, time, pathlib, ssl, urllib.request
+
+# Windows'ta python.org Python'u kök sertifikaları bulamayabiliyor (CERTIFICATE_VERIFY_FAILED).
+# Önce Windows sertifika deposunu (truststore), yoksa certifi paketini kullan; doğrulama hiçbir zaman kapatılmaz.
+try:
+    import truststore; truststore.inject_into_ssl(); SSL_CTX = None
+except ImportError:
+    try:
+        import certifi; SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        SSL_CTX = None
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ML = ROOT / "ml-data"
@@ -44,7 +54,7 @@ def indir():
         for deneme in range(4):
             try:
                 req = urllib.request.Request(u, headers={"User-Agent": UA})
-                with urllib.request.urlopen(req, timeout=180) as r:
+                with urllib.request.urlopen(req, timeout=180, context=SSL_CTX) as r:
                     data = r.read()
                 if not data.startswith(b"station"):
                     raise ValueError(data[:120])
@@ -52,6 +62,8 @@ def indir():
                 print(f"[{i}/{len(isler)}] {s} {y}: {data.count(b'\n') - 1} rapor", flush=True)
                 break
             except Exception as e:
+                if "CERTIFICATE_VERIFY_FAILED" in str(e):
+                    sys.exit("Sertifika doğrulanamadı. Şunu çalıştırıp yeniden deneyin:  python -m pip install truststore certifi")
                 bekle = 15 * (deneme + 1)
                 print(f"[{i}/{len(isler)}] {s} {y}: hata ({e}); {bekle} sn sonra tekrar", flush=True)
                 time.sleep(bekle)
