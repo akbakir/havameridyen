@@ -148,6 +148,9 @@ def cozumle():
     rows = pd.DataFrame([coz(m) for m in df.metar.fillna("")])
     out = pd.concat([df[["station", "ts", "metar"]].rename(columns={"station": "icao"}).reset_index(drop=True), rows], axis=1)
     out = out.sort_values(["icao", "ts"]).reset_index(drop=True)
+    # IEM metninde "SPECI" sözcüğü yok; rutin raporlar her meydanda hep aynı dakikalarda (Türkiye: :20 ve :50).
+    rutin = out.groupby("icao").ts.transform(lambda s: s.dt.minute.isin(s.dt.minute.value_counts().index[:2]))
+    out["speci"] = out.speci | ~rutin
     p = ML / "obs" / "metar.parquet"; out.to_parquet(p, index=False)
     print(f"\n{len(out):,} rapor, {out.icao.nunique()} havalimanı, {out.ts.min():%Y-%m-%d} – {out.ts.max():%Y-%m-%d} → {p}")
     print(f"SPECI %{100*out.speci.mean():.1f} · hamle %{100*out.hamle_kt.notna().mean():.1f} · "

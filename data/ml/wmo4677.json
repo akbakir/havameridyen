@@ -651,7 +651,12 @@
   "DS": "toz",
   "SS": "toz",
   "BLSN": "kar_savrulmasi",
-  "DRSN": "kar_savrulmasi"
+  "DRSN": "kar_savrulmasi",
+  "BLDU": "toz",
+  "BLSA": "toz",
+  "DRDU": "toz",
+  "DRSA": "toz",
+  "PO": "toz"
  },
  "metar_siddet": {
   "-": "hafif",
