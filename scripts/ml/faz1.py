@@ -7,6 +7,7 @@ SICAKLIK (saatlik, istasyon başına, öncü günü başına):
   ortanca5_ham, ortanca8_ham, icon_ham        sitedeki gibi / en iyi tek model
   ortanca5_sd, ortanca8_sd                    her modelden istasyon × saat × ay sapması çıkarılıp ortanca
                                               (sapma = Σhata / (n + 20); az örnekli hücreler sıfıra büzülür)
+  agirlikli_ortanca                           sapması düzeltilmiş modellerin 1/MSE ağırlıklı ortancası (plan madde 2)
   agirlikli                                   sapması düzeltilmiş modellerin 1/MSE ağırlıklı ortalaması
   emos                                        μ = a + Σ bᵢ·modelᵢ (sapması düzeltilmiş, ridge), σ² = c + d·dağınıklık²
   Ölçütler: MAE, RMSE, sapma; EMOS için CRPS ve %80 aralığın kapsama oranı.
@@ -22,6 +23,7 @@ YAĞIŞ (24 saatlik toplam, 00–24 UTC; en az 5 model):
 Çıktı: ml-data/faz1/  sicaklik.csv, sicaklik_istasyon.csv, yagis_olasilik.csv, yagis_guvenilirlik.csv,
                       yagis_miktar.csv, faz1_ozet.txt
 Kullanım:  python scripts/ml/faz1.py [--test]     (tam çalışma ~30–60 dk)
+Not: EMOS burada ridge + yayılım regresyonu, 22 aylık eğitim; plandaki CRPS ile kayan pencere (30–60 gün) sürümü ayrıca sınanacak.
 """
 import sys, json, gzip, time, pathlib, warnings
 import numpy as np
@@ -98,7 +100,7 @@ del ob, qc
 print(f"Gözlem: {obsf.name} · sıcaklık {len(OT)}, yağış {len(OR)} istasyon")
 
 # ---------- sıcaklık ----------
-TM = ["ortanca5_ham", "ortanca8_ham", "icon_ham", "ortanca5_sd", "ortanca8_sd", "agirlikli", "emos"]
+TM = ["ortanca5_ham", "ortanca8_ham", "icon_ham", "ortanca5_sd", "ortanca8_sd", "agirlikli_ortanca", "agirlikli", "emos"]
 TA = np.zeros((len(TM), NL, 4))                      # n, Σe, Σ|e|, Σe²
 TEX = np.zeros((NL, 3))                              # emos: Σcrps, kapsama80, n
 TIST = np.zeros((NS, len(TM), 2))                    # öncü 1: n, Σ|e|
@@ -133,6 +135,12 @@ def temp_station(si, P, obs):
                 k = tr & ~np.isnan(Xc[m]); w[m] = 1 / max(np.mean((Xc[m, k] - obs[k]) ** 2), 0.05)
             W = np.where(np.isnan(Xc), 0, w[:, None]); num = np.nansum(np.where(np.isnan(Xc), 0, Xc) * W, 0); den = W.sum(0)
             F["agirlikli"] = np.where(den > 0, num / den, np.nan)
+            # 2b) 1/MSE ağırlıklı ORTANCA (plan, madde 2): her saatte değerler sıralanır, birikimli ağırlık %50'yi geçtiği değer
+            Xs = np.where(np.isnan(Xc), np.inf, Xc); o_ = np.argsort(Xs, 0)
+            Vs = np.take_along_axis(Xs, o_, 0); Ws = np.take_along_axis(W, o_, 0)
+            cw = np.cumsum(Ws, 0); tot = cw[-1]
+            pos = np.argmax(cw >= 0.5 * tot[None, :], 0)
+            F["agirlikli_ortanca"] = np.where(tot > 0, Vs[pos, np.arange(NH)], np.nan)
         # 3) EMOS (ridge + yayılım)
         Z = Xc[av]; full = ~np.isnan(Z).any(0)
         ktr = tr & full; kte = te & full
