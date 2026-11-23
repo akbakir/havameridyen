@@ -23,7 +23,15 @@ YAĞIŞ (24 saatlik toplam, 00–24 UTC; en az 5 model):
 Çıktı: ml-data/faz1/  sicaklik.csv, sicaklik_istasyon.csv, yagis_olasilik.csv, yagis_guvenilirlik.csv,
                       yagis_miktar.csv, faz1_ozet.txt
 Kullanım:  python scripts/ml/faz1.py [--test]     (tam çalışma ~30–60 dk)
-Not: EMOS burada ridge + yayılım regresyonu, 22 aylık eğitim; plandaki CRPS ile kayan pencere (30–60 gün) sürümü ayrıca sınanacak.
+GENİŞLEYEN PENCERE (23 Kas): Previous Runs arşivinde öncü ≥ 1 verisi bazı modellerde geç başlıyor
+  (UKMO Ağu 2024, AIFS Şub 2025, IFS Eki 2025). Sabit eğitim yılı IFS'i öncü ≥ 1'de dışarıda bırakıyordu.
+  Artık her test ayı için sapma, ağırlık, EMOS, lojistik ve miktar katsayıları o aydan ÖNCEKİ bütün veriyle
+  kurulur (sitede aylık yeniden eğitimin karşılığı). Geçmişte ≥ MIN_H saat verisi olan model dahil edilir.
+  Sapma iki katmanlı: istasyon × saat (bütün aylar) + istasyon × saat × ay kalıntısı; ikisi de n + 20 büzülmeli,
+  böylece verisi kısa olan model (IFS) de saatlik sapmasıyla düzeltilir.
+  EMOS: geçmişte bütün dahil modellerin aynı anda dolu olduğu ≥ 1000 saat gerekir; yetmezse geçmişi en kısa
+  model o ay için EMOS'tan çıkar (hangi ayda hangi modelin kullanıldığı özete yazılır).
+Not: EMOS burada ridge + yayılım regresyonu; plandaki CRPS ile kayan pencere (30–60 gün) sürümü ayrıca sınanacak.
 """
 import sys, json, gzip, time, pathlib, warnings
 import numpy as np
@@ -47,6 +55,9 @@ TR_END, TE_END = hix("2025-11-01T00:00"), hix("2026-11-01T00:00")
 DT = pd.date_range("2024-01-01", periods=NH, freq="h")
 HOUR = DT.hour.values; MONTH = DT.month.values - 1
 SPLIT = np.where(np.arange(NH) < TR_END, 0, np.where(np.arange(NH) < TE_END, 1, 2))   # 0 eğitim, 1 test, 2 dışarıda
+HMON = (DT.year.values - 2024) * 12 + DT.month.values - 1                              # 0 = Oca 2024
+TEST_MONTHS = sorted(set(HMON[SPLIT == 1].tolist()))
+MIN_H = 480                                                                            # ≥ 20 günlük geçmiş
 
 def hidx(t):
     return ((np.array(t, dtype="datetime64[m]") - T0) / np.timedelta64(1, "h")).astype(np.int64)
@@ -104,57 +115,69 @@ TM = ["ortanca5_ham", "ortanca8_ham", "icon_ham", "ortanca5_sd", "ortanca8_sd", 
 TA = np.zeros((len(TM), NL, 4))                      # n, Σe, Σ|e|, Σe²
 TEX = np.zeros((NL, 3))                              # emos: Σcrps, kapsama80, n
 TIST = np.zeros((NS, len(TM), 2))                    # öncü 1: n, Σ|e|
+EUSE = np.zeros((NL, NMOD)); ETOT = np.zeros(NL)     # EMOS'a giren model / ay sayısı
 SHRINK = 20.0
 
 def temp_station(si, P, obs):
-    hm = HOUR * 12 + MONTH
+    okO = ~np.isnan(obs)
     for n in range(NL):
         X = P[:, n]                                                   # (8, NH)
-        tr = (SPLIT == 0) & ~np.isnan(obs); te = (SPLIT == 1) & ~np.isnan(obs)
-        if te.sum() < 500 or tr.sum() < 2000: continue
-        cov = np.array([np.mean(~np.isnan(X[m, tr])) for m in range(NMOD)])
-        av = np.where(cov >= 0.8)[0]
-        if len(av) < 3: continue
-        # 1) istasyon × saat × ay sapması
-        Xc = X.copy()
-        for m in av:
-            k = tr & ~np.isnan(X[m]); e = X[m, k] - obs[k]
-            se = np.bincount(hm[k], e, 288); cn = np.bincount(hm[k], minlength=288)
-            Xc[m] = X[m] - (se / (cn + SHRINK))[hm]
-        F = {}
+        te = (SPLIT == 1) & okO
+        if te.sum() < 500: continue
+        F = {k: np.full(NH, np.nan) for k in TM}; sig = np.full(NH, np.nan)
         with np.errstate(all="ignore"):
             c5 = np.sum(~np.isnan(X[:5]), 0); c8 = np.sum(~np.isnan(X), 0)
             F["ortanca5_ham"] = np.where(c5 >= 3, np.nanmedian(X[:5], 0), np.nan)
             F["ortanca8_ham"] = np.where(c8 >= 3, np.nanmedian(X, 0), np.nan)
-            F["icon_ham"] = X[2]
-            F["ortanca5_sd"] = np.where(c5 >= 3, np.nanmedian(Xc[:5], 0), np.nan)
-            F["ortanca8_sd"] = np.where(c8 >= 3, np.nanmedian(Xc, 0), np.nan)
-            # 2) 1/MSE ağırlıklı
-            w = np.zeros(NMOD)
+            F["icon_ham"] = X[2].astype(float)
+        for mi in TEST_MONTHS:
+            here = te & (HMON == mi)
+            if not here.any(): continue
+            past = okO & (HMON < mi)
+            nh = np.array([np.sum(past & ~np.isnan(X[m])) for m in range(NMOD)])
+            av = [m for m in range(NMOD) if nh[m] >= MIN_H]
+            if len(av) < 3: continue
+            # 1) sapma: istasyon × saat + istasyon × saat × ay kalıntısı (geçmiş veriyle)
+            Xc = X.astype(float).copy(); mse = np.full(NMOD, np.nan)
             for m in av:
-                k = tr & ~np.isnan(Xc[m]); w[m] = 1 / max(np.mean((Xc[m, k] - obs[k]) ** 2), 0.05)
-            W = np.where(np.isnan(Xc), 0, w[:, None]); num = np.nansum(np.where(np.isnan(Xc), 0, Xc) * W, 0); den = W.sum(0)
-            F["agirlikli"] = np.where(den > 0, num / den, np.nan)
-            # 2b) 1/MSE ağırlıklı ORTANCA (plan, madde 2): her saatte değerler sıralanır, birikimli ağırlık %50'yi geçtiği değer
-            Xs = np.where(np.isnan(Xc), np.inf, Xc); o_ = np.argsort(Xs, 0)
-            Vs = np.take_along_axis(Xs, o_, 0); Ws = np.take_along_axis(W, o_, 0)
-            cw = np.cumsum(Ws, 0); tot = cw[-1]
-            pos = np.argmax(cw >= 0.5 * tot[None, :], 0)
-            F["agirlikli_ortanca"] = np.where(tot > 0, Vs[pos, np.arange(NH)], np.nan)
-        # 3) EMOS (ridge + yayılım)
-        Z = Xc[av]; full = ~np.isnan(Z).any(0)
-        ktr = tr & full; kte = te & full
-        if ktr.sum() > 1000:
-            A = np.c_[np.ones(ktr.sum()), Z[:, ktr].T]; lam = np.eye(A.shape[1]) * 1.0; lam[0, 0] = 0
+                k = past & ~np.isnan(X[m]); e = X[m, k] - obs[k]
+                bh = np.bincount(HOUR[k], e, 24) / (np.bincount(HOUR[k], minlength=24) + SHRINK)
+                r = e - bh[HOUR[k]]; hmk = HOUR[k] * 12 + MONTH[k]
+                bhm = np.bincount(hmk, r, 288) / (np.bincount(hmk, minlength=288) + SHRINK)
+                Xc[m] = X[m] - bh[HOUR] - bhm[HOUR * 12 + MONTH]
+                mse[m] = max(np.mean((Xc[m, k] - obs[k]) ** 2), 0.05)
+            Xh = Xc[:, here]
+            with np.errstate(all="ignore"):
+                h5 = np.sum(~np.isnan(Xh[:5]), 0); h8 = np.sum(~np.isnan(Xh), 0)
+                F["ortanca5_sd"][here] = np.where(h5 >= 3, np.nanmedian(Xh[:5], 0), np.nan)
+                F["ortanca8_sd"][here] = np.where(h8 >= 3, np.nanmedian(Xh, 0), np.nan)
+                # 2) 1/MSE ağırlıklı ortalama ve ORTANCA (plan madde 2); yalnız düzeltilmiş (dahil) modeller
+                w = np.where(np.isnan(mse), 0, 1 / mse)
+                W = np.where(np.isnan(Xh), 0, w[:, None])
+                num = np.nansum(np.where(np.isnan(Xh), 0, Xh) * W, 0); den = W.sum(0)
+                F["agirlikli"][here] = np.where(den > 0, num / den, np.nan)
+                Xs = np.where(W > 0, Xh, np.inf); o_ = np.argsort(Xs, 0)
+                Vs = np.take_along_axis(Xs, o_, 0); Ws = np.take_along_axis(W, o_, 0)
+                cw = np.cumsum(Ws, 0); tot = cw[-1]
+                pos = np.argmax(cw >= 0.5 * tot[None, :], 0)
+                F["agirlikli_ortanca"][here] = np.where(tot > 0, Vs[pos, np.arange(Xh.shape[1])], np.nan)
+            # 3) EMOS (ridge + yayılım): geçmişte bütün dahil modellerin dolu olduğu ≥ 1000 saat
+            ae = sorted(av, key=lambda m: -nh[m])
+            while len(ae) >= 3:
+                full = ~np.isnan(Xc[ae]).any(0); ktr = past & full
+                if ktr.sum() >= 1000: break
+                ae = ae[:-1]
+            if len(ae) < 3: continue
+            ETOT[n] += 1; EUSE[n, ae] += 1
+            Z = Xc[ae]
+            A = np.c_[np.ones(ktr.sum()), Z[:, ktr].T]; lam = np.eye(A.shape[1]); lam[0, 0] = 0
             coef = np.linalg.solve(A.T @ A + lam, A.T @ obs[ktr])
-            mu = np.full(NH, np.nan); mu[full] = np.c_[np.ones(full.sum()), Z[:, full].T] @ coef
-            S2 = np.var(Z, 0)
-            r2 = (obs[ktr] - mu[ktr]) ** 2; B = np.c_[np.ones(ktr.sum()), S2[ktr]]
-            c, d = np.linalg.lstsq(B, r2, rcond=None)[0]; c, d = max(c, 0.05), max(d, 0.0)
-            sig = np.sqrt(c + d * S2)
-            F["emos"] = mu
-        else:
-            F["emos"] = np.full(NH, np.nan); sig = np.ones(NH)
+            mu_tr = A @ coef; S2tr = np.var(Z[:, ktr], 0)
+            c, d = np.linalg.lstsq(np.c_[np.ones(ktr.sum()), S2tr], (obs[ktr] - mu_tr) ** 2, rcond=None)[0]
+            c, d = max(c, 0.05), max(d, 0.0)
+            kh = here & full
+            F["emos"][kh] = np.c_[np.ones(kh.sum()), Z[:, kh].T] @ coef
+            sig[kh] = np.sqrt(c + d * np.var(Z[:, kh], 0))
         common = te.copy()
         for k in TM: common &= ~np.isnan(F[k])
         if common.sum() == 0: continue
@@ -163,8 +186,8 @@ def temp_station(si, P, obs):
             e = F[k][common] - o
             TA[j, n] += [e.size, e.sum(), np.abs(e).sum(), (e * e).sum()]
             if n == 1: TIST[si, j] += [e.size, np.abs(e).sum()]
-        s = sig[common]; mu_ = F["emos"][common]
-        TEX[n] += [crps_normal(mu_, s, o).sum(), np.sum(np.abs(o - mu_) <= 1.2816 * s), o.size]
+        s_ = sig[common]; mu_ = F["emos"][common]
+        TEX[n] += [crps_normal(mu_, s_, o).sum(), np.sum(np.abs(o - mu_) <= 1.2816 * s_), o.size]
 
 # ---------- yağış ----------
 THR = [1.0, 10.0]
@@ -179,30 +202,35 @@ def daysum(x):
 
 DAY_SPLIT = SPLIT[1:1 + ((NH - 1) // 24) * 24].reshape(-1, 24)[:, 0]
 DAY_SEASON = SEASON[MONTH[1:1 + ((NH - 1) // 24) * 24].reshape(-1, 24)[:, 0]]
+DAY_MON = HMON[1:1 + ((NH - 1) // 24) * 24].reshape(-1, 24)[:, 0]
 
 def rain_station(si, P, obs):
     O = daysum(obs); W = daysum(P)                                  # (ND,), (8, NL, ND)
     for n in range(NL):
         Wn = W[:, n]; cnt = np.sum(~np.isnan(Wn), 0)
         ok = (cnt >= 5) & ~np.isnan(O)
-        tr = ok & (DAY_SPLIT == 0); te = ok & (DAY_SPLIT == 1)
-        if tr.sum() < 200 or te.sum() < 100: continue
+        tr0 = ok & (DAY_SPLIT == 0); te = ok & (DAY_SPLIT == 1)
+        if tr0.sum() < 200 or te.sum() < 100: continue
         med = np.nanmedian(Wn, 0); mean = np.nanmean(Wn, 0); mx = np.nanmax(Wn, 0)
-        clim = {th: np.mean(O[tr] >= th) for th in THR}
+        clim = {th: np.mean(O[tr0] >= th) for th in THR}        # iklim: yalnız gözlem, test öncesi
         frac = {th: np.nanmean(np.where(np.isnan(Wn), np.nan, Wn >= th), 0) for th in THR}
-        for d in np.where(tr | te)[0]:
-            LOG.append((n, int(DAY_SPLIT[d]), frac[1.0][d], frac[10.0][d], med[d], mean[d], mx[d], clim[1.0], clim[10.0], O[d]))
-        # miktar yöntemleri
-        F = {"ortanca8": med, "ortalama8": mean}
-        k = np.ones(4)
-        for s_ in range(4):
-            m = tr & (DAY_SEASON == s_)
-            so, sm = O[m].sum(), med[m].sum()
-            k[s_] = np.clip(so / sm, 0.5, 3.0) if sm > 5 else 1.0
-        F["olcekli"] = med * k[DAY_SEASON]
+        for d in np.where(ok & (DAY_SPLIT <= 1))[0]:
+            LOG.append((n, int(DAY_SPLIT[d]), int(DAY_MON[d]), frac[1.0][d], frac[10.0][d], med[d], mean[d], mx[d], clim[1.0], clim[10.0], O[d]))
+        # miktar yöntemleri: katsayılar her test ayı için o aydan önceki günlerle
+        F = {"ortanca8": med, "ortalama8": mean, "olcekli": np.full(med.shape, np.nan), "kantil": np.full(med.shape, np.nan)}
         q = np.linspace(0, 1, 201)
-        qm, qo = np.quantile(med[tr], q), np.quantile(O[tr], q)
-        km = np.interp(med, qm, qo); km[med <= 0] = 0; F["kantil"] = km
+        for mi in TEST_MONTHS:
+            here = te & (DAY_MON == mi); tr = ok & (DAY_MON < mi)
+            if not here.any() or tr.sum() < 200: continue
+            k = np.ones(4)
+            for s_ in range(4):
+                m = tr & (DAY_SEASON == s_)
+                so, sm = O[m].sum(), med[m].sum()
+                k[s_] = np.clip(so / sm, 0.5, 3.0) if sm > 5 else 1.0
+            F["olcekli"][here] = med[here] * k[DAY_SEASON[here]]
+            qm, qo = np.quantile(med[tr], q), np.quantile(O[tr], q)
+            km = np.interp(med[here], qm, qo); km[med[here] <= 0] = 0; F["kantil"][here] = km
+        te = te & ~np.isnan(F["kantil"])
         o = O[te]
         for j, key in enumerate(RM):
             f = F[key][te]; wet = (o >= 0.1) | (f >= 0.1)
@@ -222,7 +250,7 @@ for si, s in enumerate(stations):
     print(f"[{si+1}/{NS}] {s['id']} tamam · {el/60:.1f} dk · kalan ≈ {el/(si+1)*(NS-si-1)/60:.0f} dk", flush=True)
 
 # ---------- yağış olasılığı: lojistik ----------
-L = pd.DataFrame(LOG, columns=["oncu", "split", "oy1", "oy10", "ort", "ortalama", "maks", "iklim1", "iklim10", "gozlem"])
+L = pd.DataFrame(LOG, columns=["oncu", "split", "ay", "oy1", "oy10", "ort", "ortalama", "maks", "iklim1", "iklim10", "gozlem"])
 def logit(p): p = np.clip(p, 1e-3, 1 - 1e-3); return np.log(p / (1 - p))
 def fit_logistic(X, y, lam=1.0, it=30):
     b = np.zeros(X.shape[1])
@@ -238,10 +266,14 @@ for n in range(NL):
     if d.empty: continue
     for th, oy, ik in ((1.0, "oy1", "iklim1"), (10.0, "oy10", "iklim10")):
         X = np.c_[np.ones(len(d)), d[oy], np.log1p(d.ort), np.log1p(d.ortalama), np.log1p(d.maks), logit(d[ik])]
-        y = (d.gozlem >= th).values.astype(float); tr = (d.split == 0).values; te = (d.split == 1).values
-        if tr.sum() < 1000 or te.sum() < 500: continue
-        b = fit_logistic(X[tr], y[tr])
-        P = {"iklim": d[ik].values, "oy": d[oy].values, "lojistik": 1 / (1 + np.exp(-(X @ b)))}
+        y = (d.gozlem >= th).values.astype(float); te = (d.split == 1).values; ay = d.ay.values
+        if (d.split == 0).sum() < 1000 or te.sum() < 500: continue
+        plog = np.full(len(d), np.nan)
+        for mi in TEST_MONTHS:                                   # genişleyen pencere: o aydan önceki günler
+            here = te & (ay == mi); trm = ay < mi
+            if here.any(): plog[here] = 1 / (1 + np.exp(-(X[here] @ fit_logistic(X[trm], y[trm]))))
+        te = te & ~np.isnan(plog)
+        P = {"iklim": d[ik].values, "oy": d[oy].values, "lojistik": plog}
         bs_clim = np.mean((P["iklim"][te] - y[te]) ** 2)
         for k_, p in P.items():
             bs = np.mean((p[te] - y[te]) ** 2)
@@ -283,9 +315,11 @@ rm = pd.DataFrame(rows, columns=["yontem", "oncu_gun", "gun", "toplam_orani", "m
 rm.to_csv(OUT / "yagis_miktar.csv", index=False)
 
 with open(OUT / "faz1_ozet.txt", "w", encoding="utf-8") as fo:
-    fo.write(f"Faz 1 ({NS} istasyon, {time.strftime('%Y-%m-%d %H:%M')}) · eğitim Oca 2024–Eki 2025, test Kas 2025–Eki 2026\n\n")
+    fo.write(f"Faz 1 ({NS} istasyon, {time.strftime('%Y-%m-%d %H:%M')}) · genişleyen pencere (her test ayı öncesindeki bütün veri), test Kas 2025–Eki 2026\n\n")
     fo.write("SICAKLIK MAE (°C), yöntem × öncü günü:\n" + ts.pivot(index="yontem", columns="oncu_gun", values="mae").reindex(TM).to_string() + "\n\n")
     fo.write("EMOS CRPS ve %80 aralık kapsama:\n" + ts[ts.yontem == "emos"][["oncu_gun", "crps", "kapsama80"]].to_string(index=False) + "\n\n")
+    eu = pd.DataFrame(np.round(100 * EUSE / np.maximum(ETOT[:, None], 1)), columns=MODELS); eu.index.name = "oncu_gun"
+    fo.write("EMOS'a giren model (% istasyon-ay), öncü günü × model:\n" + eu.to_string() + "\n\n")
     if len(pr):
         for th in THR:
             fo.write(f"YAĞIŞ ≥ {th} mm/gün — Brier beceri skoru (iklime göre; yüksek iyi):\n" +
