@@ -7,6 +7,9 @@ Arayüz kuralı (lib/consensus.js dayCond → windowCond, lib/agreement.js condA
 Ağırlıklı sürüm (aynı kural, eşit oy yerine ağırlıklı oy ve ağırlıklı ortanca):
   - Ağırlık = istasyon × öncü günü başına, eğitim yılında modelin "yağışlı gün" Brier hatasının tersi
     (w = 1 / (BS + 0,02)); gün yağışlı ⇔ yağışlı modellerin ağırlık payı ≥ 0,5; miktar = yağış verenlerin ağırlıklı ortancası.
+  - Ağırlıklar genişleyen pencereyle kurulur: her test ayı için o aydan ÖNCEKİ bütün günler (Oca 2024'ten başlayarak).
+    Previous Runs arşivinde öncü ≥ 1 verisi geç başlar (UKMO Ağu 2024, AIFS Şub 2025, IFS Eki 2025); geçmişte
+    100 günden az verisi olan model, setteki öteki modellerin ağırlıklarının ortancasını alır (nötr).
 Model setleri: V5 (varsayılan: IFS, GFS, ICON, UKMO, ARPEGE), V5−ARPEGE, IFS+ICON+UKMO, V5+GEM, V5+AIFS, V5+JMA, 8 model.
   ARPEGE ~4. günden, ICON ve UKMO 7. günden sonra yok: arayüz gibi verisi olan modeller kullanılır.
 Ortak örneklem: gözlem dolu ve bütün setlerde en az 3 model verisi olan günler. Test: Kas 2025 – Eki 2026.
@@ -39,6 +42,10 @@ OFF = 21; ND = (NH - OFF) // 24; DSTART = OFF + 24 * np.arange(ND)
 def hix(s): return int((np.datetime64(s) - T0) / np.timedelta64(1, "h"))
 TR_END, TE_END = hix("2025-11-01T00:00") - 3, hix("2026-11-01T00:00") - 3
 DSPLIT = np.where(DSTART < TR_END, 0, np.where(DSTART < TE_END, 1, 2))
+_dd = (T0 + (DSTART + 3).astype("timedelta64[h]")).astype("datetime64[M]")          # TSİ günün ayı
+DMON = (_dd - np.datetime64("2024-01", "M")).astype(int)                            # 0 = Oca 2024
+TEST_MONTHS = sorted(set(DMON[DSPLIT == 1].tolist()))
+MIN_TR = 100
 THR = [1.0, 5.0, 10.0, 20.0]
 NV = 2  # 0 eşit oy, 1 ağırlıklı
 
@@ -95,7 +102,8 @@ del ob
 SN = list(SETS)
 # toplayıcı: set × sürüm × öncü × [n, yağışlı gün h/m/fa/cn, Σo, Σf, Σ|f-o| ıslak, n ıslak, (h,m,fa,cn)×THR]
 A = np.zeros((len(SN), NV, NL, 4 + 4 + 4 * len(THR) + 1))
-WSUM = np.zeros((NL, 8)); WCNT = np.zeros(NL)            # ortalama ağırlıklar (rapor için)
+WSUM = np.zeros((NL, 8)); WCNT = np.zeros((NL, 8))       # ortalama ağırlıklar (rapor için; yalnız kendi verisiyle kurulanlar)
+WNEU = np.zeros((NL, 8)); WTOT = np.zeros(NL)            # nötr ağırlık alan ay sayısı
 t0 = time.time()
 for si, s in enumerate(stations):
     no = int(s["yerel"]) if s.get("yerel") else None
@@ -107,14 +115,19 @@ for si, s in enumerate(stations):
         Tn, Mn = T[:, n], MX[:, n]
         avail = ~np.isnan(Tn)
         wet = avail & (Tn >= 0.2 - 1e-9) & (Mn >= 0.1 - 1e-9)
-        # ağırlıklar: eğitim yılı, istasyon × öncü, modelin yağışlı gün Brier hatası
-        tr = (DSPLIT == 0) & ~np.isnan(O)
-        ow = (O >= 0.2)
-        w = np.zeros(8)
-        for m in range(8):
-            k = tr & avail[m]
-            if k.sum() >= 100: w[m] = 1.0 / (np.mean(wet[m, k] != ow[k]) + 0.02)
-        if w.sum() > 0: WSUM[n] += w / w.max(); WCNT[n] += 1
+        # ağırlıklar: genişleyen pencere, her test ayı için o aydan önceki günler; istasyon × öncü
+        ow = (O >= 0.2); okO = ~np.isnan(O)
+        WM = np.zeros((8, ND))                              # günün (test ayının) model ağırlıkları; -1 = nötr
+        for mi in TEST_MONTHS:
+            past = okO & (DMON < mi); here = DMON == mi
+            w = np.full(8, np.nan)
+            for m in range(8):
+                k = past & avail[m]
+                if k.sum() >= MIN_TR: w[m] = 1.0 / (np.mean(wet[m, k] != ow[k]) + 0.02)
+            WTOT[n] += 1; WNEU[n] += np.isnan(w)
+            if not np.all(np.isnan(w)):
+                WSUM[n] += np.where(np.isnan(w), 0, w / np.nanmax(w)); WCNT[n] += ~np.isnan(w)
+            WM[:, here] = np.where(np.isnan(w), -1.0, w)[:, None]
         te = (DSPLIT == 1) & ~np.isnan(O)
         for idx in SETS.values(): te &= avail[idx].sum(0) >= 3
         if te.sum() == 0: continue
@@ -129,8 +142,9 @@ for si, s in enumerate(stations):
                     vals = np.where(wt, tt, np.nan)
                     amt = np.nanmedian(vals, 0)
                 else:
-                    W = np.where(av, w[ids][:, None], 0.0)
-                    if W.sum() == 0: continue
+                    W0 = WM[ids][:, te]
+                    neu = np.nanmedian(np.where(W0 > 0, W0, np.nan), 0); neu = np.where(np.isnan(neu), 1.0, neu)
+                    W = np.where(av, np.where(W0 > 0, W0, neu[None, :]), 0.0)
                     share = np.where(W.sum(0) > 0, (W * wt).sum(0) / W.sum(0), 0)
                     daywet = share >= 0.5
                     vals = np.where(wt, tt, np.nan); amt = wmedian(vals, np.where(wt, W, 0) + 1e-9)
@@ -166,7 +180,8 @@ for j, sn in enumerate(SN):
                 out[f"ets_{th:g}"] = round(ets(hh, mm, ff, cc), 3); out[f"fb_{th:g}"] = round((hh + ff) / (hh + mm), 3) if hh + mm else None
             rows.append(out)
 df = pd.DataFrame(rows); df.to_csv(OUT / "arayuz_yagis.csv", index=False)
-wavg = pd.DataFrame(WSUM / np.maximum(WCNT[:, None], 1), columns=MODELS).round(2); wavg.index.name = "oncu_gun"
+wavg = pd.DataFrame(np.where(WCNT > 0, WSUM / np.maximum(WCNT, 1), np.nan), columns=MODELS).round(2); wavg.index.name = "oncu_gun"
+wneu = pd.DataFrame(100 * WNEU / np.maximum(WTOT[:, None], 1), columns=MODELS).round(0); wneu.index.name = "oncu_gun"
 with open(OUT / "arayuz_yagis_ozet.txt", "w", encoding="utf-8") as fo:
     fo.write(f"Arayüz günlük yağış kuralı, model setleri ({NS} istasyon, {time.strftime('%Y-%m-%d %H:%M')}), test Kas 2025 – Eki 2026\n\n")
     for col, name in [("yagisli_gun_ets", "Yağışlı gün ETS (≥ 0,2 mm)"), ("yagisli_gun_siklik", "Yağışlı gün sıklık sapması"),
@@ -176,5 +191,6 @@ with open(OUT / "arayuz_yagis_ozet.txt", "w", encoding="utf-8") as fo:
             x = df[df.surum == v].pivot(index="set", columns="oncu_gun", values=col).reindex(SN)
             fo.write(f"{name} — {'eşit oy' if v == 'esit' else 'ağırlıklı'}:\n" + x.to_string() + "\n\n")
     fo.write("Ortalama ağırlık (en iyi model = 1), öncü günü × model:\n" + wavg.to_string() + "\n")
+    fo.write("\nNötr ağırlık alan test ayı oranı (%; geçmişte < 100 gün veri), öncü günü × model:\n" + wneu.to_string() + "\n")
 print(open(OUT / "arayuz_yagis_ozet.txt", encoding="utf-8").read())
 print(f"Çıktılar: {OUT} · toplam {(time.time()-t0)/60:.1f} dk")
